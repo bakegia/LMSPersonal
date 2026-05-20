@@ -29,4 +29,15 @@ namespace LMSfinal.Models.ViewModels
             ? Items.Where(x => x.Grade != null).Average(x => x.Grade.FinalScore)
             : 0m;
     }
+
+    public class StudentCourseCompletionVM
+    {
+        public List<StudentGradeItemVM> CompletedCourses { get; set; } = new();
+        public List<StudentGradeItemVM> IncompleteCourses { get; set; } = new();
+
+        public int TotalCourses { get; set; }
+        public int CompletedCount { get; set; }
+        public int IncompleteCount { get; set; }
+        public decimal CompletionRate { get; set; } // Tỷ lệ % hoàn thành
+    }
 }

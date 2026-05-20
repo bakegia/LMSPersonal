@@ -168,5 +168,67 @@ namespace LMSfinal.Areas.Student.Controllers
 
             return View(items);
         }
+
+        // ==================== COMPLETED - Xem khóa học hoàn thành/chưa hoàn thành ====================
+        /// <summary>
+        /// Xem danh sách khóa học đã hoàn thành (D-A) và chưa hoàn thành (F hoặc không có điểm)
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Completed()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            // Lấy danh sách lớp của học sinh
+            var classrooms = await _context.ClassroomStudents
+                .Where(cs => cs.StudentId == userId)
+                .Include(cs => cs.Classroom)
+                    .ThenInclude(c => c.Course)
+                .Select(cs => cs.Classroom)
+                .ToListAsync();
+
+            // Lấy danh sách điểm của học sinh
+            var grades = await _context.ClassroomGrades
+                .Where(g => g.StudentId == userId)
+                .ToListAsync();
+
+            // Phân chia khóa học thành 2 nhóm
+            var allItems = classrooms
+                .Select(classroom => new StudentGradeItemVM
+                {
+                    ClassroomId = classroom.Id,
+                    ClassroomName = classroom.NameClass,
+                    ClassroomCode = classroom.ClassCode,
+                    CourseName = classroom.Course?.Title ?? "N/A",
+                    StartDate = classroom.StartDate,
+                    EndDate = classroom.EndDate,
+                    Grade = grades.FirstOrDefault(g => g.ClassroomId == classroom.Id)
+                })
+                .OrderByDescending(x => x.StartDate)
+                .ToList();
+
+            // Phân loại: Hoàn thành (D-A) vs Chưa hoàn thành (F hoặc null)
+            var completedCourses = allItems
+                .Where(x => x.Grade != null && x.Grade.GradeLetterClass != GradeLetterEnum.F)
+                .ToList();
+
+            var incompleteCourses = allItems
+                .Where(x => x.Grade == null || x.Grade.GradeLetterClass == GradeLetterEnum.F)
+                .ToList();
+
+            var model = new StudentCourseCompletionVM
+            {
+                CompletedCourses = completedCourses,
+                IncompleteCourses = incompleteCourses,
+                TotalCourses = allItems.Count,
+                CompletedCount = completedCourses.Count,
+                IncompleteCount = incompleteCourses.Count,
+                CompletionRate = allItems.Count > 0 
+                    ? Math.Round((decimal)completedCourses.Count / allItems.Count * 100, 2)
+                    : 0
+            };
+
+            return View(model);
+        }
+
     }
 }
