@@ -27,6 +27,7 @@ namespace LMSfinal.Data
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Instructor> Instructors { get; set; }
         public DbSet<Contact> Contacts { get; set; }
+        public DbSet<ClassroomGrade> ClassroomGrades { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

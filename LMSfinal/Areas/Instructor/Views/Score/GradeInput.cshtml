@@ -1,0 +1,295 @@
+﻿@using LMSfinal.Models.Utilities
+@model LMSfinal.Models.ViewModels.GradeInputViewModel
+@{
+    ViewData["Title"] = "Ghi Điểm Học Sinh";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Left Column: Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white border-0">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="fa-solid fa-pen-to-square me-2"></i>Ghi Điểm - @Model.StudentName
+                    </h4>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body p-4">
+                    <!-- Validation Summary -->
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" id="validationAlert"></div>
+
+                    <form asp-action="GradeInput" asp-route-classroomId="@Model.ClassroomId" method="post">
+                        <input type="hidden" asp-for="ClassroomId" />
+                        <input type="hidden" asp-for="StudentId" />
+                        <input type="hidden" asp-for="GradeId" />
+
+                        <!-- Student Info Section -->
+                        <div class="alert alert-info mb-4">
+                            <h6 class="fw-bold mb-2">
+                                <i class="fa-solid fa-circle-info me-2"></i>Thông Tin Học Sinh
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Tên:</small>
+                                    <strong>@Model.StudentName</strong>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Email:</small>
+                                    <strong>@Model.StudentEmail</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Classroom Info -->
+                        <div class="alert alert-secondary mb-4">
+                            <small class="text-muted d-block">Lớp Học:</small>
+                            <strong>@Model.ClassroomName</strong>
+                        </div>
+
+                        <!-- Score Inputs Section -->
+                        <div class="score-input-section mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fa-solid fa-chart-bar me-2"></i>Nhập Điểm
+                            </h5>
+
+                            <!-- Process Score -->
+                            <div class="mb-4">
+                                <label asp-for="ProcessScore" class="form-label fw-bold">
+                                    <i class="fa-solid fa-percent me-1"></i>@Html.DisplayNameFor(m => m.ProcessScore)
+                                    <small class="text-muted fw-normal">(Trọng số: 30%)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="ProcessScore" type="number" step="0.5" min="0" max="10"
+                                           class="form-control form-control-lg"
+                                           placeholder="Nhập điểm từ 0 đến 10" />
+                                    <span class="input-group-text">/10</span>
+                                </div>
+                                <span asp-validation-for="ProcessScore" class="text-danger small"></span>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fa-solid fa-lightbulb me-1"></i>Điểm dự kiến: Quá trình học, bài tập, thảo luận...
+                                </small>
+                            </div>
+
+                            <!-- Midterm Score -->
+                            <div class="mb-4">
+                                <label asp-for="MidtermScore" class="form-label fw-bold">
+                                    <i class="fa-solid fa-percent me-1"></i>@Html.DisplayNameFor(m => m.MidtermScore)
+                                    <small class="text-muted fw-normal">(Trọng số: 20%)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="MidtermScore" type="number" step="0.5" min="0" max="10"
+                                           class="form-control form-control-lg"
+                                           placeholder="Nhập điểm từ 0 đến 10" />
+                                    <span class="input-group-text">/10</span>
+                                </div>
+                                <span asp-validation-for="MidtermScore" class="text-danger small"></span>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fa-solid fa-lightbulb me-1"></i>Điểm kiểm tra giữa kỳ
+                                </small>
+                            </div>
+
+                            <!-- Final Exam Score -->
+                            <div class="mb-4">
+                                <label asp-for="FinalExamScore" class="form-label fw-bold">
+                                    <i class="fa-solid fa-percent me-1"></i>@Html.DisplayNameFor(m => m.FinalExamScore)
+                                    <small class="text-muted fw-normal">(Trọng số: 50%)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="FinalExamScore" type="number" step="0.5" min="0" max="10"
+                                           class="form-control form-control-lg"
+                                           placeholder="Nhập điểm từ 0 đến 10" />
+                                    <span class="input-group-text">/10</span>
+                                </div>
+                                <span asp-validation-for="FinalExamScore" class="text-danger small"></span>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fa-solid fa-lightbulb me-1"></i>Điểm thi cuối kỳ
+                                </small>
+                            </div>
+
+                            <!-- Comments -->
+                            <div class="mb-4">
+                                <label asp-for="Comments" class="form-label fw-bold">
+                                    <i class="fa-solid fa-note-sticky me-1"></i>@Html.DisplayNameFor(m => m.Comments)
+                                </label>
+                                <textarea asp-for="Comments" class="form-control" rows="3"
+                                          placeholder="Nhập ghi chú hoặc nhận xét về học sinh (không bắt buộc)"></textarea>
+                                <span asp-validation-for="Comments" class="text-danger small"></span>
+                                <small class="text-muted d-block mt-1">Tối đa 500 ký tự</small>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                            <a asp-action="GradeList" asp-route-classroomId="@Model.ClassroomId"
+                               class="btn btn-outline-secondary btn-lg">
+                                <i class="fa-solid fa-times me-1"></i>Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-save me-1"></i>Lưu Điểm
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Preview -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-success text-white border-0">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fa-solid fa-calculator me-2"></i>Xem Trước Kết Quả
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Score Preview -->
+                    <div class="score-preview mb-4">
+                        <h6 class="fw-bold text-muted mb-3">Điểm Thành Phần</h6>
+
+                        <div class="mb-2">
+                            <small class="d-block text-muted">Quá trình (30%)</small>
+                            <div class="score-item">
+                                <span id="previewProcessScore" class="score-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <small class="d-block text-muted">Giữa kỳ (20%)</small>
+                            <div class="score-item">
+                                <span id="previewMidtermScore" class="score-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <small class="d-block text-muted">Thi (50%)</small>
+                            <div class="score-item">
+                                <span id="previewFinalExamScore" class="score-value">-</span>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Final Calculation -->
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <small class="d-block text-muted mb-1">Điểm Tổng</small>
+                            <h3 class="mb-0 text-primary" id="previewFinalScore">0.00</h3>
+                        </div>
+
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <small class="d-block text-muted mb-1">GPA (0-4 scale)</small>
+                            <h3 class="mb-0 text-info" id="previewGPA">0.00</h3>
+                        </div>
+
+                        <!-- Grade Badge -->
+                        <div class="mb-3 p-3 bg-light rounded text-center">
+                            <small class="d-block text-muted mb-2">Hạng Điểm</small>
+                            <span id="previewGradeBadge" class="badge bg-secondary fs-5">F</span>
+                        </div>
+
+                        <small class="text-muted d-block">
+                            <i class="fa-solid fa-info-circle me-1"></i>
+                            Cập nhật tự động khi bạn nhập điểm
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .score-item {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 3px solid #0d6efd;
+    }
+
+    .score-value {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #0d6efd;
+    }
+
+    .sticky-top {
+        top: 20px;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+</style>
+
+<script>
+    // Real-time calculation preview
+    function updatePreview() {
+        const processScore = parseFloat(document.querySelector('[asp-for="ProcessScore"]').value) || 0;
+        const midtermScore = parseFloat(document.querySelector('[asp-for="MidtermScore"]').value) || 0;
+        const finalExamScore = parseFloat(document.querySelector('[asp-for="FinalExamScore"]').value) || 0;
+
+        // Update preview values
+        document.getElementById('previewProcessScore').textContent = processScore > 0 ? processScore.toFixed(1) : '-';
+        document.getElementById('previewMidtermScore').textContent = midtermScore > 0 ? midtermScore.toFixed(1) : '-';
+        document.getElementById('previewFinalExamScore').textContent = finalExamScore > 0 ? finalExamScore.toFixed(1) : '-';
+
+        // Calculate final score
+        if (processScore === 0 && midtermScore === 0 && finalExamScore === 0) {
+            document.getElementById('previewFinalScore').textContent = '0.00';
+            document.getElementById('previewGPA').textContent = '0.00';
+            document.getElementById('previewGradeBadge').textContent = 'F';
+            document.getElementById('previewGradeBadge').className = 'badge bg-secondary fs-5';
+            return;
+        }
+
+        const finalScore = (processScore * 0.3) + (midtermScore * 0.2) + (finalExamScore * 0.5);
+        const gpa = (finalScore / 10) * 4;
+
+        document.getElementById('previewFinalScore').textContent = finalScore.toFixed(2);
+        document.getElementById('previewGPA').textContent = gpa.toFixed(2);
+
+        // Determine grade
+        let grade = 'F';
+        let badgeClass = 'bg-danger';
+
+        if (finalScore >= 8.5) {
+            grade = 'A';
+            badgeClass = 'bg-success';
+        } else if (finalScore >= 7.0) {
+            grade = 'B';
+            badgeClass = 'bg-info';
+        } else if (finalScore >= 5.5) {
+            grade = 'C';
+            badgeClass = 'bg-warning';
+        } else if (finalScore >= 4.0) {
+            grade = 'D';
+            badgeClass = 'bg-danger';
+        }
+
+        document.getElementById('previewGradeBadge').textContent = grade;
+        document.getElementById('previewGradeBadge').className = `badge ${badgeClass} fs-5`;
+    }
+
+    // Attach event listeners
+    document.querySelector('[asp-for="ProcessScore"]').addEventListener('input', updatePreview);
+    document.querySelector('[asp-for="MidtermScore"]').addEventListener('input', updatePreview);
+    document.querySelector('[asp-for="FinalExamScore"]').addEventListener('input', updatePreview);
+
+    // Initial preview
+    updatePreview();
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

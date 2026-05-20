@@ -16,7 +16,7 @@ packages/
 # Upload files
 wwwroot/uploads/
 wwwroot/videos/
-
+Migrations
 # Database
 *.mdf
 *.ldf

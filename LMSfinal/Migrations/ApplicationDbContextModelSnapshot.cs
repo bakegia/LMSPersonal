@@ -318,6 +318,63 @@ namespace LMSfinal.Migrations
                     b.ToTable("Classrooms");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.ClassroomGrade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClassroomId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("FinalExamScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("FinalScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("GPA")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("GradeLetterClass")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GradedByInstructorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal?>("MidtermScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ProcessScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.HasIndex("GradedByInstructorId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("ClassroomGrades");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.ClassroomStudent", b =>
                 {
                     b.Property<int>("ClassroomId")
@@ -1068,6 +1125,31 @@ namespace LMSfinal.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("Instructor");
+                });
+
+            modelBuilder.Entity("LMSfinal.Models.EF.ClassroomGrade", b =>
+                {
+                    b.HasOne("LMSfinal.Models.EF.Classroom", "Classroom")
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LMSfinal.Models.ApplicationUser", "GradedByInstructor")
+                        .WithMany()
+                        .HasForeignKey("GradedByInstructorId");
+
+                    b.HasOne("LMSfinal.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
+
+                    b.Navigation("GradedByInstructor");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("LMSfinal.Models.EF.ClassroomStudent", b =>

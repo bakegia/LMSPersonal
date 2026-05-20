@@ -1,0 +1,276 @@
+﻿@using LMSfinal.Models.Utilities
+@using LMSfinal.Models.Enums
+@model LMSfinal.Models.ViewModels.GradeDetailViewModel
+@{
+    ViewData["Title"] = "Chi Tiết Điểm";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Student Info Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white border-0">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="fa-solid fa-user-graduate me-2"></i>@Model.StudentName
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block mb-1">Email</small>
+                            <strong class="d-block mb-3">@Model.StudentEmail</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block mb-1">Lớp Học</small>
+                            <strong class="d-block mb-3">@Model.ClassroomName</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block mb-1">Môn Học</small>
+                            <strong class="d-block mb-3">@Model.CourseName</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block mb-1">Cập Nhật Lần Cuối</small>
+                            <strong class="d-block mb-3">
+                                @{
+                                    var displayDate = Model.UpdatedDate?.ToString("dd/MM/yyyy HH:mm") ?? Model.CreatedDate.ToString("dd/MM/yyyy HH:mm");
+                                }
+                                @displayDate
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scores Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-success text-white border-0">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fa-solid fa-chart-bar me-2"></i>Điểm Chi Tiết
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Process Score -->
+                        <div class="col-md-6">
+                            <div class="score-card p-3 border-left-primary">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fa-solid fa-percent me-1"></i>Điểm Quá Trình
+                                </small>
+                                <h3 class="mb-1">
+                                    @if (Model.ProcessScore.HasValue)
+                                    {
+                                        <span class="text-primary">@Model.ProcessScore.Value.ToString("F1")</span>
+                                        <small class="text-muted">/10</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </h3>
+                                <small class="text-muted">Trọng số: 30%</small>
+                            </div>
+                        </div>
+
+                        <!-- Midterm Score -->
+                        <div class="col-md-6">
+                            <div class="score-card p-3 border-left-info">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fa-solid fa-percent me-1"></i>Điểm Giữa Kỳ
+                                </small>
+                                <h3 class="mb-1">
+                                    @if (Model.MidtermScore.HasValue)
+                                    {
+                                        <span class="text-info">@Model.MidtermScore.Value.ToString("F1")</span>
+                                        <small class="text-muted">/10</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </h3>
+                                <small class="text-muted">Trọng số: 20%</small>
+                            </div>
+                        </div>
+
+                        <!-- Final Exam Score -->
+                        <div class="col-md-6">
+                            <div class="score-card p-3 border-left-warning">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fa-solid fa-percent me-1"></i>Điểm Thi
+                                </small>
+                                <h3 class="mb-1">
+                                    @if (Model.FinalExamScore.HasValue)
+                                    {
+                                        <span class="text-warning">@Model.FinalExamScore.Value.ToString("F1")</span>
+                                        <small class="text-muted">/10</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </h3>
+                                <small class="text-muted">Trọng số: 50%</small>
+                            </div>
+                        </div>
+
+                        <!-- Final Score -->
+                        <div class="col-md-6">
+                            <div class="score-card p-3 border-left-success">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="fa-solid fa-star me-1"></i>Điểm Tổng
+                                </small>
+                                <h3 class="mb-1">
+                                    <span class="text-success">@Model.FinalScore.ToString("F2")</span>
+                                    <small class="text-muted">/10</small>
+                                </h3>
+                                <small class="text-muted">Công thức: (QT×30% + GK×20% + Thi×50%)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Card -->
+            @if (!string.IsNullOrEmpty(Model.Comments))
+            {
+                <div class="card border-0 shadow-sm mb-4 border-left-info">
+                    <div class="card-header bg-info bg-opacity-10 border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-note-sticky me-2"></i>Ghi Chú
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">@Model.Comments</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Summary Card -->
+            <div class="card border-0 shadow-sm sticky-top mb-4" style="top: 20px;">
+                <div class="card-header bg-dark text-white border-0">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fa-solid fa-summary me-2"></i>Tóm Tắt Điểm
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Grade Badge -->
+                    <div class="text-center mb-4 p-3 bg-light rounded">
+                        <small class="text-muted d-block mb-2">Hạng Điểm</small>
+                        @{
+                            var gradeColor = Model.GradeLetterClass switch
+                            {
+                                GradeLetterEnum.A => "success",
+                                GradeLetterEnum.B => "info",
+                                GradeLetterEnum.C => "warning",
+                                GradeLetterEnum.D => "danger",
+                                _ => "secondary"
+                            };
+                        }
+                        <h2 class="mb-0">
+                            <span class="badge bg-@gradeColor" style="font-size: 1.5rem;">@Model.GradeLetterClass</span>
+                        </h2>
+                        <p class="mb-0 mt-2">
+                            <strong>@Model.GradeDescription</strong>
+                        </p>
+                        <small class="text-muted d-block mt-1">
+                            Khoảng: @GradeCalculator.GetGradeRange(Model.GradeLetterClass)
+                        </small>
+                    </div>
+
+                    <!-- GPA -->
+                    <div class="text-center mb-3 p-3 bg-light rounded">
+                        <small class="text-muted d-block mb-1">GPA</small>
+                        <h3 class="mb-0 text-primary">
+                            @Model.GPA.ToString("F2") <small class="text-muted">/4</small>
+                        </h3>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <small class="text-muted d-block mb-1">Trạng Thái</small>
+                        @if (Model.FinalScore >= 4.0m)
+                        {
+                            <span class="badge bg-success">
+                                <i class="fa-solid fa-check-circle me-1"></i>Đạt
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">
+                                <i class="fa-solid fa-times-circle me-1"></i>Không Đạt
+                            </span>
+                        }
+                    </div>
+
+                    <hr>
+
+                    <!-- Info -->
+                    <div class="small text-muted">
+                        <p class="mb-2">
+                            <i class="fa-solid fa-info-circle me-1"></i>
+                            <strong>Ghi chú:</strong> Tài liệu này được tạo ngày @Model.CreatedDate.ToString("dd/MM/yyyy")
+                        </p>
+                        @if (Model.GradedByInstructorName != null)
+                        {
+                            <p class="mb-0">
+                                <i class="fa-solid fa-user-tie me-1"></i>
+                                <strong>Giáo viên:</strong> @Model.GradedByInstructorName
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-grid gap-2">
+                    <a asp-action="GradeInput" 
+                       asp-route-classroomId="@Model.ClassroomId" 
+                       asp-route-studentId="@Model.StudentId"
+                       class="btn btn-primary">
+                        <i class="fa-solid fa-pen me-1"></i>Sửa Điểm
+                    </a>
+                    <a asp-action="GradeList" 
+                       asp-route-classroomId="@Model.ClassroomId"
+                       class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i>Quay Lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .score-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #0d6efd;
+    }
+
+    .border-left-primary {
+        border-left-color: #0d6efd !important;
+    }
+
+    .border-left-info {
+        border-left-color: #0dcaf0 !important;
+    }
+
+    .border-left-warning {
+        border-left-color: #ffc107 !important;
+    }
+
+    .border-left-success {
+        border-left-color: #198754 !important;
+    }
+
+    .sticky-top {
+        top: 20px;
+    }
+</style>

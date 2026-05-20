@@ -1,0 +1,231 @@
+﻿@using LMSfinal.Models.Enums
+@using LMSfinal.Models.Utilities
+@model LMSfinal.Models.ViewModels.ClassroomGradeListViewModel
+@{
+    ViewData["Title"] = "Danh Sách Ghi Điểm";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="fw-bold">
+                        <i class="fa-solid fa-list text-primary me-2"></i>Ghi Điểm - @Model.ClassroomName
+                    </h2>
+                    <div class="breadcrumb-custom mt-2">
+                        <small class="text-muted">
+                            <i class="fa-solid fa-book me-1"></i>@Model.CourseName |
+                            <i class="fa-solid fa-hashtag me-1"></i>@Model.ClassroomCode |
+                            <i class="fa-solid fa-users me-1"></i>@Model.StudentGrades.Count học sinh
+                        </small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i>Quay Lại
+                    </a>
+                    <a asp-action="ExportToExcel" asp-route-classroomId="@Model.ClassroomId" class="btn btn-outline-success">
+                        <i class="fa-solid fa-download me-1"></i>Xuất Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check-circle me-2"></i>@TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Tổng Học Sinh</h6>
+                    <h3 class="fw-bold text-primary">@Model.StudentGrades.Count</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Đã Ghi Điểm</h6>
+                    <h3 class="fw-bold text-success">@Model.StudentGrades.Count(s => s.GradeId > 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Chưa Ghi Điểm</h6>
+                    <h3 class="fw-bold text-danger">@Model.StudentGrades.Count(s => s.GradeId == 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-1">Điểm Trung Bình</h6>
+                    <h3 class="fw-bold text-info">
+                        @{
+                            var avgScore = Model.StudentGrades.Where(s => s.GradeId > 0).Any()
+                            ? Model.StudentGrades.Where(s => s.GradeId > 0).Average(s => s.FinalScore).ToString("F2")
+                            : "N/A";
+                        }
+                        @avgScore
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grades Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-bottom">
+            <h5 class="mb-0 fw-bold">
+                <i class="fa-solid fa-table me-2"></i>Danh Sách Học Sinh
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 5%">STT</th>
+                        <th style="width: 20%">Tên Học Sinh</th>
+                        <th style="width: 15%">Email</th>
+                        <th style="width: 10%">Quá Trình</th>
+                        <th style="width: 10%">Giữa Kỳ</th>
+                        <th style="width: 10%">Thi</th>
+                        <th style="width: 10%">Điểm Tổng</th>
+                        <th style="width: 8%">Hạng</th>
+                        <th style="width: 8%">GPA</th>
+                        <th style="width: 15%">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.StudentGrades.Any())
+                    {
+                        int index = 1;
+                        @foreach (var student in Model.StudentGrades)
+                        {
+                            var gradeColor = student.GradeLetterClass switch
+                            {
+                                GradeLetterEnum.A => "success",
+                                GradeLetterEnum.B => "info",
+                                GradeLetterEnum.C => "warning",
+                                GradeLetterEnum.D => "danger",
+                                _ => "secondary"
+                            };
+                            <tr>
+                                <td class="fw-bold">@index</td>
+                                <td>
+                                    <strong>@student.StudentName</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@student.StudentEmail</small>
+                                </td>
+                                <td>
+                                    @if (student.ProcessScore.HasValue)
+                                    {
+                                        <span class="badge bg-info">@student.ProcessScore.Value.ToString("F1")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Chưa</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (student.MidtermScore.HasValue)
+                                    {
+                                        <span class="badge bg-info">@student.MidtermScore.Value.ToString("F1")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Chưa</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (student.FinalExamScore.HasValue)
+                                    {
+                                        <span class="badge bg-info">@student.FinalExamScore.Value.ToString("F1")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Chưa</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (student.GradeId > 0 && student.FinalScore > 0)
+                                    {
+                                        <strong class="text-primary">@student.FinalScore.ToString("F2")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (student.GradeId > 0)
+                                    {
+                                        <span class="badge bg-@gradeColor fw-bold">@student.GradeLetterClass</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (student.GradeId > 0 && student.GPA > 0)
+                                    {
+                                        <span class="badge bg-primary">@student.GPA.ToString("F2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-action="GradeInput"
+                                           asp-route-classroomId="@Model.ClassroomId"
+                                           asp-route-studentId="@student.StudentId"
+                                           class="btn btn-primary" title="Ghi Điểm">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        @if (student.GradeId > 0)
+                                        {
+                                            <a asp-action="GradeDetail"
+                                               asp-route-classroomId="@Model.ClassroomId"
+                                               asp-route-studentId="@student.StudentId"
+                                               class="btn btn-info" title="Xem Chi Tiết">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="fa-solid fa-inbox fa-2x text-muted mb-2 d-block"></i>
+                                <p class="text-muted mb-0">Không có học sinh trong lớp</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
