@@ -1,0 +1,113 @@
+﻿@model LMSfinal.Models.EF.Classroom
+@{
+    ViewData["Title"] = "Nội dung khóa học";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    // Lấy danh sách ID đã hoàn thành từ ViewBag
+    var completedIds = ViewBag.CompletedLessonIds as List<int> ?? new List<int>();
+}
+
+<div class="container py-4">
+    <div class="row">
+        @* Cột trái: Thông tin tổng quan khóa học *@
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <img src="@(Model.Course != null && !string.IsNullOrEmpty(Model.Course.ImageUrl) ? Model.Course.ImageUrl : "/images/courses/default-course.png")"
+                     class="card-img-top" alt="@Model.Course?.Title" style="height: 220px; object-fit: cover;">
+
+                <div class="card-body">
+                    <h4 class="fw-bold">@Model.NameClass</h4>
+                    
+                    @* --- PHẦN TIẾN ĐỘ HỌC TẬP MỚI --- *@
+                    <div class="mb-3 mt-3">
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="text-muted">Tiến độ của bạn</span>
+                            <span class="fw-bold text-primary">@ViewBag.ProgressPercent%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: @ViewBag.ProgressPercent%"></div>
+                        </div>
+                    </div>
+                    @* ------------------------------- *@
+
+                    <p class="text-muted small">@Model.Course?.Description</p>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">Số Buổi Học:</span>
+                        <span class="fw-bold">@Model.Sections?.Count()</span>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-arrow-left me-2"></i>Quay lại danh sách
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Cột phải: Danh sách Chương & Bài học *@
+        <div class="col-lg-8">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-layer-group text-primary me-2"></i>Các chương học</h5>
+
+            <div class="list-group shadow-sm">
+                @if (Model.Sections != null && Model.Sections.Any())
+                {
+                    @foreach (var s in Model.Sections.OrderBy(x => x.Order))
+                    {
+                        <div class="list-group-item bg-light py-2 px-4 border-start border-4 border-primary mb-1">
+                            <span class="badge bg-primary-subtle text-primary me-2">Chương @s.Order</span>
+                            <span class="fw-bold text-dark">@s.Title</span>
+                        </div>
+
+                        @if (s.Lessons != null && s.Lessons.Any())
+                        {
+                            @foreach (var lesson in s.Lessons.OrderBy(x => x.Order))
+                            {
+                                @* Kiểm tra bài học đã hoàn thành chưa *@
+                                bool isDone = completedIds.Contains(lesson.Id);
+
+                                <div class="list-group-item list-group-item-action py-2 px-5 d-flex align-items-center justify-content-between border-0 border-bottom">
+                                    <div class="@(isDone ? "text-success fw-medium" : "text-secondary")">
+                                        @if (isDone)
+                                        {
+                                            <i class="fa-solid fa-circle-check me-2 text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fa-solid fa-circle-play me-2 small"></i>
+                                        }
+                                        @lesson.Title
+                                    </div>
+
+                                    <a asp-area="Student" asp-controller="CourseStudent" asp-action="ViewLesson" asp-route-id="@lesson.Id"
+                                       class="btn btn-sm @(isDone ? "btn-success" : "btn-outline-primary") px-3 rounded-pill">
+                                        @if (isDone)
+                                        {
+                                            <span>Xem lại</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Học ngay</span> <i class="fa-solid fa-play ms-1"></i>
+                                        }
+                                    </a>
+                                </div>
+                            }
+                        }
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .list-group-item-action:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+        transition: all 0.2s ease;
+    }
+    /* Làm mờ các bài học đã xong một chút để nổi bật bài chưa học */
+    .text-success.fw-medium {
+        opacity: 0.9;
+    }
+</style>

@@ -1,0 +1,202 @@
+﻿@using LMSfinal.Models.EF
+@model IEnumerable<Section>
+@{
+    ViewData["Title"] = "Quản lý nội dung lớp học";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    // Lấy ClassroomId từ ViewBag do Controller truyền sang
+    int classroomId = ViewBag.ClassroomId ?? 0;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-area="Admin" asp-controller="Classroom" asp-action="Index">Lớp học</a></li>
+                    <li class="breadcrumb-item active">Nội dung chi tiết</li>
+                </ol>
+            </nav>
+            <h4><i class="fa-solid fa-layer-group text-primary me-2"></i>Nội dung khóa học</h4>
+        </div>
+
+        @* Nút mở Modal *@
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addSectionModal">
+            <i class="fa-solid fa-plus me-1"></i> Thêm chương mới
+        </button>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="accordion" id="accordionSections">
+            @foreach (var s in Model)
+            {
+                <div class="accordion-item mb-3 shadow-sm border">
+                    <h2 class="accordion-header" id="heading-@s.Id">
+                        <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@s.Id">
+                            <span class="text-primary me-2">Chương @s.Order:</span> @s.Title
+                        </button>
+                    </h2>
+                    <div id="collapse-@s.Id" class="accordion-collapse collapse" data-bs-parent="#accordionSections">
+                        <div class="accordion-body bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                <h6 class="mb-0 text-secondary"><i class="fa-solid fa-list-ul me-2"></i>Danh sách bài học</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-success me-2" onclick="openAddLessonModal(@s.Id)">
+                                        <i class="fa-solid fa-plus"></i> Thêm bài học
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning me-2"
+                                            onclick="openEditSectionModal(@s.Id, '@s.Title', @s.Order)">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <form asp-area="Instructor" asp-controller="Section" asp-action="Delete"
+                                          asp-route-id="@s.Id" method="post" style="display:inline;"
+                                          onsubmit="return confirm('Xóa chương này sẽ xóa tất cả bài học bên trong. Bạn chắc chứ?')">
+
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="list-group">
+                                @if (s.Lessons != null && s.Lessons.Any())
+                                {
+                                    @foreach (var lesson in s.Lessons.OrderBy(l => l.Order))
+                                    {
+                                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 mb-2 rounded shadow-sm">
+                                            <div>
+                                                <i class="fa-solid fa-play-circle text-primary me-2"></i>
+                                                @lesson.Title
+                                                @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                                                {
+                                                    <span class="badge bg-info ms-2"><i class="fa-solid fa-video me-1"></i>Video</span>
+                                                }
+                                            </div>
+                                            <div class="btn-group shadow-sm">
+                                                @* 1. Nút Xem chi tiết *@
+                                                <a asp-area="Instructor" asp-controller="Lesson" asp-action="Details" asp-route-id="@lesson.Id"
+                                                   class="btn btn-sm btn-light text-info" title="Xem chi tiết bài học">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </a>
+
+                                                @* 2. Nút Chỉnh sửa *@
+                                                <a asp-area="Instructor" asp-controller="Lesson" asp-action="Edit" asp-route-id="@lesson.Id"
+                                                   class="btn btn-sm btn-light text-primary" title="Chỉnh sửa bài học">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
+
+                                                @* 3. Nút Xóa (Dùng Form để an toàn dữ liệu và tự reload trang) *@
+                                                <form asp-area="Instructor" asp-controller="Lesson" asp-action="Delete" asp-route-id="@lesson.Id"
+                                                      method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài học này?')" style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-light text-danger" title="Xóa bài học"
+                                                            style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="text-center py-3 text-muted">
+                                        <small><i class="fa-solid fa-info-circle me-1"></i>Chưa có bài học nào trong chương này.</small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 border rounded bg-white shadow-sm">
+            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="80" class="mb-3 opacity-50">
+            <p class="text-muted">Lớp học này chưa có chương nào. Hãy nhấn "Thêm chương mới" để bắt đầu.</p>
+        </div>
+    }
+</div>
+@* MODAL SỬA CHƯƠNG *@
+<div class="modal fade" id="editSectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-area="Instructor" asp-controller="Section" asp-action="Edit" method="post">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Chỉnh sửa chương</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editSectionId" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu đề chương</label>
+                        <input name="title" id="editSectionTitle" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Thứ tự hiển thị</label>
+                        <input type="number" name="order" id="editSectionOrder" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning">Cập nhật</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* MODAL THÊM CHƯƠNG *@
+<div class="modal fade" id="addSectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        @* Quan trọng: Form gửi đến Action Create *@
+        <form asp-area="Instructor" asp-controller="Section" asp-action="Create" method="post">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Thêm chương mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @* Ràng buộc ID của lớp *@
+                    <input type="hidden" name="ClassroomId" value="@classroomId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu đề chương</label>
+                        <input name="Title" class="form-control" placeholder="Ví dụ: Giới thiệu tổng quan" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Thứ tự hiển thị</label>
+                        <input type="number" name="Order" class="form-control" value="@(Model.Count() + 1)" />
+                        <div class="form-text">Thứ tự xuất hiện trong danh sách.</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu chương</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAddLessonModal(sectionId) {
+            // Chuyển sang trang tạo bài học và truyền sectionId qua query string
+            window.location.href = `@Url.Action("Create", "Lesson", new { area = "Instructor" })?sectionId=${sectionId}`;
+        }
+                function openEditSectionModal(id, title, order) {
+            // Điền dữ liệu vào các ô input trong Modal
+            document.getElementById('editSectionId').value = id;
+            document.getElementById('editSectionTitle').value = title;
+            document.getElementById('editSectionOrder').value = order;
+
+            // Hiển thị modal
+            var editModal = new bootstrap.Modal(document.getElementById('editSectionModal'));
+            editModal.show();
+        }
+    </script>
+}

@@ -1,0 +1,242 @@
+﻿@using LMSfinal.Models.EF
+@model List<Course>
+@{
+    ViewData["Title"] = "Tất cả khóa học - LMS Academy";
+    ViewData["MetaDescription"] = "Khám phá danh sách đầy đủ các khóa học có sẵn trên nền tảng LMS Academy. Lập trình, thiết kế, kinh doanh và nhiều lĩnh vực khác.";
+    ViewData["MetaKeywords"] = "khóa học, lập trình, thiết kế, kinh doanh, kỹ năng";
+    ViewData["MetaImage"] = "/images/og-courses.jpg";
+
+    var currentPage = (int?)ViewData["CurrentPage"] ?? 1;
+    var totalPages = (int?)ViewData["TotalPages"] ?? 1;
+    var currentCategory = ViewData["CurrentCategory"] as Category;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="bg-light py-3 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active">Khóa học</li>
+            @if (currentCategory != null)
+            {
+                <li class="breadcrumb-item active">@currentCategory.Name</li>
+            }
+        </ol>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<section class="page-header py-5" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: white;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="bi bi-book-fill me-2"></i>
+                    @(currentCategory != null ? currentCategory.Name : "Tất cả khóa học")
+                </h1>
+                <p class="lead mb-0">
+                    @(currentCategory != null ? 
+                        $"Khám phá các khóa học trong lĩnh vực {currentCategory.Name}" : 
+                        "Khám phá hàng trăm khóa học chất lượng cao từ các chuyên gia")
+                </p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <i class="bi bi-book-half" style="font-size: 4rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters & Search -->
+<section class="filters-section py-4 bg-light border-bottom">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="search-bar">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm khóa học...">
+                </div>
+            </div>
+            <div class="col-lg-6 text-end mt-3 mt-lg-0">
+                <a href="/courses" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
+                </a>
+                <a href="/categories" class="btn btn-sm btn-primary">
+                    <i class="bi bi-collection me-1"></i>Xem danh mục
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Courses Grid -->
+<section class="courses-section py-5">
+    <div class="container">
+        @if (Model != null && Model.Any())
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <p class="text-muted">
+                        Hiển thị <strong>@Model.Count</strong> khóa học
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                @foreach (var course in Model)
+                {
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <a href="/courses/@course.Slug" class="text-decoration-none">
+                            <div class="course-item card h-100 border-0 shadow-sm">
+                                <!-- Course Image -->
+                                <div class="position-relative overflow-hidden course-image-wrapper" style="height: 220px;">
+                                    <img src="@(course.ImageUrl ?? "/images/course-placeholder.jpg")" 
+                                         alt="@course.Title" 
+                                         class="card-img-top course-image"
+                                         style="height: 100%; object-fit: cover;" />
+                                    
+                                    <!-- Category Badge -->
+                                    <div class="position-absolute top-0 start-0 m-3">
+                                        <span class="badge bg-primary">
+                                            @(course.Category?.Name ?? "Khác")
+                                        </span>
+                                    </div>
+
+                                    <!-- Rating Badge -->
+                                    <div class="position-absolute top-0 end-0 m-3">
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-star-fill me-1"></i>4.8
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Course Body -->
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold text-accent mb-2">@course.Title</h5>
+                                    <p class="card-text text-muted small mb-3">
+                                        @(string.IsNullOrWhiteSpace(course.Description) ? 
+                                            "Khóa học chất lượng cao" : 
+                                            course.Description.Length > 80 ? 
+                                            course.Description.Substring(0, 80) + "..." : 
+                                            course.Description)
+                                    </p>
+
+                                    <!-- Course Stats -->
+                                    <div class="course-stats">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="badge bg-light text-primary">
+                                                <i class="bi bi-file-earmark-text me-1"></i>
+                                                @(course.Sections?.Count ?? 0) chương
+                                            </span>
+                                            <span class="badge bg-light text-secondary">
+                                                <i class="bi bi-people me-1"></i>
+                                                @(course.Quantity ?? 0)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Course Footer -->
+                                <div class="card-footer bg-light border-top">
+                                    <span class="text-primary fw-bold d-flex align-items-center justify-content-center">
+                                        Xem chi tiết <i class="bi bi-arrow-right ms-2"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Page navigation" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        @if (currentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="/courses?page=@(currentPage - 1)@(currentCategory != null ? $"&categorySlug={currentCategory.Slug}" : "")">
+                                    <i class="bi bi-chevron-left me-1"></i>Trước
+                                </a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            if (i == currentPage)
+                            {
+                                <li class="page-item active">
+                                    <span class="page-link">@i</span>
+                                </li>
+                            }
+                            else if ((i >= currentPage - 2 && i <= currentPage + 2) || i == 1 || i == totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="/courses?page=@i@(currentCategory != null ? $"&categorySlug={currentCategory.Slug}" : "")">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+                            else if (i == currentPage - 3 || i == currentPage + 3)
+                            {
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            }
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="/courses?page=@(currentPage + 1)@(currentCategory != null ? $"&categorySlug={currentCategory.Slug}" : "")">
+                                    Sau<i class="bi bi-chevron-right ms-1"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="empty-state text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: var(--color-gray-300);"></i>
+                </div>
+                <h3 class="fw-bold text-primary mb-2">Chưa có khóa học nào</h3>
+                <p class="text-muted mb-4">Danh mục này hiện chưa có khóa học. Chúng tôi sẽ cập nhật sớm!</p>
+                <a href="/categories" class="btn btn-primary">
+                    <i class="bi bi-collection me-2"></i>Quay lại danh mục
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- CTA Section -->
+@await Html.PartialAsync("_CtaSection")
+
+
+
+@section Scripts {
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const courseItems = document.querySelectorAll('.course-item');
+            
+            courseItems.forEach(item => {
+                const courseTitle = item.querySelector('.card-title').textContent.toLowerCase();
+                const courseDesc = item.querySelector('.card-text').textContent.toLowerCase();
+                
+                if (courseTitle.includes(searchTerm) || courseDesc.includes(searchTerm)) {
+                    item.closest('.col-lg-4').style.display = '';
+                } else {
+                    item.closest('.col-lg-4').style.display = 'none';
+                }
+            });
+        });
+    </script>
+}

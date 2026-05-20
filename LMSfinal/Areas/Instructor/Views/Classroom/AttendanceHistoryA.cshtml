@@ -1,0 +1,110 @@
+﻿
+@using LMSfinal.Models.EF
+@using LMSfinal.Models.ViewModels
+
+@model IEnumerable<AttendanceHistoryViewModel>
+@{
+    var classroom = ViewBag.Classroom as Classroom;
+    ViewData["Title"] = "Lịch sử điểm danh - " + classroom.NameClass;
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Danh sách lớp</a></li>
+            <li class="breadcrumb-item active">Lịch sử điểm danh</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2"></i> Lịch sử điểm danh: @classroom.NameClass</h5>
+            <a asp-action="Attendance" asp-route-id="@classroom.Id" class="btn btn-sm btn-success">
+                <i class="fa-solid fa-plus"></i> Điểm danh mới
+            </a>
+        </div>
+
+        <div class="card-body bg-light border-bottom">
+            <form method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="id" value="@classroom.Id" />
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Từ ngày</label>
+                    <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Đến ngày</label>
+                    <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate" />
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fa-solid fa-filter"></i> Lọc
+                    </button>
+                    <a asp-action="AttendanceHistory" asp-route-id="@classroom.Id" class="btn btn-outline-secondary px-3">
+                        Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Ngày điểm danh</th>
+                        <th class="text-center">Sỉ số đi học</th>
+                        <th style="width: 35%;">Tỉ lệ chuyên cần</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            var percent = item.TotalCount > 0 ? (item.PresentCount * 100) / item.TotalCount : 0;
+                            string progressColor = percent >= 80 ? "bg-success" : (percent >= 50 ? "bg-warning" : "bg-danger");
+
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">@item.Date.ToString("dd/MM/yyyy")</div>
+                                    <small class="text-muted">@item.Date.DayOfWeek.ToString()</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge rounded-pill bg-info text-dark px-3">
+                                        @item.PresentCount / @item.TotalCount
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar @progressColor" role="progressbar" style="width: @percent%"></div>
+                                        </div>
+                                        <span class="ms-3 small fw-bold">@percent%</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="Attendance"
+                                       asp-route-id="@classroom.Id"
+                                       asp-route-date="@item.Date.ToString("yyyy-MM-dd")"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fa-solid fa-eye"></i> Chi tiết / Sửa
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-inbox fa-3x mb-3"></i>
+                                <p>Không có dữ liệu điểm danh nào trong khoảng thời gian này.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

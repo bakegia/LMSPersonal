@@ -1,0 +1,481 @@
+﻿/* ============================================
+   LANDING PAGES - SHARED STYLES
+   Sử dụng CSS Custom Properties từ color-scheme.css
+   ============================================ */
+
+/* ============================================
+   1. HERO BANNER STYLES
+   ============================================ */
+.hero-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 3rem;
+    min-height: 550px;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+.animate-fade-in {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.animate-fade-in-delay {
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.btn-lg {
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary.btn-lg:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(122, 31, 43, 0.3);
+}
+
+.btn-outline-light.btn-lg:hover {
+    background-color: rgba(248, 244, 241, 0.15);
+    border-color: white;
+    transform: translateY(-3px);
+}
+
+/* ============================================
+   2. STATS CARD STYLES
+   ============================================ */
+.stat-card {
+    padding: 2rem;
+    background: var(--color-white);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(122, 31, 43, 0.08);
+    transition: all 0.3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(122, 31, 43, 0.15);
+    }
+
+    .stat-card .text-primary {
+        color: var(--color-primary) !important;
+    }
+
+    .stat-card .text-success {
+        color: var(--color-success) !important;
+    }
+
+    .stat-card .text-warning {
+        color: var(--color-warning) !important;
+    }
+
+    .stat-card .text-danger {
+        color: var(--color-danger) !important;
+    }
+
+/* ============================================
+   3. FEATURED COURSES STYLES
+   ============================================ */
+.featured-course-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--color-white);
+}
+
+    .featured-course-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(122, 31, 43, 0.15) !important;
+    }
+
+.featured-course-image {
+    transition: transform 0.3s ease;
+}
+
+.featured-course-card:hover .featured-course-image {
+    transform: scale(1.05);
+}
+
+.featured-course-card:hover .featured-course-overlay {
+    display: flex !important;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.featured-course-overlay {
+    display: none;
+    background: rgba(122, 31, 43, 0.85) !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.card-title {
+    font-size: 1.1rem;
+    line-height: 1.4;
+    min-height: 2.8em;
+    color: var(--color-accent);
+}
+
+/* ============================================
+   4. CATEGORIES GRID STYLES
+   ============================================ */
+.category-card {
+    background: linear-gradient(135deg, var(--color-light) 0%, var(--color-gray-200) 100%);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(122, 31, 43, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(248, 244, 241, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .category-card:hover::before {
+        left: 100%;
+    }
+
+    .category-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(122, 31, 43, 0.15);
+    }
+
+        .category-card:hover .category-icon i {
+            color: var(--color-primary-dark);
+            transform: scale(1.1) rotate(5deg);
+        }
+
+    .category-card .category-icon i {
+        transition: all 0.3s ease;
+        display: inline-block;
+        color: var(--color-primary);
+    }
+
+    .category-card:hover .card-title {
+        color: var(--color-primary);
+    }
+
+    .category-card .card-title {
+        transition: color 0.3s ease;
+        color: var(--color-accent);
+    }
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+/* ============================================
+   5. BENEFIT CARD STYLES
+   ============================================ */
+.benefit-card {
+    border: none;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--color-primary);
+    background-color: var(--color-light) !important;
+}
+
+    .benefit-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(122, 31, 43, 0.1) !important;
+        border-left-color: var(--color-secondary);
+    }
+
+.benefit-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .benefit-icon i {
+        transition: all 0.3s ease;
+    }
+
+.benefit-card:hover .benefit-icon i {
+    color: var(--color-primary-dark);
+}
+
+/* ============================================
+   6. TESTIMONIAL CARD STYLES
+   ============================================ */
+.testimonial-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    background: var(--color-white);
+}
+
+    .testimonial-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(122, 31, 43, 0.12) !important;
+    }
+
+    .testimonial-card .text-warning {
+        color: var(--color-warning) !important;
+    }
+
+/* ============================================
+   7. COURSE CARD STYLES
+   ============================================ */
+.course-card {
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--color-white);
+}
+
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .hover-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(122, 31, 43, 0.15) !important;
+    }
+
+/* ============================================
+   8. CTA SECTION STYLES
+   ============================================ */
+.cta-section {
+    padding: 5rem 0;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+}
+
+.btn-light {
+    background-color: var(--color-white);
+    color: var(--color-primary);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+    .btn-light:hover {
+        background-color: var(--color-light);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        color: var(--color-primary-dark);
+    }
+
+.btn-outline-light {
+    border: 2px solid white;
+    transition: all 0.3s ease;
+}
+
+    .btn-outline-light:hover {
+        background-color: var(--color-secondary);
+        border-color: var(--color-secondary);
+        transform: translateY(-3px);
+    }
+
+.py-6 {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
+
+/* ============================================
+   9. UTILITY CLASSES
+   ============================================ */
+.rounded-3 {
+    border-radius: 12px;
+}
+
+.shadow-sm {
+    box-shadow: 0 4px 12px rgba(122, 31, 43, 0.08);
+}
+
+.shadow-md {
+    box-shadow: 0 10px 25px rgba(122, 31, 43, 0.12);
+}
+
+.shadow-lg {
+    box-shadow: 0 15px 40px rgba(122, 31, 43, 0.15);
+}
+
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .display-6 {
+        font-size: 2rem;
+    }
+
+    .display-5 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .display-6 {
+        font-size: 1.8rem;
+    }
+
+    .display-5 {
+        font-size: 1.5rem;
+    }
+
+    .display-4 {
+        font-size: 1.3rem;
+    }
+
+    .display-3 {
+        font-size: 1.1rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+        .stat-card h3 {
+            font-size: 1.8rem !important;
+        }
+
+    .benefit-card {
+        padding: 1.5rem !important;
+        margin-bottom: 1rem;
+    }
+
+    .category-card {
+        padding: 2rem 1rem !important;
+    }
+
+    .category-icon i {
+        font-size: 2rem !important;
+    }
+
+    .featured-course-card {
+        margin-bottom: 1rem;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .hero-banner {
+        min-height: 400px;
+        padding-top: 60px;
+    }
+
+        .hero-banner .display-3 {
+            font-size: 2rem;
+        }
+
+        .hero-banner .lead {
+            font-size: 1rem;
+        }
+
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+
+    .btn-lg {
+        width: 100%;
+    }
+
+    .cta-section {
+        padding: 3rem 0;
+    }
+
+        .cta-section .display-5 {
+            font-size: 1.8rem;
+        }
+}
+
+@media (max-width: 576px) {
+    .display-6 {
+        font-size: 1.5rem;
+    }
+
+    .display-5 {
+        font-size: 1.3rem;
+    }
+
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .col-lg-4,
+    .col-md-6,
+    .col-md-4 {
+        margin-bottom: 1rem;
+    }
+
+    .btn-lg {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+        .stat-card h3 {
+            font-size: 1.5rem !important;
+        }
+
+    .benefit-card {
+        padding: 1rem !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .benefit-icon i {
+        font-size: 2rem !important;
+    }
+
+    .testimonial-card .card-body {
+        padding: 1rem;
+    }
+
+    .hero-banner {
+        min-height: 300px;
+        padding-top: 40px;
+    }
+
+    .py-5 {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .py-6 {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .g-4 {
+        --bs-gutter-x: 1rem !important;
+        --bs-gutter-y: 1rem !important;
+    }
+}

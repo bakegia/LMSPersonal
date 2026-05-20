@@ -1,0 +1,114 @@
+﻿@using LMSfinal.Models.EF
+@model IEnumerable<ClassSchedule>
+@{
+    ViewData["Title"] = "Danh sách thời khóa biểu";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fa-solid fa-calendar-list"></i> Lịch dạy của giảng viên</h2>
+        <a asp-area="Instructor" asp-controller="ScheduleTeach" asp-action="weeklygrid" class="btn btn-primary">
+            <i class="fa-solid fa-chalkboard-user"></i> Xem dạng lưới (Grid)
+        </a>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Lọc theo lớp học</label>
+                    <select name="classroomId" class="form-select">
+                        <option value="">-- Tất cả các lớp --</option>
+                        @foreach (var c in ViewBag.Classrooms)
+                        {
+                            <option value="@c.Id">@c.NameClass (@c.ClassCode)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Lọc theo thứ</label>
+                    <select name="dayOfWeek" class="form-select">
+                        <option value="">-- Tất cả các ngày --</option>
+                        <option value="Monday">Thứ Hai</option>
+                        <option value="Tuesday">Thứ Ba</option>
+                        <option value="Wednesday">Thứ Tư</option>
+                        <option value="Thursday">Thứ Năm</option>
+                        <option value="Friday">Thứ Sáu</option>
+                        <option value="Saturday">Thứ Bảy</option>
+                        <option value="Sunday">Chủ Nhật</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <button type="submit" class="btn btn-dark">
+                        <i class="fa-solid fa-filter"></i> Lọc dữ liệu
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-rotate-left"></i> Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-center">Thứ</th>
+                    <th>Lớp học</th>
+                    <th>Môn học</th>
+                    <th class="text-center">Ca học</th>
+                    <th class="text-center">Thời gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold text-primary">
+                                @GetVietnameseDay(item.DayOfWeek)
+                            </td>
+                            <td>
+                                <span class="fw-bold">@item.Classroom.NameClass</span><br />
+                                <small class="text-muted">Mã: @item.Classroom.ClassCode</small>
+                            </td>
+                            <td>@item.Classroom.Course.Title</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark">@item.TimeSlot.Name</span>
+                            </td>
+                            <td class="text-center">
+                                @item.TimeSlot.StartTime.ToString(@"hh\:mm") - @item.TimeSlot.EndTime.ToString(@"hh\:mm")
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Không tìm thấy lịch dạy phù hợp.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    string GetVietnameseDay(DayOfWeek day)
+    {
+        return day switch
+        {
+            DayOfWeek.Monday => "Thứ Hai",
+            DayOfWeek.Tuesday => "Thứ Ba",
+            DayOfWeek.Wednesday => "Thứ Tư",
+            DayOfWeek.Thursday => "Thứ Năm",
+            DayOfWeek.Friday => "Thứ Sáu",
+            DayOfWeek.Saturday => "Thứ Bảy",
+            DayOfWeek.Sunday => "Chủ Nhật",
+            _ => day.ToString()
+        };
+    }
+}

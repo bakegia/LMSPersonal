@@ -1,0 +1,347 @@
+﻿@{
+    ViewData["Title"] = "Manage Sections & Lessons";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2>Manage Sections & Lessons</h2>
+
+    <div class="mb-3">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sectionModal" onclick="openAddSection()">
+            + Add Section
+        </button>
+    </div>
+
+    <div id="content">
+        <!-- Sections & Lessons sẽ load vào đây bằng JS -->
+    </div>
+</div>
+
+<!-- Section Modal -->
+<div class="modal fade" id="sectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="sectionModalTitle" class="modal-title">Add Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="sectionId" />
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="secTitle" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Order</label>
+                    <input type="number" id="secOrder" class="form-control" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Course</label>
+                <select id="selectCourseId" class="form-select">
+                    <option value="">-- Chọn Course --</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" onclick="saveSection()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lesson Modal -->
+<div class="modal fade" id="lessonModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="lessonModalTitle" class="modal-title">Add Lesson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="lessonId" />
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="lessonTitle" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Content</label>
+                    <textarea id="lessonContent" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Order</label>
+                    <input type="number" id="lessonOrder" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Upload Video</label>
+                    <input type="file" id="videoFile" class="form-control" accept="video/*" />
+                </div>
+                <div class="mb-3">
+                    <video id="videoPreview" width="100%" controls style="display:none;"></video>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" onclick="saveLesson()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sectionApi = '/api/section';
+    const lessonApi = '/api/lesson';
+
+    let courseId = null;
+    let currentSectionId = null;
+    let currentCourseId = null;
+    let sections = [];
+
+    let sectionModal, lessonModal;
+
+    document.addEventListener("DOMContentLoaded", async function () {
+        sectionModal = new bootstrap.Modal(document.getElementById('sectionModal'));
+        lessonModal = new bootstrap.Modal(document.getElementById('lessonModal'));
+
+        await loadCourses(); // load course + auto chọn + load sections
+
+        // đổi course
+        document.getElementById('selectCourseId').addEventListener('change', function () {
+            courseId = this.value;
+            if (courseId) loadSections(courseId);
+        });
+
+        // preview video
+        const videoInput = document.getElementById('videoFile');
+        const videoPreview = document.getElementById('videoPreview');
+
+        videoInput?.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                videoPreview.src = URL.createObjectURL(file);
+                videoPreview.style.display = 'block';
+            } else {
+                videoPreview.style.display = 'none';
+            }
+        });
+    });
+
+    // ================== LOAD COURSES ==================
+    async function loadCourses(selectedId = null) {
+        try {
+            const res = await fetch('/api/course');
+            const courses = await res.json();
+
+            let html = '<option value="">-- Chọn Course --</option>';
+            courses.forEach(c => {
+                html += `<option value="${c.id}">${c.title}</option>`;
+            });
+
+            const select = document.getElementById('selectCourseId');
+            select.innerHTML = html;
+
+            if (courses.length > 0) {
+                courseId = selectedId || courses[0].id;
+                select.value = courseId;
+
+                await loadSections(courseId);
+            }
+
+        } catch (err) {
+            console.error('Lỗi load Courses', err);
+        }
+    }
+
+    // ================== LOAD SECTIONS ==================
+    async function loadSections(cId) {
+        try {
+            const res = await fetch(`${sectionApi}/${cId}`);
+            sections = await res.json();
+
+            let html = '';
+
+            for (const s of sections) {
+                const lessons = await fetch(`${lessonApi}/${s.id}`).then(r => r.json());
+
+                html += `
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <b>${s.title}</b>
+                        <div>
+                            <button class="btn btn-sm btn-warning" onclick="editSection(${s.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSection(${s.id})">Delete</button>
+                            <button class="btn btn-sm btn-primary" onclick="openAddLesson(${s.id})">+ Lesson</button>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        ${lessons.map(l => `
+                            <li class="list-group-item d-flex justify-content-between">
+                                ${l.title}
+                                <div>
+                                    <button class="btn btn-sm btn-warning" onclick="editLesson(${l.id})">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteLesson(${l.id})">Delete</button>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>`;
+            }
+
+            document.getElementById('content').innerHTML = html;
+
+        } catch (err) {
+            console.error(err);
+            alert('Không load được dữ liệu');
+        }
+    }
+
+    // ================== SECTION ==================
+    function openAddSection() {
+        document.getElementById('sectionId').value = '';
+        document.getElementById('secTitle').value = '';
+        document.getElementById('secOrder').value = 1;
+        sectionModal.show();
+    }
+
+    async function saveSection() {
+        const id = document.getElementById('sectionId').value;
+        const title = document.getElementById('secTitle').value.trim();
+        const order = document.getElementById('secOrder').value || 1;
+        const courseId = document.getElementById('selectCourseId').value;
+
+        if (!courseId) return alert("Chưa chọn Course");
+        if (!title) return alert("Chưa nhập title");
+
+        const data = {
+            Title: title,
+            Order: parseInt(order),
+            CourseId: parseInt(courseId)
+        };
+
+        const url = id ? `${sectionApi}/${id}` : sectionApi;
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) throw new Error();
+
+            sectionModal.hide();
+            loadSections(courseId);
+
+        } catch {
+            alert('Lỗi lưu Section');
+        }
+    }
+    //edit
+        async function editSection(id) {
+        try {
+            const res = await fetch(`${sectionApi}/${courseId}`);
+    const sections = await res.json();
+            const s = sections.find(x => x.id === id);
+    if (!s) return alert('Không tìm thấy Section');
+
+    document.getElementById('sectionId').value = s.id;
+    document.getElementById('secTitle').value = s.title;
+    document.getElementById('secOrder').value = s.order;
+    document.getElementById('sectionModalTitle').innerText = 'Edit Section';
+    sectionModal.show();
+        } catch (err) {
+        console.error(err);
+    alert('Không thể load Section');
+        }
+    }
+
+    //delete
+    async function deleteSection(id) {
+        if (!confirm('Xóa?')) return;
+
+        await fetch(`${sectionApi}/${id}`, { method: 'DELETE' });
+        loadSections(courseId);
+    }
+
+    // ================== LESSON ==================
+    function openAddLesson(sectionId) {
+        currentSectionId = sectionId;
+
+        const section = sections.find(s => s.id === sectionId);
+        
+
+        document.getElementById('lessonId').value = '';
+        document.getElementById('lessonTitle').value = '';
+        document.getElementById('lessonContent').value = '';
+        document.getElementById('lessonOrder').value = 1;
+
+        lessonModal.show();
+    }
+
+    async function saveLesson() {
+        const id = document.getElementById('lessonId').value;
+        const title = document.getElementById('lessonTitle').value.trim();
+        const content = document.getElementById('lessonContent').value;
+        const order = document.getElementById('lessonOrder').value || 1;
+        const file = document.getElementById('videoFile').files[0];
+
+        if (!title) return alert("Chưa nhập title");
+
+        const formData = new FormData();
+        formData.append("Title", title);
+        formData.append("Content", content);
+        formData.append("Order", order);
+        formData.append("SectionId", currentSectionId);
+        
+        if (file) formData.append("VideoUpload", file);
+
+        const url = id ? `${lessonApi}/${id}` : lessonApi;
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, { method, body: formData });
+            if (!res.ok) throw new Error();
+
+            lessonModal.hide();
+            loadSections(courseId);
+
+        } catch {
+            alert("Lỗi lưu Lesson");
+        }
+    }
+    // edit lesson
+    async function editLesson(id) {
+        try {
+            const sectionsRes = await fetch(`${sectionApi}/${courseId}`);
+    const sections = await sectionsRes.json();
+
+    let lesson;
+    for (const s of sections) {
+                const lessons = await fetch(`${lessonApi}/${s.id}`).then(r => r.json());
+                lesson = lessons.find(l => l.id === id);
+    if (lesson) {currentSectionId = s.id; break; }
+            }
+    if (!lesson) return alert('Không tìm thấy Lesson');
+
+    document.getElementById('lessonId').value = lesson.id;
+    document.getElementById('lessonTitle').value = lesson.title;
+    document.getElementById('lessonContent').value = lesson.content || '';
+    document.getElementById('lessonOrder').value = lesson.order;
+    document.getElementById('videoFile').value = '';
+    document.getElementById('videoPreview').style.display = 'none';
+    document.getElementById('lessonModalTitle').innerText = 'Edit Lesson';
+    lessonModal.show();
+        } catch (err) {
+        console.error(err);
+    alert('Không thể load Lesson');
+        }
+    }
+    // delete lesson
+    async function deleteLesson(id) {
+        if (!confirm('Xóa Lesson?')) return;
+
+        await fetch(`${lessonApi}/${id}`, { method: 'DELETE' });
+        loadSections(courseId);
+    }
+</script>

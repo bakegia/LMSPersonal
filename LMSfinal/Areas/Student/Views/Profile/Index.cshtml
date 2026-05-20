@@ -1,0 +1,25 @@
+@model StudentProfileViewModel
+
+@{
+    ViewData["Title"] = "Thong tin ca nhan";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Thong tin ca nhan</h2>
+    <a asp-area="Student" asp-controller="Profile" asp-action="Edit" class="btn btn-primary">Cap nhat</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6"><span class="fw-semibold">Ho ten:</span> @Model.FullName</div>
+            <div class="col-md-6"><span class="fw-semibold">Email:</span> @Model.Email</div>
+            <div class="col-md-6"><span class="fw-semibold">MSSV:</span> @(Model.Mssv.HasValue ? Model.Mssv.Value.ToString() : "-")</div>
+            <div class="col-md-6"><span class="fw-semibold">Ngay sinh:</span> @(Model.DateOfBirth.HasValue ? Model.DateOfBirth.Value.ToString("dd/MM/yyyy") : "-")</div>
+            <div class="col-md-6"><span class="fw-semibold">Gioi tinh:</span> @Model.Gender</div>
+            <div class="col-md-6"><span class="fw-semibold">So dien thoai:</span> @Model.PhoneNumber</div>
+            <div class="col-12"><span class="fw-semibold">Dia chi:</span> @Model.Address</div>
+        </div>
+    </div>
+</div>

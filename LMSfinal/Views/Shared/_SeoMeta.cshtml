@@ -1,0 +1,39 @@
+﻿@{
+    var title = ViewData["Title"]?.ToString() ?? "LMS Academy - Nền tảng học tập trực tuyến";
+    var description = ViewData["MetaDescription"]?.ToString() ?? "LMS Academy - Nền tảng học tập trực tuyến phát triển kỹ năng cho tương lai";
+    var keywords = ViewData["MetaKeywords"]?.ToString() ?? "học tập trực tuyến, khóa học, kỹ năng";
+    var image = ViewData["MetaImage"]?.ToString() ?? "/images/og-default.jpg";
+    var url = ViewData["CanonicalUrl"]?.ToString() ?? $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+}
+
+<title>@title</title>
+<meta name="description" content="@description" />
+<meta name="keywords" content="@keywords" />
+<meta name="language" content="vi" />
+<meta name="revisit-after" content="7 days" />
+<meta name="author" content="LMS Academy" />
+
+<!-- Open Graph Meta Tags -->
+<meta property="og:title" content="@title" />
+<meta property="og:description" content="@description" />
+<meta property="og:image" content="@url.TrimEnd('/')/@image.TrimStart('/')" />
+<meta property="og:url" content="@url" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="vi_VN" />
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="@title" />
+<meta name="twitter:description" content="@description" />
+<meta name="twitter:image" content="@url.TrimEnd('/')/@image.TrimStart('/')" />
+
+<!-- Canonical URL -->
+<link rel="canonical" href="@url" />
+
+<!-- Schema.org Structured Data -->
+@if (ViewData["SchemaData"] != null)
+{
+    <script type="application/ld+json">
+        @Html.Raw(ViewData["SchemaData"])
+    </script>
+}

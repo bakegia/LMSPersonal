@@ -1,0 +1,97 @@
+﻿@model LMSfinal.Models.EF.Lesson
+@{
+    ViewData["Title"] = "Chi tiết bài học: " + Model.Title;
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Section" asp-action="Index" asp-route-classroomId="@Model.Section?.ClassroomId">Nội dung lớp học</a>
+                </li>
+                <li class="breadcrumb-item active">@Model.Title</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <h4><i class="fa-solid fa-file-video text-primary me-2"></i>Chi tiết bài học</h4>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                    <i class="fa-solid fa-pen-to-square me-1"></i> Chỉnh sửa
+                </a>
+                <a asp-controller="Section" asp-action="Index" asp-route-classroomId="@Model.Section?.ClassroomId" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        @* Cột hiển thị Video *@
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">@Model.Title</h5>
+                    <hr />
+
+                    @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                    {
+                        <div class="ratio ratio-16x9 mb-3">
+                            @* Hỗ trợ nhúng Youtube nếu VideoUrl là link Youtube *@
+                            @if (Model.VideoUrl.Contains("youtube.com") || Model.VideoUrl.Contains("youtu.be"))
+                            {
+                                <iframe src="@Model.VideoUrl.Replace("watch?v=", "embed/")" title="YouTube video" allowfullscreen></iframe>
+                            }
+                            else
+                            {
+                                <video controls>
+                                    <source src="@Model.VideoUrl" type="video/mp4">
+                                    Trình duyệt của bạn không hỗ trợ phát video.
+                                </video>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fa-solid fa-circle-info me-2"></i>Bài học này không có video.
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <h6 class="fw-bold">Mô tả bài học:</h6>
+                        <div class="p-3 bg-light border rounded">
+                            @Html.Raw(Model.Content ?? "Không có mô tả cho bài học này.")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Cột thông tin bổ sung *@
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white fw-bold">
+                    Thông tin chung
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Thuộc chương:</span>
+                            <span class="fw-bold">@Model.Section?.Title</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Thứ tự hiển thị:</span>
+                            <span class="badge bg-secondary">@Model.Order</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Trạng thái:</span>
+                            <span class="badge bg-success">Đang hoạt động</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

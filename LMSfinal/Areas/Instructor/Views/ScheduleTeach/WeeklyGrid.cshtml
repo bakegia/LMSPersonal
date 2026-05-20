@@ -1,0 +1,211 @@
+﻿@using LMSfinal.Models.ViewModels
+@model WeeklyScheduleViewModel
+@{
+    ViewData["Title"] = "Thời khóa biểu dạng grid";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+<style>
+    /* Kẻ bảng và căn giữa */
+    .table-schedule thead th {
+        background-color: #f8f9fa;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table-schedule td {
+        height: 90px;
+        width: 12%;
+        vertical-align: top;
+        padding: 5px;
+    }
+
+    /* Cột tiết học bên trái */
+    .time-col {
+        background-color: #f1f3f5;
+        font-weight: bold;
+        text-align: center;
+        width: 80px !important;
+    }
+
+    /* Style cho từng ô môn học */
+    .schedule-card {
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        border-left: 4px solid #0d6efd;
+        background-color: #e7f1ff;
+        color: #084298;
+        height: 100%;
+    }
+
+    .schedule-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        filter: brightness(0.95);
+    }
+
+    /* Tùy chỉnh Tooltip giống ảnh mẫu */
+    .custom-tooltip .tooltip-inner {
+        background-color: #212529 !important; /* Nền đen */
+        color: #fff;
+        text-align: left;
+        padding: 12px;
+        max-width: 300px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+
+    .custom-tooltip .tooltip-arrow::before {
+        border-top-color: #212529 !important;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm">
+        <a asp-area="Instructor" asp-controller="ScheduleTeach" asp-action="index">Thời Khóa Biểu Dạng Danh Sách</a>
+        <select class="form-select form-select-sm border-primary" style="width: auto; min-width: 350px;" onchange="location.href=this.value">
+            @if (ViewBag.Weeks != null)
+            {
+                foreach (var w in (List<WeekItem>)ViewBag.Weeks)
+                {
+                    <option value="@Url.Action("WeeklyGrid", new { date = w.StartDate.ToString("yyyy-MM-dd") })"
+                            selected="@(w.IsSelected ? "selected" : null)">
+                        @w.DisplayText
+                    </option>
+                }
+            }
+            else
+            {
+                <option>Không có dữ liệu tuần học</option>
+            }
+        </select>
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary"><i class="bi bi-calendar3"></i> THỜI KHÓA BIỂU DẠY HỌC</h5>
+            <div class="btn-group">
+                <a href="@Url.Action("WeeklyGrid", new { date = Model.WeekStart.AddDays(-7) })" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-chevron-left"></i> Tuần trước
+                </a>
+                <button class="btn btn-light btn-sm fw-bold border">
+                    @Model.WeekStart.ToString("dd/MM/yyyy") - @Model.DaysInWeek.Last().ToString("dd/MM/yyyy")
+                </button>
+                <a href="@Url.Action("WeeklyGrid", new { date = Model.WeekStart.AddDays(7) })" class="btn btn-outline-secondary btn-sm">
+                    Tuần sau <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-schedule mb-0">
+                <thead>
+                    <tr>
+                        <th class="time-col">Ca / Tiết</th>
+                        @foreach (var day in Model.DaysInWeek)
+                        {
+                            <th class="@(day.Date == DateTime.Now.Date ? "table-primary" : "")">
+                                <span class="text-uppercase">@GetVietnameseDayName(day.DayOfWeek)</span><br />
+                                <small class="text-muted">@day.ToString("dd/MM")</small>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in Model.TimeSlots)
+                    {
+                        <tr>
+                            <td class="time-col">
+                                <div class="text-primary">@slot.Name</div>
+                                <div style="font-size: 0.7rem;" class="text-muted">
+                                    @slot.StartTime.ToString(@"hh\:mm")<br/>@slot.EndTime.ToString(@"hh\:mm")
+                                </div>
+                            </td>
+                            @foreach (var day in Model.DaysInWeek)
+                            {
+                                var session = Model.Schedules.FirstOrDefault(s => 
+                                    s.DayOfWeek == day.DayOfWeek && s.TimeSlotId == slot.Id);
+
+                                <td>
+                                    @if (session != null)
+                                    {
+                                        var startTime = slot.StartTime.ToString(@"hh\:mm");
+                                        var endTime = slot.EndTime.ToString(@"hh\:mm");
+
+                                        var dayText = (int)day.DayOfWeek == 0
+                                        ? "Chủ Nhật"
+                                        : $"Thứ {(int)day.DayOfWeek + 1}";
+
+                                        var instructorName = session.Classroom.Instructor != null
+                                        ? session.Classroom.Instructor.FullName
+                                        : "Chưa cập nhật";
+
+                                        var tooltipHtml = $@"
+                                                        <div class='p-1'>
+                                                        <b>Mã MH:</b> {session.Classroom.ClassCode}<br/>
+                                                        <b>Môn:</b> {session.Classroom.NameClass}<br/>
+                                                        <b>Nhóm:</b> A10<br/>
+                                                        <b>Phòng:</b> A.23-01-GYM<br/>
+                                                        <hr class='my-1 border-secondary'>
+                                                        <b>Thứ:</b> {dayText}<br/>
+                                                        <b>Giờ:</b> {startTime} - {endTime}<br/>
+                                                        <b>GV:</b> {instructorName}
+                                                        </div>";
+
+                                        <div class="schedule-card p-2 rounded shadow-sm"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-html="true"
+                                             data-bs-custom-class="custom-tooltip"
+                                             title="@tooltipHtml">
+
+                                            <div class="fw-bold text-truncate"
+                                                 title="@session.Classroom.NameClass">
+                                                @session.Classroom.NameClass
+                                            </div>
+
+                                            <div class="small">
+                                                Mã: @session.Classroom.ClassCode
+                                            </div>
+
+                                            <div class="small mt-1">
+                                                <i class="bi bi-geo-alt"></i> P.A23-01
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            // Khởi tạo tất cả Tooltips của Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+}
+
+@functions {
+    string GetVietnameseDayName(DayOfWeek day)
+    {
+        return day switch
+        {
+            DayOfWeek.Monday => "Thứ Hai",
+            DayOfWeek.Tuesday => "Thứ Ba",
+            DayOfWeek.Wednesday => "Thứ Tư",
+            DayOfWeek.Thursday => "Thứ Năm",
+            DayOfWeek.Friday => "Thứ Sáu",
+            DayOfWeek.Saturday => "Thứ Bảy",
+            DayOfWeek.Sunday => "Chủ Nhật",
+            _ => day.ToString()
+        };
+    }
+}

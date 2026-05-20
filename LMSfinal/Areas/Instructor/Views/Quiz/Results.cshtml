@@ -1,0 +1,186 @@
+﻿@using LMSfinal.Models.EF
+@model Quiz
+
+@{
+    ViewData["Title"] = "Kết quả Quiz";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fa-solid fa-chart-bar"></i> Kết quả Quiz
+            </h2>
+            <p class="text-muted">
+                <strong>@Model.Title</strong> -
+                @Model.Lesson?.Section?.Classroom?.NameClass
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Thống kê tổng quát -->
+    @if (Model.StudentAttempts.Any())
+    {
+        <div class="row mb-4">
+            @{
+                var totalAttempts = Model.StudentAttempts.Count;
+                var passedCount = 0;
+                var totalScore = 0;
+                var avgScore = 0;
+
+                foreach (var attempt in Model.StudentAttempts)
+                {
+                    var score = attempt.Answers.Count(a => a.SelectedAnswer?.IsCorrect ?? false);
+                    var percentage = Model.Questions.Count > 0 ? (score * 100) / Model.Questions.Count : 0;
+
+                    if (percentage >= Model.PassingScore)
+                        passedCount++;
+
+                    totalScore += percentage;
+                }
+                avgScore = totalAttempts > 0 ? totalScore / totalAttempts : 0;
+            }
+            <div class="col-md-3">
+                <div class="card text-center bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Tổng lượt làm bài</h6>
+                        <h3>@totalAttempts</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Số người đạt</h6>
+                        <h3>@passedCount</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-danger text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Số người không đạt</h6>
+                        <h3>@(totalAttempts - passedCount)</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Điểm trung bình</h6>
+                        <h3>@avgScore%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Danh sách kết quả chi tiết -->
+    @if (Model.StudentAttempts.Any())
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-list"></i> Chi tiết kết quả
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%">STT</th>
+                            <th style="width: 25%">Học sinh</th>
+                            <th style="width: 15%">Điểm</th>
+                            <th style="width: 20%">Tỷ lệ</th>
+                            <th style="width: 15%">Kết quả</th>
+                            <th style="width: 15%">Ngày làm bài</th>
+                            <th style="width: 10%">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int index = 1;
+                        }
+                        @foreach (var attempt in Model.StudentAttempts.OrderByDescending(a => a.AttemptedAt))
+                        {
+                            var score = attempt.Answers.Count(a => a.SelectedAnswer?.IsCorrect ?? false);
+                            var totalQuestions = Model.Questions.Count;
+                            var percentage = totalQuestions > 0 ? (score * 100) / totalQuestions : 0;
+                            var passed = percentage >= Model.PassingScore;
+
+                            <tr>
+                                <td>@index</td>
+                                <td>
+                                    <strong>@attempt.Student?.FullName</strong>
+                                    <br />
+                                    <small class="text-muted">@attempt.Student?.Email</small>
+                                </td>
+                                <td>
+                                    <strong>@score/@totalQuestions</strong>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @(passed ? "bg-success" : "bg-danger")"
+                                             role="progressbar"
+                                             style="width: @percentage%"
+                                             aria-valuenow="@percentage"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                            @percentage%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (passed)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="fa-solid fa-check-circle"></i> Đạt
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="fa-solid fa-times-circle"></i> Không đạt
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <small>@attempt.AttemptedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-info"
+                                            onclick="viewDetails(@attempt.Id)"
+                                            title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye"></i> Chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-5">
+            <i class="fa-solid fa-circle-info fa-2x mb-3"></i>
+            <p>Chưa có học sinh nào làm bài quiz này</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function viewDetails(attemptId) {
+            window.location.href = `/Instructor/Quiz/AttemptDetails/${attemptId}`;
+        }
+    </script>
+}

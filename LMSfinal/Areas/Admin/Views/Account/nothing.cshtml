@@ -1,0 +1,95 @@
+﻿@using LMSfinal.Models.ViewModels
+@model AccountVM
+@{
+    ViewData["Title"] = "Tạo Tài Khoản";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+<section class="content">
+    <div class="container-fluid d-flex justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card card-primary shadow-sm">
+                <div class="card-header text-center">
+                    <h3 class="card-title w-100">
+                        <i class="fas fa-user-plus mr-2"></i> Đăng ký tài khoản
+                    </h3>
+                </div>
+
+                <div class="card-body">
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <form asp-area="Admin"
+                          asp-controller="Account"
+                          asp-action="CreateAccount"
+                          method="post">
+
+                        <!-- USERNAME -->
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-user mr-1"></i> Tên User
+                            </label>
+                            <input asp-for="UserName"
+                                   class="form-control"
+                                   placeholder="Nhập tên user" />
+                            <span asp-validation-for="UserName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-user mr-1"></i> Tên đầy đủ
+                            </label>
+                            <input asp-for="FullName"
+                                   class="form-control"
+                                   placeholder="Nhập tên user" />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+                        <!-- EMAIL -->
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-envelope mr-1"></i> Email
+                            </label>
+                            <input asp-for="Email"
+                                   type="email"
+                                   class="form-control"
+                                   placeholder="example@gmail.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <!-- PASSWORD -->
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-lock mr-1"></i> Mật khẩu
+                            </label>
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="form-control"
+                                   placeholder="Nhập mật khẩu" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select asp-for="RoleId" class="form-control" asp-items="ViewBag.Roles"></select>
+                            <span asp-validation-for="RoleId" class="text-danger"></span>
+                        </div>
+                        <!-- BUTTON -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-user-plus"></i> Đăng ký
+                            </button>
+
+                            <a asp-area="Admin"
+                               asp-controller="Account"
+                               asp-action="Login"
+                               class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                            </a>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>

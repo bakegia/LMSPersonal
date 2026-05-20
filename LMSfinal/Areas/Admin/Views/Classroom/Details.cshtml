@@ -1,0 +1,225 @@
+﻿@using LMSfinal.Models.EF
+
+@model Classroom
+
+@{
+    ViewData["Title"] = "Chi tiết Lớp học";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Header -->
+            <div class="mb-4">
+                <a asp-area="Admin" asp-controller="Classroom" asp-action="Index" class="btn btn-light mb-3">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Quay lại
+                </a>
+            </div>
+
+            <!-- Thông tin lớp học -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-school-flag me-2"></i>Thông tin Lớp học
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Mã Lớp</strong>
+                                <span class="badge bg-secondary">@Model.ClassCode</span>
+                            </p>
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Tên Lớp</strong>
+                                <span class="h6">@Model.NameClass</span>
+                            </p>
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Trạng thái</strong>
+                                <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger")">
+                                    @(Model.IsActive ? "Đang hoạt động" : "Tạm dừng")
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Ngày Bắt Đầu</strong>
+                                <span class="h6">@Model.StartDate.ToString("dd/MM/yyyy")</span>
+                            </p>
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Ngày Kết Thúc</strong>
+                                <span class="h6">@Model.EndDate.ToString("dd/MM/yyyy")</span>
+                            </p>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="border-top pt-3 mt-3">
+                            <strong class="text-muted d-block mb-1">Mô Tả</strong>
+                            <p class="mb-0">@Model.Description</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Môn học & Giảng viên -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-info text-white py-3">
+                            <h6 class="mb-0">
+                                <i class="fa-solid fa-book me-2"></i>Môn Học
+                            </h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <h5 class="text-primary">@Model.Course?.Title</h5>
+                            @if (!string.IsNullOrEmpty(Model.Course?.Description))
+                            {
+                                <p class="text-muted small">@Model.Course.Description</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-warning text-white py-3">
+                            <h6 class="mb-0">
+                                <i class="fa-solid fa-chalkboard-user me-2"></i>Giảng Viên
+                            </h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <h5 class="text-primary">@Model.Instructor?.UserName</h5>
+                            <p class="text-muted small">
+                                <i class="fa-solid fa-envelope me-1"></i>
+                                @Model.Instructor?.Email
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lịch học -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-success text-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fa-solid fa-clock me-2"></i>Lịch Học
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.ClassSchedules != null && Model.ClassSchedules.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fa-solid fa-calendar-days me-1 text-success"></i>Thứ</th>
+                                        <th><i class="fa-solid fa-hourglass-start me-1 text-success"></i>Ca Học</th>
+                                        <th><i class="fa-solid fa-clock me-1 text-success"></i>Thời Gian</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        string[] days = { "Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy" };
+                                    }
+                                    @foreach (var schedule in Model.ClassSchedules.OrderBy(x => x.DayOfWeek))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-light text-dark">@days[(int)schedule.DayOfWeek]</span>
+                                            </td>
+                                            <td>@schedule.TimeSlot?.Name</td>
+                                            <td>
+                                                <span class="badge bg-secondary">
+                                                    @schedule.TimeSlot?.StartTime.ToString(@"hh\:mm") - @schedule.TimeSlot?.EndTime.ToString(@"hh\:mm")
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mb-0">
+                            <i class="fa-solid fa-exclamation-triangle me-2"></i>Chưa có lịch học
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Danh sách học viên -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-danger text-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fa-solid fa-users me-2"></i>Danh Sách Học Viên
+                    </h6>
+                    <span class="badge bg-light text-dark">@(Model.ClassroomStudents?.Count ?? 0) học viên</span>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.ClassroomStudents != null && Model.ClassroomStudents.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 50px;">#</th>
+                                        <th><i class="fa-solid fa-user me-1 text-danger"></i>Tên Người Dùng</th>
+                                        <th><i class="fa-solid fa-envelope me-1 text-danger"></i>Email</th>
+                                        <th style="width: 80px;">Trạng Thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int index = 1;
+                                    }
+                                    @foreach (var student in Model.ClassroomStudents)
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-secondary">@index</span></td>
+                                            <td>
+                                                <i class="fa-solid fa-circle me-1" style="font-size: 6px; color: #28a745;"></i>
+                                                @student.Student?.UserName
+                                            </td>
+                                            <td>@student.Student?.Email</td>
+                                            <td>
+                                                <span class="badge @(student.Student?.IsActive == true ? "bg-success" : "bg-secondary")">
+                                                    @(student.Student?.IsActive == true ? "Hoạt động" : "Tạm dừng")
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        index++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mb-0">
+                            <i class="fa-solid fa-exclamation-triangle me-2"></i>Chưa có học viên trong lớp
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mb-4">
+                <a asp-area="Admin" asp-controller="Classroom" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">
+                    <i class="fa-solid fa-pen-to-square me-2"></i>Chỉnh Sửa
+                </a>
+                <a asp-area="Admin" asp-controller="Classroom" asp-action="Index" class="btn btn-light px-4">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Quay Lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>

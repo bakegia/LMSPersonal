@@ -1,0 +1,132 @@
+﻿@{
+    ViewData["Title"] = "Quản lý quyền (Roles)";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Role Management</h2>
+
+<button class="btn btn-success mb-3" onclick="openCreate()">+ Add Role</button>
+
+<table class="table table-bordered" id="tblRole">
+    <thead class="table-dark">
+        <tr>
+            
+            <th>Role Name</th>
+            <th width="150">Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<div class="modal fade" id="roleModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="modalTitle"></h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="roleId" />
+
+                <div class="mb-3">
+                    <label>Role Name</label>
+                    <input id="roleName" class="form-control" placeholder="Nhập tên quyền..." />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" onclick="save()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const api = '/api/roles';
+    let isEdit = false;
+    let myModal;
+
+    // Khởi tạo modal khi trang load xong
+    document.addEventListener("DOMContentLoaded", function() {
+        myModal = new bootstrap.Modal(document.getElementById('roleModal'));
+        loadData();
+    });
+
+    function loadData() {
+        fetch(api)
+            .then(r => r.json())
+            .then(data => {
+                let html = '';
+                data.forEach(r => {
+                    html += `
+                        <tr>
+                            
+                            <td><span class="badge bg-info text-dark">${r.name}</span></td>
+                            <td>
+                                <button class="btn btn-warning btn-sm"
+                                    onclick="openEdit('${r.id}', '${r.name}')">Edit</button>
+                                <button class="btn btn-danger btn-sm"
+                                    onclick="remove('${r.id}')">Delete</button>
+                            </td>
+                        </tr>`;
+                });
+                document.querySelector('#tblRole tbody').innerHTML = html;
+            })
+            .catch(err => console.error("Lỗi load data:", err));
+    }
+
+    function openCreate() {
+        isEdit = false;
+        document.getElementById('modalTitle').innerText = 'Add New Role';
+        document.getElementById('roleId').value = '';
+        document.getElementById('roleName').value = '';
+        myModal.show();
+    }
+
+    function openEdit(id, name) {
+        isEdit = true;
+        document.getElementById('modalTitle').innerText = 'Edit Role';
+        document.getElementById('roleId').value = id;
+        document.getElementById('roleName').value = name;
+        myModal.show();
+    }
+
+    function save() {
+        const id = document.getElementById('roleId').value;
+        const name = document.getElementById('roleName').value;
+
+        if (!name) {
+            alert("Vui lòng nhập tên Role");
+            return;
+        }
+
+        // Vì API nhận [FromBody] string, nên ta gửi chuỗi trực tiếp (có bao ngoặc kép)
+        const url = isEdit ? `${api}/${id}` : api;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(name) // Gửi dạng "RoleName" thay vì {name: "RoleName"}
+        })
+        .then(async response => {
+            if (response.ok) {
+                myModal.hide();
+                loadData();
+            } else {
+                const err = await response.json();
+                alert("Lỗi: " + JSON.stringify(err));
+            }
+        })
+        .catch(err => console.error("Lỗi khi save:", err));
+    }
+
+    function remove(id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa Role này?')) return;
+        fetch(`${api}/${id}`, { method: 'DELETE' })
+            .then(response => {
+                if(response.ok) loadData();
+                else alert("Không thể xóa Role này.");
+            });
+    }
+</script>

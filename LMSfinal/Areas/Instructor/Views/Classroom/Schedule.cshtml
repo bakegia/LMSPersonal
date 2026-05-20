@@ -1,0 +1,185 @@
+﻿@model LMSfinal.Models.ViewModels.ClassroomScheduleViewModel
+
+@{
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Thoi khoa bieu";
+
+    var cellLookup = Model.Sessions
+        .GroupBy(x => new { x.TimeSlotId, Date = x.Date.Date })
+        .ToDictionary(g => (g.Key.TimeSlotId, g.Key.Date), g => g.First());
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+    <div>
+        <h2 class="mb-1">Thoi khoa bieu lop @Model.ClassCode</h2>
+        <p class="text-muted mb-0">@Model.ClassroomName | @Model.CourseTitle</p>
+    </div>
+    <a asp-area="Instructor" asp-controller="Classroom" asp-action="Index" class="btn btn-outline-secondary">Quay lai</a>
+</div>
+
+<form method="get" asp-area="Instructor" asp-controller="Classroom" asp-action="Schedule" class="row g-2 mb-3">
+    <input type="hidden" name="id" value="@Model.ClassroomId" />
+    <div class="col-md-10">
+        <label class="form-label">Chon tuan</label>
+        <select name="weekKey" class="form-select">
+            @if (Model.WeekOptions.Any())
+            {
+                foreach (var week in Model.WeekOptions)
+                {
+                    if (Model.SelectedWeekKey == week.Key)
+                    {
+                        <option selected value="@week.Key">@week.Label</option>
+                    }
+                    else
+                    {
+                        <option value="@week.Key">@week.Label</option>
+                    }
+                }
+            }
+            else
+            {
+                <option value="">Chua co tuan hoc</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-danger w-100">Xem</button>
+    </div>
+</form>
+
+@if (!Model.TimeSlotRows.Any())
+{
+    <div class="alert alert-warning">Lop nay chua co lich hoc.</div>
+}
+else
+{
+    <div class="schedule-wrap">
+        <div class="table-responsive">
+            <table class="table schedule-table align-middle text-center mb-0">
+                <thead>
+                    <tr>
+                        <th class="period-col">Ca hoc</th>
+                        @foreach (var day in Model.DayColumns)
+                        {
+                            <th>
+                                <div class="fw-semibold">@day.DayLabel.Split('(')[0].Trim()</div>
+                                <small class="text-muted">@day.Date.ToString("dd/MM")</small>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in Model.TimeSlotRows)
+                    {
+                        <tr>
+                            <td class="period-col period-label">
+                                <div class="fw-semibold">@slot.Name</div>
+                                <small>@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")</small>
+                            </td>
+                            @foreach (var day in Model.DayColumns)
+                            {
+                                var hasSession = cellLookup.TryGetValue((slot.TimeSlotId, day.Date.Date), out var session);
+                                <td class="schedule-cell @(hasSession ? "has-session" : "empty-session")">
+                                    @if (hasSession)
+                                    {
+                                        <div class="session-card text-start">
+                                            <div class="session-title">@session.CourseTitle</div>
+                                            <div>Nhom: @session.ClassCode</div>
+                                            <div>GV: @session.InstructorName</div>
+                                            <div class="session-time">@session.TimeRange</div>
+                                            <div class="mt-2">
+                                                <a asp-area="Instructor"
+                                                   asp-controller="Classroom"
+                                                   asp-action="TakeAttendance"
+                                                   asp-route-id="@Model.ClassroomId"
+                                                   asp-route-weekKey="@Model.SelectedWeekKey"
+                                                   asp-route-date="@day.Date.ToString("yyyy-MM-dd")"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    Diem danh
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<style>
+    .schedule-wrap {
+        border: 1px solid #d0d7de;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .schedule-table thead th {
+        background: #f8f9fa;
+        border-color: #d0d7de;
+        min-width: 170px;
+    }
+
+    .schedule-table .period-col {
+        min-width: 150px;
+        width: 150px;
+        background: #b70f18;
+        color: #fff;
+        border-color: #a50e17;
+        position: sticky;
+        left: 0;
+        z-index: 2;
+    }
+
+    .schedule-table .period-label small {
+        color: #f5d9d9;
+    }
+
+    .schedule-table td {
+        border-color: #d0d7de;
+        height: 115px;
+        vertical-align: top;
+        background: #fff;
+    }
+
+    .schedule-table .has-session {
+        background: #eaf2ff;
+        border: 1px solid #cf2a2a;
+    }
+
+    .session-card {
+        font-size: 0.9rem;
+        line-height: 1.35;
+    }
+
+    .session-title {
+        font-weight: 700;
+        color: #0f356b;
+    }
+
+    .session-time {
+        margin-top: 4px;
+        font-weight: 600;
+    }
+
+    @@media (max-width: 768px) {
+        .schedule-table thead th,
+        .schedule-table td {
+            min-width: 140px;
+        }
+
+        .schedule-table .period-col {
+            min-width: 120px;
+            width: 120px;
+            font-size: 0.85rem;
+        }
+
+        .session-card {
+            font-size: 0.8rem;
+        }
+    }
+</style>

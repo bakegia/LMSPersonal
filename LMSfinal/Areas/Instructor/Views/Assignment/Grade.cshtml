@@ -1,0 +1,170 @@
+﻿@using LMSfinal.Models.EF
+@model StudentAssignment
+@{
+    ViewData["Title"] = "Chấm Điểm Bài Tập";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="mb-4">
+                <a asp-action="Submissions" asp-route-assignmentId="@Model.AssignmentId"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+
+            <!-- Thông tin học sinh -->
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-user"></i> Thông Tin Học Sinh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Họ Tên:</strong> @Model.Student?.FullName
+                            </p>
+                            <p class="mb-0">
+                                <strong>Username:</strong> @Model.Student?.UserName
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Email:</strong> @Model.Student?.Email
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông tin bài tập -->
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-file-lines"></i> Bài Tập
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>@Model.Assignment?.Title</h6>
+                    <p class="text-muted mb-2">@Model.Assignment?.Description</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-0">
+                                <strong>Hạn Chót:</strong> @Model.Assignment?.DueDate.ToString("dd/MM/yyyy HH:mm")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bài nộp -->
+            @if (Model.Submissions?.Any() == true)
+            {
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fa-solid fa-file-export"></i> Bài Nộp (Lần Cuối)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @{
+                            var latestSubmission = Model.Submissions.OrderByDescending(s => s.SubmittedAt).FirstOrDefault();
+                        }
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-2">
+                                <i class="fa-regular fa-calendar"></i> Nộp lúc: @latestSubmission?.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                            </small>
+                            @if (latestSubmission?.IsLate == true)
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Nộp Trễ Hạn
+                                </span>
+                            }
+                        </div>
+
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <strong>Nội dung bài nộp:</strong>
+                            <div class="mt-2 p-2 bg-white border rounded" style="max-height: 300px; overflow-y: auto;">
+                                <p>@latestSubmission?.SubmissionText</p>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(latestSubmission?.AttachmentUrl))
+                        {
+                            <div class="mb-3">
+                                <a href="@latestSubmission.AttachmentUrl" target="_blank" class="btn btn-outline-primary">
+                                    <i class="fa-solid fa-download"></i> Tải xuống File Đính Kèm
+                                </a>
+                            </div>
+                        }
+
+                        <small class="text-muted">
+                            Tổng số lần nộp: <strong>@Model.Submissions.Count</strong>
+                        </small>
+                    </div>
+                </div>
+            }
+
+            <!-- Form chấm điểm -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-star"></i> Chấm Điểm & Nhận Xét
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Grade" method="post">
+                        <input type="hidden" name="studentAssignmentId" value="@Model.Id" />
+
+                        <!-- Điểm số -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fa-solid fa-trophy"></i> Điểm Số
+                            </label>
+                            <input type="text" name="score" class="form-control form-control-lg"
+                                   value="@Model.Score"
+                                   placeholder="Ví dụ: 9.5 hoặc Excellent">
+                            <small class="text-muted d-block mt-2">
+                                Bạn có thể nhập số (0-10), số thập phân, hoặc mô tả (Excellent, Good, v.v.)
+                            </small>
+                        </div>
+
+                        <!-- Nhận xét -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fa-solid fa-comment"></i> Nhận Xét & Feedback
+                            </label>
+                            <textarea name="feedback" class="form-control" rows="6"
+                                      placeholder="Viết nhận xét, hướng dẫn cải thiện cho học sinh...">@Model.Feedback</textarea>
+                            <small class="text-muted d-block mt-2">
+                                Viết chi tiết những điểm tốt và cần cải thiện
+                            </small>
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex gap-2 justify-content-between">
+                            <a asp-action="Submissions" asp-route-assignmentId="@Model.AssignmentId"
+                               class="btn btn-secondary btn-lg">
+                                <i class="fa-solid fa-times"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-save"></i> Lưu & Chấm Điểm
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

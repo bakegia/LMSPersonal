@@ -1,0 +1,125 @@
+﻿@using LMSfinal.Models.ViewModels
+@model WeeklyScheduleViewModel
+
+<div class="table-responsive">
+    <table class="table table-bordered table-schedule mb-0">
+
+        <thead>
+            <tr>
+                <th class="time-col">Ca / Tiết</th>
+
+                @foreach (var day in Model.DaysInWeek)
+                {
+                    <th class="@(day.Date == DateTime.Now.Date ? "table-primary" : "")">
+
+                        <span class="text-uppercase">
+                            @GetVietnameseDayName(day.DayOfWeek)
+                        </span>
+
+                        <br />
+
+                        <small class="text-muted">
+                            @day.ToString("dd/MM")
+                        </small>
+
+                    </th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var slot in Model.TimeSlots)
+            {
+                <tr>
+
+                    <td class="time-col">
+
+                        <div class="text-primary fw-bold">
+                            @slot.Name
+                        </div>
+
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                            @slot.StartTime.ToString(@"hh\:mm")
+                            <br />
+                            @slot.EndTime.ToString(@"hh\:mm")
+                        </div>
+
+                    </td>
+
+                    @foreach (var day in Model.DaysInWeek)
+                    {
+                        var session = Model.Schedules.FirstOrDefault(s =>
+                        s.DayOfWeek == day.DayOfWeek
+                        &&
+                        s.TimeSlotId == slot.Id);
+
+                        <td>
+
+                            @if (session != null)
+                            {
+                                var tooltipHtml = $@"
+                                        <div class='p-1'>
+                                        <b>Môn:</b> {session.Classroom.NameClass}<br/>
+                                        <b>Giảng viên:</b> {session.Classroom.Instructor?.FullName}<br/>
+                                        <b>Phòng:</b> A.202<br/>
+                                        <hr class='my-1'>
+                                        <b>Giờ:</b>
+                                        {slot.StartTime:hh\:mm}
+                                        -
+                                        {slot.EndTime:hh\:mm}
+                                        </div>";
+
+                                <div class="schedule-card p-2 rounded shadow-sm"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-html="true"
+                                     data-bs-custom-class="custom-tooltip"
+                                     title="@tooltipHtml">
+
+                                    <div class="fw-bold text-truncate"
+                                         title="@session.Classroom.NameClass">
+
+                                        @session.Classroom.NameClass
+
+                                    </div>
+
+                                    <div class="small">
+                                        Mã: @session.Classroom.ClassCode
+                                    </div>
+
+                                    <div class="small mt-1">
+                                        <i class="bi bi-geo-alt"></i>
+                                        P.A23-01
+                                    </div>
+
+                                </div>
+                            }
+
+                        </td>
+                    }
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+</div>
+
+@functions {
+
+    string GetVietnameseDayName(DayOfWeek day)
+    {
+        return day switch
+        {
+            DayOfWeek.Monday => "Thứ Hai",
+            DayOfWeek.Tuesday => "Thứ Ba",
+            DayOfWeek.Wednesday => "Thứ Tư",
+            DayOfWeek.Thursday => "Thứ Năm",
+            DayOfWeek.Friday => "Thứ Sáu",
+            DayOfWeek.Saturday => "Thứ Bảy",
+            DayOfWeek.Sunday => "Chủ Nhật",
+            _ => day.ToString()
+        };
+    }
+}

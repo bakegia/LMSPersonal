@@ -1,0 +1,96 @@
+﻿@using LMSfinal.Models.EF
+@model Assignment
+@{
+    ViewData["Title"] = "Tạo Bài Tập Mới";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fa-solid fa-file-circle-plus"></i> Tạo Bài Tập Mới
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <form asp-action="Create" method="post">
+                        <!-- Tiêu đề -->
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-bold">
+                                <i class="fa-solid fa-heading"></i> Tiêu Đề Bài Tập
+                            </label>
+                            <input asp-for="Title" class="form-control form-control-lg"
+                                   placeholder="Nhập tiêu đề bài tập..." />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                            <small class="text-muted d-block mt-1">Ví dụ: "Bài tập về mảng trong C#"</small>
+                        </div>
+
+                        <!-- Chọn lớp học -->
+                        <div class="mb-4">
+                            <label asp-for="ClassroomId" class="form-label fw-bold">
+                                <i class="fa-solid fa-school"></i> Chọn Lớp Học
+                            </label>
+                            <select asp-for="ClassroomId" class="form-select form-select-lg"
+                                    asp-items="ViewBag.Classrooms">
+                                <option value="">-- Vui lòng chọn lớp --</option>
+                            </select>
+                            <span asp-validation-for="ClassroomId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Mô tả -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-bold">
+                                <i class="fa-solid fa-align-left"></i> Mô Tả Ngắn
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="2"
+                                      placeholder="Nhập mô tả ngắn về bài tập..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Nội dung chi tiết -->
+                        <div class="mb-4">
+                            <label asp-for="Content" class="form-label fw-bold">
+                                <i class="fa-solid fa-file-lines"></i> Nội Dung Chi Tiết & Hướng Dẫn
+                            </label>
+                            <textarea asp-for="Content" class="form-control" rows="6"
+                                      placeholder="Nhập nội dung chi tiết, yêu cầu, hướng dẫn làm bài..."></textarea>
+                            <span asp-validation-for="Content" class="text-danger small"></span>
+                            <small class="text-muted d-block mt-1">Hỗ trợ markdown hoặc HTML</small>
+                        </div>
+
+                        <!-- Hạn chót -->
+                        <div class="mb-4">
+                            <label asp-for="DueDate" class="form-label fw-bold">
+                                <i class="fa-regular fa-calendar"></i> Hạn Chót Nộp Bài
+                            </label>
+                            <input asp-for="DueDate" type="datetime-local" class="form-control form-control-lg" />
+                            <span asp-validation-for="DueDate" class="text-danger small"></span>
+                            <small class="text-muted d-block mt-1">Chọn ngày và giờ hạn cuối nộp bài</small>
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex gap-2 justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary btn-lg">
+                                <i class="fa-solid fa-arrow-left"></i> Quay Lại
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-save"></i> Tạo Bài Tập
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

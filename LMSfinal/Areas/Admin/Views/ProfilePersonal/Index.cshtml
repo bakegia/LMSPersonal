@@ -1,0 +1,16 @@
+﻿@model LMSfinal.Models.EF.UserProfile
+@{
+    ViewData["Title"] = "Hồ Sơ Cá Nhân";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div>
+    <p><strong>Họ tên:</strong> @Model.Fullname</p>
+    <p><strong>Email:</strong> @Model.Email</p>
+    <p><strong>MSSV:</strong> @Model.Mssv</p>
+    @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+    {
+        <img src="@Model.ProfilePictureUrl" alt="Profile Picture" width="150" />
+    }
+</div>
+

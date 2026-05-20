@@ -1,0 +1,24 @@
+﻿@using LMSfinal.Models.ViewModels
+@model ResetPasswordManualVM
+
+<h2>Xác nhận OTP</h2>
+
+<form asp-action="ResetPasswordManual" method="post">
+
+    <input type="hidden" asp-for="Email" />
+
+    <div class="form-group">
+        <label>Mã OTP</label>
+        <input asp-for="Code" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Mật khẩu mới</label>
+        <input asp-for="NewPassword" type="password" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Đổi mật khẩu
+    </button>
+
+</form>

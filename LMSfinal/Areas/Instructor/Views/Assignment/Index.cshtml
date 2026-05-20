@@ -1,0 +1,192 @@
+﻿@using LMSfinal.Models.EF
+@model IEnumerable<Assignment>
+@{
+    ViewData["Title"] = "Quản lý bài tập";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .assignment-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid #0d6efd;
+    }
+
+        .assignment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+    .badge-status {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .due-date-alert {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .due-date-normal {
+        color: #198754;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fa-solid fa-file-lines"></i> Quản lý Bài Tập</h2>
+            <small class="text-muted">Tạo, chỉnh sửa và chấm điểm bài tập cho học sinh</small>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-plus"></i> Tạo Bài Tập Mới
+        </a>
+    </div>
+
+    <!-- Thông báo -->
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-circle-check"></i> @TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Bộ lọc -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Lọc theo lớp học</label>
+                    <select name="classroomId" class="form-select">
+                        <option value="">-- Tất cả các lớp --</option>
+                        @if (ViewBag.Classrooms != null)
+                        {
+                            foreach (var classroom in ViewBag.Classrooms)
+                            {
+                                <option value="@classroom.Value">@classroom.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-dark flex-grow-1">
+                        <i class="fa-solid fa-filter"></i> Lọc dữ liệu
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-grow-1">
+                        <i class="fa-solid fa-rotate-left"></i> Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách bài tập -->
+    @if (Model.Any())
+    {
+        <div class="row g-4">
+            @foreach (var assignment in Model)
+            {
+                var now = DateTime.Now;
+                var daysLeft = (assignment.DueDate - now).Days;
+                var isOverdue = now > assignment.DueDate;
+                var submittedCount = assignment.StudentAssignments?.Count(sa => sa.IsSubmitted) ?? 0;
+                var totalCount = assignment.StudentAssignments?.Count ?? 0;
+                var submissionRate = totalCount > 0 ? (submittedCount * 100 / totalCount) : 0;
+
+                <div class="col-lg-6">
+                    <div class="card assignment-card shadow-sm h-100">
+                        <div class="card-header bg-light border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-2">@assignment.Title</h5>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fa-solid fa-book"></i> @assignment.Classroom?.NameClass (@assignment.Classroom?.ClassCode)
+                                    </p>
+                                </div>
+                                <span class="badge bg-info">@assignment.StudentAssignments?.Count học sinh</span>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Mô tả -->
+                            @if (!string.IsNullOrEmpty(assignment.Description))
+                            {
+                                <p class="card-text text-muted small">@assignment.Description</p>
+                            }
+
+                            <!-- Ngày hạn -->
+                            <div class="mb-3 p-2 bg-light rounded">
+                                <small class="text-muted">
+                                    <i class="fa-regular fa-calendar"></i> Hạn chót:
+                                </small>
+                                <div class="@(isOverdue ? "due-date-alert" : "due-date-normal")">
+                                    @assignment.DueDate.ToString("dd/MM/yyyy HH:mm")
+                                    @if (isOverdue)
+                                    {
+                                        <span class="badge bg-danger ms-2">Quá hạn</span>
+                                    }
+                                    else if (daysLeft <= 1)
+                                    {
+                                        <span class="badge bg-warning ms-2">Sắp hạn</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Tiến độ nộp bài -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-2">Tiến độ nộp bài</small>
+                                <div class="progress" style="height: 24px;">
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         style="width: @submissionRate%;"
+                                         aria-valuenow="@submittedCount"
+                                         aria-valuemin="0"
+                                         aria-valuemax="@totalCount">
+                                        @submittedCount/@totalCount
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Thông tin bổ sung -->
+                            <div class="row text-center g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Nộp bài</small>
+                                    <span class="badge bg-success p-2">@submittedCount/@totalCount</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Chưa nộp</small>
+                                    <span class="badge bg-warning p-2">@(totalCount - submittedCount)/@totalCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light d-flex gap-2 justify-content-between flex-wrap">
+                            <a asp-action="Submissions" asp-route-assignmentId="@assignment.Id"
+                               class="btn btn-sm btn-primary flex-grow-1">
+                                <i class="fa-solid fa-eye"></i> Xem bài nộp
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@assignment.Id"
+                               class="btn btn-sm btn-warning flex-grow-1">
+                                <i class="fa-solid fa-pen"></i> Sửa
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@assignment.Id" method="post" class="d-inline flex-grow-1">
+                                <button type="submit" class="btn btn-sm btn-danger w-100"
+                                        onclick="return confirm('Xóa bài tập này?')">
+                                    <i class="fa-solid fa-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-5">
+            <i class="fa-solid fa-inbox fa-2x mb-3 d-block"></i>
+            <h5>Chưa có bài tập nào</h5>
+            <p class="text-muted mb-0">Hãy tạo bài tập mới để học sinh bắt đầu làm bài</p>
+        </div>
+    }
+</div>

@@ -1,0 +1,25 @@
+﻿.timeline {
+    position: relative;
+    padding-left: 10px;
+}
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 40px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+        z-index: 0;
+    }
+
+    .timeline .d-flex {
+        position: relative;
+        z-index: 1;
+    }
+
+.progress {
+    border-radius: 10px;
+    background-color: #f0f2f5;
+}

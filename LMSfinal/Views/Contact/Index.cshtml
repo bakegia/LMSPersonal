@@ -1,0 +1,301 @@
+﻿@model dynamic
+@{
+    ViewData["Title"] = "Liên hệ chúng tôi - LMS Academy";
+    ViewData["MetaDescription"] = "Liên hệ với chúng tôi để được hỗ trợ, giải đáp thắc mắc hoặc gửi phản hồi về khóa học.";
+    ViewData["MetaKeywords"] = "liên hệ, hỗ trợ, khóa học, giải đáp";
+    ViewData["MetaImage"] = "/images/og-contact.jpg";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="bg-light py-3 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active">Liên hệ</li>
+        </ol>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<section class="page-header py-5" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: white;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="bi bi-telephone-fill me-2"></i>Liên hệ chúng tôi
+                </h1>
+                <p class="lead mb-0">
+                    Hãy liên hệ với chúng tôi nếu bạn có bất kỳ câu hỏi hoặc cần hỗ trợ
+                </p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <i class="bi bi-chat-left-dots" style="font-size: 4rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact-section py-5">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Contact Form -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="card-title fw-bold text-primary mb-4">
+                            <i class="bi bi-envelope-open me-2"></i>Gửi tin nhắn cho chúng tôi
+                        </h2>
+
+                        <form id="contactForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label fw-bold text-accent">
+                                        <i class="bi bi-person me-2"></i>Họ tên *
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="name" name="name" required>
+                                    <small class="text-danger d-none" id="nameError">Vui lòng nhập họ tên</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label fw-bold text-accent">
+                                        <i class="bi bi-envelope me-2"></i>Email *
+                                    </label>
+                                    <input type="email" class="form-control form-control-lg" id="email" name="email" required>
+                                    <small class="text-danger d-none" id="emailError">Vui lòng nhập email hợp lệ</small>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label fw-bold text-accent">
+                                        <i class="bi bi-telephone me-2"></i>Số điện thoại
+                                    </label>
+                                    <input type="tel" class="form-control form-control-lg" id="phone" name="phone">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="subject" class="form-label fw-bold text-accent">
+                                        <i class="bi bi-chat-dots me-2"></i>Chủ đề *
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="subject" name="subject" required>
+                                    <small class="text-danger d-none" id="subjectError">Vui lòng nhập chủ đề</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="message" class="form-label fw-bold text-accent">
+                                    <i class="bi bi-file-text me-2"></i>Nội dung tin nhắn *
+                                </label>
+                                <textarea class="form-control form-control-lg" id="message" name="message" rows="5" required></textarea>
+                                <small class="text-danger d-none" id="messageError">Vui lòng nhập nội dung tin nhắn</small>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg fw-bold" id="submitBtn">
+                                    <i class="bi bi-send me-2"></i>Gửi tin nhắn
+                                </button>
+                            </div>
+
+                            <div id="responseMessage"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="col-lg-4">
+                <!-- Info Cards -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-primary mb-3">
+                            <i class="bi bi-geo-alt-fill me-2"></i>Địa chỉ
+                        </h5>
+                        <p class="text-muted">
+                            123 Đường Lê Lợi, Quận 1<br>
+                            TP. Hồ Chí Minh, Việt Nam
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-primary mb-3">
+                            <i class="bi bi-telephone-fill me-2"></i>Điện thoại
+                        </h5>
+                        <p class="text-muted">
+                            <a href="tel:+84123456789" class="text-decoration-none text-primary">
+                                +84 (123) 456-789
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-primary mb-3">
+                            <i class="bi bi-envelope-fill me-2"></i>Email
+                        </h5>
+                        <p class="text-muted">
+                            <a href="mailto:support@lmsacademy.vn" class="text-decoration-none text-primary">
+                                support@lmsacademy.vn
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-primary mb-3">
+                            <i class="bi bi-clock-fill me-2"></i>Giờ làm việc
+                        </h5>
+                        <p class="text-muted mb-1">
+                            <strong>Thứ 2 - Thứ 6:</strong> 8:00 - 18:00
+                        </p>
+                        <p class="text-muted mb-1">
+                            <strong>Thứ 7:</strong> 9:00 - 15:00
+                        </p>
+                        <p class="text-muted">
+                            <strong>Chủ nhật:</strong> Nghỉ
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Social Links -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold text-primary mb-3">
+                            <i class="bi bi-share me-2"></i>Theo dõi chúng tôi
+                        </h5>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-facebook"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-twitter"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-linkedin"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-youtube"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+@await Html.PartialAsync("_CtaSection")
+
+<style>
+    .form-control,
+    .form-select {
+        border-radius: 8px;
+        border: 2px solid var(--color-gray-200);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.2rem rgba(122, 31, 43, 0.15);
+    }
+
+    .text-accent {
+        color: var(--color-accent);
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 10px 25px rgba(122, 31, 43, 0.12) !important;
+        transform: translateY(-3px);
+    }
+
+
+
+        .form-control-lg {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const contactForm = document.getElementById('contactForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const responseMessage = document.getElementById('responseMessage');
+
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Validation
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            if (!name || !email || !subject || !message) {
+                showAlert('danger', 'Vui lòng điền đầy đủ thông tin bắt buộc!');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+            try {
+                const response = await fetch('/contact/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        name: name,
+                        email: email,
+                        phone: document.getElementById('phone').value,
+                        subject: subject,
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', data.message);
+                    contactForm.reset();
+                } else {
+                    showAlert('danger', data.message);
+                }
+            } catch (error) {
+                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại sau!');
+                console.error('Error:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-send me-2"></i>Gửi tin nhắn';
+            }
+        });
+
+        function showAlert(type, message) {
+            responseMessage.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                const alert = responseMessage.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+    </script>
+}

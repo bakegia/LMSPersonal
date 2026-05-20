@@ -1,0 +1,77 @@
+﻿@using LMSfinal.Models.EF
+@model IEnumerable<ApplicationUser>
+@{
+    var classroom = ViewBag.Classroom as Classroom;
+    DateTime selectedDate = ViewBag.SelectedDate;
+    var existingAttendance = ViewBag.ExistingAttendance as Dictionary<string, bool>;
+}
+
+@{
+    ViewData["Title"] = "Attendance";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="container mt-4">
+    <h3>Điểm danh lớp: @classroom.NameClass</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="id" value="@classroom.Id" />
+                <div class="col-md-4">
+                    <label class="form-label">Chọn ngày điểm danh:</label>
+                    <input type="date" name="date" class="form-control"
+                           value="@selectedDate.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+                </div>
+                <div class="col-md-4">
+                    <a asp-action="AttendanceHistory" asp-route-id="@classroom.Id" class="btn btn-outline-info">
+                        <i class="fa-solid fa-history"></i> Xem lịch sử
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <form asp-action="SaveAttendance" method="post">
+        <input type="hidden" name="classroomId" value="@classroom.Id" />
+        <input type="hidden" name="attendanceDate" value="@selectedDate.ToString("yyyy-MM-dd")" />
+
+        <table class="table table-hover border">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Họ và Tên</th>
+                    <th class="text-center">Hiện diện</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var students = Model.ToList();
+                    for (int i = 0; i < students.Count; i++)
+                    {
+                        var student = students[i];
+                        bool isPresent = existingAttendance.ContainsKey(student.Id) && existingAttendance[student.Id];
+
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>
+                                @student.FullName
+                                <input type="hidden" name="models[@i].StudentId" value="@student.Id" />
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input type="checkbox" name="models[@i].IsPresent" value="true"
+                                           class="form-check-input" @(isPresent ? "checked" : "") />
+                                    <input type="hidden" name="models[@i].IsPresent" value="false" />
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-success btn-lg">Lưu điểm danh</button>
+    </form>
+</div>
+

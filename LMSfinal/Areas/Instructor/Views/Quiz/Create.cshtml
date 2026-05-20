@@ -1,0 +1,86 @@
+﻿@using LMSfinal.Models.EF
+@model Quiz
+
+@{
+    ViewData["Title"] = "Tạo Quiz mới";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-circle-plus"></i> Tạo Quiz mới
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" novalidate>
+                        <!-- Chọn Bài học -->
+                        <div class="mb-3">
+                            <label asp-for="LessonId" class="form-label fw-bold">
+                                <i class="fa-solid fa-book"></i> Bài học
+                                <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="LessonId" asp-items="ViewBag.Lessons as SelectList"
+                                    class="form-select form-select-lg" required>
+                                <option value="">-- Chọn bài học --</option>
+                            </select>
+                            <span asp-validation-for="LessonId" class="text-danger small d-block mt-1"></span>
+                        </div>
+
+                        <!-- Tiêu đề -->
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label fw-bold">
+                                <i class="fa-solid fa-heading"></i> Tiêu đề
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Title" class="form-control form-control-lg"
+                                   placeholder="Nhập tiêu đề quiz" required />
+                            <span asp-validation-for="Title" class="text-danger small d-block mt-1"></span>
+                        </div>
+
+                        <!-- Mô tả -->
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">
+                                <i class="fa-solid fa-align-left"></i> Mô tả
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="4"
+                                      placeholder="Nhập mô tả quiz (không bắt buộc)"></textarea>
+                            <span asp-validation-for="Description" class="text-danger small d-block mt-1"></span>
+                        </div>
+
+                        <!-- Điểm qua -->
+                        <div class="mb-3">
+                            <label asp-for="PassingScore" class="form-label fw-bold">
+                                <i class="fa-solid fa-percent"></i> Điểm qua (%)
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="PassingScore" type="number" class="form-control form-control-lg"
+                                   placeholder="Nhập điểm qua (0-100)" min="0" max="100" value="70" required />
+                            <small class="text-muted d-block mt-1">Nhập giá trị từ 0 đến 100 (mặc định: 70%)</small>
+                            <span asp-validation-for="PassingScore" class="text-danger small d-block mt-1"></span>
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-save"></i> Tạo Quiz
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary btn-lg">
+                                <i class="fa-solid fa-xmark"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

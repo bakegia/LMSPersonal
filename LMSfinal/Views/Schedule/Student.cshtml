@@ -1,0 +1,38 @@
+﻿@using LMSfinal.Models.ViewModels
+@model List<ScheduleVM>
+
+@{
+    var days = new[] { 1, 2, 3, 4, 5, 6 }; // Thứ 2-7
+    var groupedSlots = Model
+        .GroupBy(x => new { x.TimeSlotId, x.Start, x.End })
+        .OrderBy(x => x.Key.Start)
+        .ToList();
+}
+
+<h3>Thời khóa biểu</h3>
+
+<select id="weekSelect" class="form-control mb-3">
+    @foreach (var w in ViewBag.Weeks)
+    {
+        <option value="@w.WeekNumber"
+                selected="@(w.WeekNumber == ViewBag.SelectedWeek)">
+            Tuần @w.WeekNumber (@w.StartDate.ToString("dd/MM"))
+        </option>
+    }
+</select>
+
+<div id="scheduleTable">
+    @Html.Partial("_ScheduleTable", Model)
+</div>
+
+@section Scripts {
+    <script>
+        $("#weekSelect").change(function () {
+            var week = $(this).val();
+
+            $.get("/Schedule/GetScheduleByWeek", { week: week }, function (res) {
+                $("#scheduleTable").html(res);
+            });
+        });
+    </script>
+}

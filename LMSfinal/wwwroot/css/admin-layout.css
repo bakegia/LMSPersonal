@@ -1,0 +1,69 @@
+﻿/* Layout General */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    min-height: 100vh;
+    background: #1e293b; /* Màu xanh đen hiện đại */
+    color: #cbd5e1;
+    transition: all 0.3s;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    background: rgba(0,0,0,0.2);
+    padding: 20px;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.sidebar a {
+    color: #cbd5e1;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    margin: 4px 10px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+    .sidebar a i {
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+
+    .sidebar a:hover {
+        background: #334155;
+        color: #38bdf8;
+        transform: translateX(5px);
+    }
+
+    .sidebar a.active {
+        background: #38bdf8;
+        color: #fff;
+    }
+
+/* Main Content */
+.main-content {
+    background: #ffffff;
+    min-height: 95vh;
+    margin: 15px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+.logout-btn {
+    margin-top: 50px !important;
+    border: 1px solid #ef4444;
+    color: #ef4444 !important;
+}
+
+    .logout-btn:hover {
+        background: #ef4444 !important;
+        color: #fff !important;
+    }

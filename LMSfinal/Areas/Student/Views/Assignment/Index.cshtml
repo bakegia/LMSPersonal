@@ -1,0 +1,373 @@
+﻿@using LMSfinal.Models.ViewModels.Student
+@model StudentAssignmentIndexViewModel
+@{
+    ViewData["Title"] = "Bài Tập Của Tôi";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .assignment-badge {
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        display: inline-block;
+    }
+
+    .badge-upcoming {
+        background-color: #cfe2ff;
+        color: #084298;
+    }
+
+    .badge-overdue {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+
+    .badge-submitted {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .assignment-item {
+        transition: all 0.3s;
+        cursor: pointer;
+        border-left: 4px solid #0d6efd;
+    }
+
+    .assignment-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateX(5px);
+    }
+
+    .due-date-soon {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .tab-content {
+        min-height: 400px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="mb-4">
+        <h2><i class="fa-solid fa-tasks"></i> Bài Tập Của Tôi</h2>
+        <p class="text-muted">Quản lý và nộp bài tập cho các lớp học</p>
+    </div>
+
+    <!-- Thống kê nhanh -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center p-3 shadow-sm">
+                <h5 class="card-title">Tất Cả</h5>
+                <h2>@Model.AllAssignments.Count</h2>
+                <small>bài tập</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark text-center p-3 shadow-sm">
+                <h5 class="card-title">Sắp Hạn</h5>
+                <h2>@Model.UpcomingAssignments.Count</h2>
+                <small>bài tập</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white text-center p-3 shadow-sm">
+                <h5 class="card-title">Quá Hạn</h5>
+                <h2>@Model.OverdueAssignments.Count</h2>
+                <small>bài tập</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center p-3 shadow-sm">
+                <h5 class="card-title">Đã Nộp</h5>
+                <h2>@Model.SubmittedAssignments.Count</h2>
+                <small>bài tập</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" 
+                    data-bs-target="#all-content" type="button" role="tab">
+                <i class="fa-solid fa-list"></i> Tất Cả (@Model.AllAssignments.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="upcoming-tab" data-bs-toggle="tab" 
+                    data-bs-target="#upcoming-content" type="button" role="tab">
+                <i class="fa-solid fa-hourglass-end"></i> Sắp Hạn (@Model.UpcomingAssignments.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="overdue-tab" data-bs-toggle="tab" 
+                    data-bs-target="#overdue-content" type="button" role="tab">
+                <i class="fa-solid fa-exclamation-circle"></i> Quá Hạn (@Model.OverdueAssignments.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="submitted-tab" data-bs-toggle="tab" 
+                    data-bs-target="#submitted-content" type="button" role="tab">
+                <i class="fa-solid fa-check-circle"></i> Đã Nộp (@Model.SubmittedAssignments.Count)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Tất cả bài tập -->
+        <div class="tab-pane fade show active" id="all-content" role="tabpanel">
+            @if (Model.AllAssignments.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var assignment in Model.AllAssignments.OrderByDescending(a => a.DueDate))
+                    {
+                        var now = DateTime.Now;
+                        var isOverdue = now > assignment.DueDate && !assignment.IsSubmitted;
+                        var daysLeft = (assignment.DueDate - now).Days;
+
+                        <div class="col-lg-6">
+                            <a asp-area="Student" asp-action="Details" asp-route-studentAssignmentId="@assignment.Id" 
+                               class="text-decoration-none">
+                                <div class="card assignment-item h-100">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-start">
+                                        <h6 class="card-title mb-1">@assignment.Title</h6>
+                                        @if (assignment.IsSubmitted)
+                                        {
+                                            <span class="assignment-badge badge-submitted">
+                                                <i class="fa-solid fa-check"></i> Đã Nộp
+                                            </span>
+                                        }
+                                        else if (isOverdue)
+                                        {
+                                            <span class="assignment-badge badge-overdue">
+                                                <i class="fa-solid fa-exclamation"></i> Quá Hạn
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="assignment-badge badge-upcoming">
+                                                <i class="fa-solid fa-clock"></i> Sắp Hạn
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">@assignment.Description</p>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Môn học</small>
+                                                <strong class="text-primary">@assignment.CourseTitle</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Hạn chót</small>
+                                                <strong class="@(isOverdue ? "due-date-soon" : "text-success")">
+                                                    @assignment.DueDate.ToString("dd/MM HH:mm")
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light d-flex justify-content-between">
+                                        <small class="text-muted">
+                                            <i class="fa-regular fa-calendar"></i>
+                                            @if (daysLeft < 0)
+                                            {
+                                                <span>Quá hạn @Math.Abs(daysLeft) ngày</span>
+                                            }
+                                            else if (daysLeft == 0)
+                                            {
+                                                <span class="text-danger"><strong>Hôm nay là hạn!</strong></span>
+                                            }
+                                            else
+                                            {
+                                                <span>Còn @daysLeft ngày</span>
+                                            }
+                                        </small>
+                                        @if (!string.IsNullOrEmpty(assignment.Score))
+                                        {
+                                            <span class="badge bg-success">Điểm: @assignment.Score</span>
+                                        }
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info text-center py-5">
+                    <i class="fa-solid fa-inbox fa-2x mb-3 d-block"></i>
+                    <p>Chưa có bài tập nào</p>
+                </div>
+            }
+        </div>
+
+        <!-- Bài tập sắp hạn -->
+        <div class="tab-pane fade" id="upcoming-content" role="tabpanel">
+            @if (Model.UpcomingAssignments.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var assignment in Model.UpcomingAssignments)
+                    {
+                        var daysLeft = (assignment.DueDate - DateTime.Now).Days;
+
+                        <div class="col-lg-6">
+                            <a asp-action="Details" asp-route-studentAssignmentId="@assignment.Id" 
+                               class="text-decoration-none">
+                                <div class="card assignment-item h-100">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-start">
+                                        <h6 class="card-title mb-1">@assignment.Title</h6>
+                                        <span class="assignment-badge badge-upcoming">
+                                            <i class="fa-solid fa-hourglass-end"></i> Còn @daysLeft ngày
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">@assignment.Description</p>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Môn học</small>
+                                                <strong class="text-primary">@assignment.CourseTitle</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Hạn chót</small>
+                                                <strong class="text-success">@assignment.DueDate.ToString("dd/MM HH:mm")</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <a asp-action="Submit" asp-route-studentAssignmentId="@assignment.Id" 
+                                           class="btn btn-sm btn-primary w-100">
+                                            <i class="fa-solid fa-paper-plane"></i> Nộp Bài
+                                        </a>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success text-center py-5">
+                    <i class="fa-solid fa-smile fa-2x mb-3 d-block"></i>
+                    <p>Không có bài tập sắp hạn!</p>
+                </div>
+            }
+        </div>
+
+        <!-- Bài tập quá hạn -->
+        <div class="tab-pane fade" id="overdue-content" role="tabpanel">
+            @if (Model.OverdueAssignments.Any())
+            {
+                <div class="alert alert-danger mb-3">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <strong>Chú ý!</strong> Những bài tập này đã quá hạn. Bạn vẫn có thể nộp bài nhưng sẽ bị tính là nộp trễ.
+                </div>
+                <div class="row g-3">
+                    @foreach (var assignment in Model.OverdueAssignments)
+                    {
+                        var daysLate = (DateTime.Now - assignment.DueDate).Days;
+
+                        <div class="col-lg-6">
+                            <a asp-action="Details" asp-route-studentAssignmentId="@assignment.Id" 
+                               class="text-decoration-none">
+                                <div class="card assignment-item h-100" style="border-left-color: #dc3545;">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-start">
+                                        <h6 class="card-title mb-1">@assignment.Title</h6>
+                                        <span class="assignment-badge badge-overdue">
+                                            <i class="fa-solid fa-clock"></i> Quá @daysLate ngày
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">@assignment.Description</p>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Môn học</small>
+                                                <strong class="text-primary">@assignment.CourseTitle</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Hạn chót</small>
+                                                <strong class="text-danger">@assignment.DueDate.ToString("dd/MM HH:mm")</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light">
+                                        <a asp-action="Submit" asp-route-studentAssignmentId="@assignment.Id" 
+                                           class="btn btn-sm btn-warning w-100">
+                                            <i class="fa-solid fa-paper-plane"></i> Nộp Bài (Trễ Hạn)
+                                        </a>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info text-center py-5">
+                    <i class="fa-solid fa-check-circle fa-2x mb-3 d-block text-success"></i>
+                    <p>Không có bài tập quá hạn!</p>
+                </div>
+            }
+        </div>
+
+        <!-- Bài tập đã nộp -->
+        <div class="tab-pane fade" id="submitted-content" role="tabpanel">
+            @if (Model.SubmittedAssignments.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var assignment in Model.SubmittedAssignments)
+                    {
+                        <div class="col-lg-6">
+                            <a asp-action="Details" asp-route-studentAssignmentId="@assignment.Id" 
+                               class="text-decoration-none">
+                                <div class="card assignment-item h-100" style="border-left-color: #198754;">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-start">
+                                        <h6 class="card-title mb-1">@assignment.Title</h6>
+                                        <span class="assignment-badge badge-submitted">
+                                            <i class="fa-solid fa-check"></i> Đã Nộp
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">@assignment.Description</p>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Môn học</small>
+                                                <strong class="text-primary">@assignment.CourseTitle</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Nộp lúc</small>
+                                                <strong>@assignment.SubmittedAt?.ToString("dd/MM HH:mm")</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light d-flex justify-content-between">
+                                        @if (!string.IsNullOrEmpty(assignment.Score))
+                                        {
+                                            <span class="badge bg-success fs-6">Điểm: @assignment.Score</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Chờ chấm điểm</span>
+                                        }
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info text-center py-5">
+                    <i class="fa-solid fa-paper-plane fa-2x mb-3 d-block"></i>
+                    <p>Bạn chưa nộp bài tập nào</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

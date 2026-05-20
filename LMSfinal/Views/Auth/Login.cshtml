@@ -1,0 +1,82 @@
+﻿@model LMSfinal.Models.ViewModels.LoginVM
+@{
+    ViewData["Title"] = "Đăng Nhập";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Đăng nhập hệ thống</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Hệ thống</a></li>
+                    <li class="breadcrumb-item active">Đăng nhập</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid d-flex justify-content-center">
+        <div class="col-md-5">
+
+            <div class="card card-info shadow-sm mt-5">
+                <div class="card-header text-center">
+                    <h3 class="card-title w-100">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Trang đăng nhập
+                    </h3>
+                </div>
+
+                <div class="card-body">
+
+                    <form asp-controller="Auth" asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="All" class="text-danger"></div>
+
+                        <input asp-for="ReturnUrl" type="hidden" />
+
+                        <div class="form-group">
+                            <label asp-for="UserName"></label>
+                            <input asp-for="UserName" class="form-control" placeholder="Nhập tên tài khoản" />
+                            <span asp-validation-for="UserName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Password"></label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Nhập mật khẩu" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-between align-items-center">
+                                <button type="submit" class="btn btn-info px-4">
+                                    Đăng nhập
+                                </button>
+
+                                @* NÚT QUÊN MẬT KHẨU THÊM TẠI ĐÂY *@
+                                <a asp-controller="Auth" asp-action="ForgotPassword" class="text-info text-sm">
+                                    Quên mật khẩu?
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+
+                    <hr />
+                    <div class="text-center">
+                        <p class="mb-0 text-muted">Chưa có tài khoản? <a href="#" class="text-info">Đăng ký ngay</a></p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

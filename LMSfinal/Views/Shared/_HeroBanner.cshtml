@@ -1,0 +1,33 @@
+﻿@{
+    var heroTitle = ViewData["HeroTitle"]?.ToString() ?? "Khóa học trực tuyến chất lượng cao";
+    var heroSubtitle = ViewData["HeroSubtitle"]?.ToString() ?? "Phát triển kỹ năng của bạn cùng các chuyên gia hàng đầu";
+    var heroBg = ViewData["HeroBg"]?.ToString() ?? "/images/hero-bg.jpg";
+}
+
+<section class="hero-banner position-relative overflow-hidden" style="background-image: url('@heroBg'); background-size: cover; background-position: center; min-height: 550px;">
+    <!-- Overlay -->
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0, 0, 0, 0.5); z-index: 1;"></div>
+    
+    <!-- Content -->
+    <div class="container position-relative" style="z-index: 2; padding-top: 120px;">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold text-white mb-3 animate-fade-in">
+                    @heroTitle
+                </h1>
+                <p class="lead text-light mb-4 animate-fade-in-delay">
+                    @heroSubtitle
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="/courses" class="btn btn-primary btn-lg">
+                        <i class="bi bi-play-circle me-2"></i> Khám phá khóa học
+                    </a>
+                    <a href="/contact" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-chat-dots me-2"></i> Liên hệ chúng tôi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+

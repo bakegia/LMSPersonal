@@ -1,0 +1,155 @@
+﻿@model IEnumerable<LMSfinal.Models.EF.ClassroomStudent>
+
+@{
+    ViewData["Title"] = "Khóa học của tôi";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    var completedIds = ViewBag.CompletedLessonIds as List<int> ?? new List<int>();
+}
+
+<div class="container py-5">
+    <h2 class="text-white mb-4 fw-bold">Khóa học của tôi</h2>
+
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            // Tính toán phần trăm hoàn thành dựa trên UserProgress
+            var allLessons = item.Classroom.Sections.SelectMany(s => s.Lessons).ToList();
+            int total = allLessons.Count();
+            int completed = allLessons.Count(l => completedIds.Contains(l.Id));
+            int percent = total > 0 ? (int)((double)completed / total * 100) : 0;
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="course-card shadow-lg">
+                    <div class="course-header" style="background-image: url('@(item.Classroom.Course?.ImageUrl ?? "/images/default-bg.jpg")');">
+                        <div class="overlay"></div>
+                    </div>
+
+                    <div class="course-body">
+                        <h5 class="course-title text-truncate">
+                            [@item.Classroom.ClassCode] @item.Classroom.NameClass
+                        </h5>
+
+                        <div class="course-subtitle mb-4">
+                            Học phần giảng dạy bằng tiếng Việt
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fa-solid fa-chart-line me-2 progress-icon"></i>
+                                <span class="progress-text">@percent% complete</span>
+                            </div>
+
+                            <div class="progress-track">
+                                <div class="progress-bar-fill" style="width: @percent%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <a asp-action="Details" asp-route-id="@item.ClassroomId" class="btn btn-view-details w-100">
+                                Vào học ngay
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Tổng thể Dark Mode */
+    body {
+        background-color: #121212;
+    }
+
+    .course-card {
+        background-color: #1e1e1e;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        border: 1px solid #333;
+    }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            border-color: #4facfe;
+        }
+
+    .course-header {
+        height: 140px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+
+    .overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50%;
+        background: linear-gradient(transparent, #1e1e1e);
+    }
+
+    .course-body {
+        padding: 20px;
+    }
+
+    .course-title {
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .course-subtitle {
+        color: #888;
+        font-size: 0.85rem;
+        background: #2a2a2a;
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 4px;
+    }
+
+    /* Tùy chỉnh thanh Progress giống ảnh mẫu */
+    .progress-icon {
+        color: #aaa;
+        font-size: 0.8rem;
+    }
+
+    .progress-text {
+        color: #ccc;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .progress-track {
+        height: 8px;
+        background-color: #333;
+        border-radius: 10px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        /* Màu Gradient xanh giống ảnh */
+        background: linear-gradient(90deg, #3a7bd5 0%, #3aedb8 100%);
+        box-shadow: 0 0 10px rgba(58, 237, 184, 0.3);
+        transition: width 0.5s ease-in-out;
+    }
+
+    .btn-view-details {
+        background-color: transparent;
+        color: #4facfe;
+        border: 1px solid #4facfe;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+
+        .btn-view-details:hover {
+            background-color: #4facfe;
+            color: white;
+        }
+</style>

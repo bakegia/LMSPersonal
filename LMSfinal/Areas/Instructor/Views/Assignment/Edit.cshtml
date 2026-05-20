@@ -1,0 +1,104 @@
+﻿@using LMSfinal.Models.EF
+@model Assignment
+@{
+    ViewData["Title"] = "Chỉnh Sửa Bài Tập";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa Bài Tập
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="InstructorId" />
+                        <input type="hidden" asp-for="CreatedDate" />
+
+                        <!-- Tiêu đề -->
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-bold">
+                                <i class="fa-solid fa-heading"></i> Tiêu Đề Bài Tập
+                            </label>
+                            <input asp-for="Title" class="form-control form-control-lg"
+                                   placeholder="Nhập tiêu đề bài tập..." />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Chọn lớp học (chỉ hiển thị, không sửa) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fa-solid fa-school"></i> Lớp Học
+                            </label>
+                            <div class="alert alert-info mb-0">
+                                <i class="fa-solid fa-info-circle"></i>
+                                @Model.Classroom?.NameClass (@Model.Classroom?.ClassCode)
+                            </div>
+                            <small class="text-muted d-block mt-2">*Không thể thay đổi lớp học sau khi tạo</small>
+                            <input type="hidden" asp-for="ClassroomId" />
+                        </div>
+
+                        <!-- Mô tả -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-bold">
+                                <i class="fa-solid fa-align-left"></i> Mô Tả Ngắn
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="2"
+                                      placeholder="Nhập mô tả ngắn về bài tập..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Nội dung chi tiết -->
+                        <div class="mb-4">
+                            <label asp-for="Content" class="form-label fw-bold">
+                                <i class="fa-solid fa-file-lines"></i> Nội Dung Chi Tiết & Hướng Dẫn
+                            </label>
+                            <textarea asp-for="Content" class="form-control" rows="6"
+                                      placeholder="Nhập nội dung chi tiết, yêu cầu, hướng dẫn làm bài..."></textarea>
+                            <span asp-validation-for="Content" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Hạn chót -->
+                        <div class="mb-4">
+                            <label asp-for="DueDate" class="form-label fw-bold">
+                                <i class="fa-regular fa-calendar"></i> Hạn Chót Nộp Bài
+                            </label>
+                            <input asp-for="DueDate" type="datetime-local" class="form-control form-control-lg" />
+                            <span asp-validation-for="DueDate" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Alert thông tin -->
+                        <div class="alert alert-info">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <strong>Lưu ý:</strong> Những thay đổi sẽ được cập nhật cho tất cả học sinh.
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex gap-2 justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary btn-lg">
+                                <i class="fa-solid fa-arrow-left"></i> Quay Lại
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fa-solid fa-save"></i> Cập Nhật
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

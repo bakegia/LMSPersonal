@@ -1,0 +1,36 @@
+﻿@model LMSfinal.Models.EF.UserProfile
+@{
+    ViewData["Title"] = "Chi tiết thông tin";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+<h2>Profile Detail</h2>
+
+@if (Model == null)
+{
+    <p>Not found</p>
+}
+else
+{
+    <div class="card p-3">
+        <p>Ảnh Đại Diện</p>
+        @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+        {
+            <img src="@Model.ProfilePictureUrl" width="150" />
+        }
+
+        <p><b>MSSV:</b> @Model.Mssv</p>
+        <p><b>Name:</b> @Model.Fullname</p>
+        <p><b>Email:</b> @Model.Email</p>
+        <p><b>Phone:</b> @Model.PhoneNumber</p>
+        <p><b>DOB:</b> @Model.DateOfBirth.ToShortDateString()</p>
+        <p><b>Gender:</b> @Model.Gender</p>
+        <p><b>Address:</b> @Model.Address</p>
+
+        <a asp-action="UpdateProfile"
+           asp-route-userId="@Model.UserId"
+           class="btn btn-warning">Edit</a>
+        <a asp-area="admin" asp-controller="Account" asp-action="index"
+          
+           class="btn btn-green">Quay Lại</a>
+    </div>
+}

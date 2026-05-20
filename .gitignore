@@ -1,0 +1,36 @@
+# ===========================================================
+# IGNORE THƯ MỤC ROOT & HỆ THỐNG (Visual Studio / IDE)
+# ===========================================================
+
+## Thư mục cấu hình ẩn của Visual Studio (Cực kỳ quan trọng)
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## Các file biên dịch (Build Artifacts) ở mọi cấp độ
+[Bb]in/
+[Oo]bj/
+core/
+
+## File cấu hình của Rider hoặc các IDE khác
+.idea/
+.vscode/
+
+## Các file tạm và log
+*.log
+*.tmp
+*.temp
+
+# ===========================================================
+# IGNORE DỮ LIỆU & MEDIA (Đã cấu hình trước đó)
+# ===========================================================
+LMSfinal/Data/*.mdf
+LMSfinal/Data/*.ldf
+**/wwwroot/images/
+**/wwwroot/videos/
+**/wwwroot/lib/
+**/appsettings.json
+**/appsettings.Development.json
+**/Program.cs

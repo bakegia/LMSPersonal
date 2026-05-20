@@ -1,0 +1,312 @@
+﻿@using LMSfinal.Models.EF
+@{
+    ViewData["Title"] = "LMS Academy - Nền tảng học tập trực tuyến";
+    ViewData["MetaDescription"] = "Khám phá hàng ngàn khóa học chất lượng cao từ các chuyên gia hàng đầu. Bắt đầu học lập trình, thiết kế, kinh doanh ngay hôm nay!";
+    ViewData["MetaKeywords"] = "học tập trực tuyến, khóa học online, kỹ năng, lập trình, thiết kế";
+    ViewData["MetaImage"] = "/images/og-home.jpg";
+
+    dynamic homeData = Model;
+    List<Course> courses = homeData?.Courses ?? new List<Course>();
+    List<Category> categories = homeData?.Categories ?? new List<Category>();
+}
+
+<!-- Hero Banner -->
+@await Html.PartialAsync("_HeroBanner", new {
+    HeroTitle = "Phát triển kỹ năng của bạn với các khóa học trực tuyến",
+    HeroSubtitle = "Học từ các chuyên gia hàng đầu. Bắt đầu miễn phí ngay hôm nay!",
+    HeroBg = "/images/hero-bg.jpg"
+})
+
+<!-- Stats Section -->
+<section class="stats-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <h3 class="display-5 fw-bold text-primary mb-2">
+                        <i class="bi bi-book-fill me-2"></i>@(courses.Count > 0 ? courses.Count : 500)+
+                    </h3>
+                    <p class="text-muted">Khóa học</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <h3 class="display-5 fw-bold text-success mb-2">
+                        <i class="bi bi-people-fill me-2"></i>50K+
+                    </h3>
+                    <p class="text-muted">Học viên hoạt động</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <h3 class="display-5 fw-bold text-warning mb-2">
+                        <i class="bi bi-star-fill me-2"></i>4.8/5
+                    </h3>
+                    <p class="text-muted">Đánh giá trung bình</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <h3 class="display-5 fw-bold text-danger mb-2">
+                        <i class="bi bi-award-fill me-2"></i>@(categories.Count > 0 ? categories.Count : 20)+
+                    </h3>
+                    <p class="text-muted">Danh mục</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Grid -->
+@await Html.PartialAsync("_CategoriesGrid", categories)
+
+<!-- Featured Courses -->
+@if (courses.Any())
+{
+    @await Html.PartialAsync("_FeaturedCourses", courses)
+}
+
+<!-- Benefits Section -->
+<section class="benefits-section py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold mb-2">Tại sao chọn LMS Academy?</h2>
+                <p class="text-muted lead">Chúng tôi cung cấp những lợi ích tuyệt vời để hỗ trợ hành trình học tập của bạn</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Benefit 1 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="benefit-card p-4 rounded-3 bg-light h-100">
+                    <div class="benefit-icon mb-3">
+                        <i class="bi bi-lightning-fill text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Học tập linh hoạt</h5>
+                    <p class="text-muted">Học bất kỳ lúc nào, bất kỳ nơi đâu với tốc độ của riêng bạn</p>
+                </div>
+            </div>
+
+            <!-- Benefit 2 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="benefit-card p-4 rounded-3 bg-light h-100">
+                    <div class="benefit-icon mb-3">
+                        <i class="bi bi-person-check-fill text-success" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Giảng viên chuyên nghiệp</h5>
+                    <p class="text-muted">Các khóa học được dạy bởi các chuyên gia có kinh nghiệm</p>
+                </div>
+            </div>
+
+            <!-- Benefit 3 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="benefit-card p-4 rounded-3 bg-light h-100">
+                    <div class="benefit-icon mb-3">
+                        <i class="bi bi-award-fill text-warning" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Chứng chỉ công nhân</h5>
+                    <p class="text-muted">Nhận chứng chỉ sau khi hoàn thành khóa học</p>
+                </div>
+            </div>
+
+            <!-- Benefit 4 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="benefit-card p-4 rounded-3 bg-light h-100">
+                    <div class="benefit-icon mb-3">
+                        <i class="bi bi-chat-dots-fill text-info" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Hỗ trợ cộng đồng</h5>
+                    <p class="text-muted">Kết nối với các học viên khác và nhận hỗ trợ từ cộng đồng</p>
+                </div>
+            </div>
+
+            <!-- Benefit 5 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="benefit-card p-4 rounded-3 bg-light h-100">
+                    <div class="benefit-icon mb-3">
+                        <i class="bi bi-graph-up-arrow text-danger" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Phát triển kỹ năng</h5>
+                    <p class="text-muted">Học những kỹ năng thực tế được yêu cầu trên thị trường</p>
+                </div>
+            </div>
+
+            <!-- Benefit 6 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="benefit-card p-4 rounded-3 bg-light h-100">
+                    <div class="benefit-icon mb-3">
+                        <i class="bi bi-phone-fill text-secondary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Hỗ trợ 24/7</h5>
+                    <p class="text-muted">Đội hỗ trợ của chúng tôi luôn sẵn sàng giúp bạn</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials-section py-5 bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold mb-2">Đánh giá từ học viên</h2>
+                <p class="text-muted lead">Nghe những gì học viên của chúng tôi nói về kinh nghiệm của họ</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Testimonial 1 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="testimonial-card card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                        </div>
+                        <p class="card-text">
+                            "Khóa học này đã thay đổi cuộc sống của tôi. Tôi đã tìm thấy công việc mơ ước của mình!"
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <img src="/images/avatars/avatar1.jpg" alt="Nguyễn Văn A" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;" />
+                            <div>
+                                <p class="mb-0 fw-bold">Nguyễn Văn A</p>
+                                <small class="text-muted">Lập trình viên</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testimonial 2 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="testimonial-card card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                        </div>
+                        <p class="card-text">
+                            "Giáo viên rất tận tâm và nội dung khóa học rất dễ hiểu. Tôi đã học được rất nhiều!"
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <img src="/images/avatars/avatar2.jpg" alt="Trần Thị B" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;" />
+                            <div>
+                                <p class="mb-0 fw-bold">Trần Thị B</p>
+                                <small class="text-muted">Thiết kế đồ họa</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testimonial 3 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="testimonial-card card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                        </div>
+                        <p class="card-text">
+                            "Nền tảng này rất thân thiện với người dùng. Tôi đã hoàn thành 5 khóa học!"
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <img src="/images/avatars/avatar3.jpg" alt="Lê Văn C" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;" />
+                            <div>
+                                <p class="mb-0 fw-bold">Lê Văn C</p>
+                                <small class="text-muted">Chuyên gia kinh doanh</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Courses Section -->
+<section class="latest-courses-section py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold mb-2">Khóa học mới nhất</h2>
+                <p class="text-muted lead">Những khóa học được cập nhật gần đây</p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <a href="/courses" class="btn btn-outline-primary">
+                    Xem tất cả <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+
+        @if (courses.Any())
+        {
+            <div class="row g-4">
+                @foreach (var course in courses.OrderByDescending(c => c.Id).Take(3))
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card course-card h-100 shadow-sm hover-card border-0">
+                            <div class="position-relative overflow-hidden" style="height: 200px;">
+                                <img src="@(course.ImageUrl ?? "/images/course-placeholder.jpg")" 
+                                     alt="@course.Title" 
+                                     class="card-img-top" 
+                                     style="height: 100%; object-fit: cover; width: 100%;" />
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-danger">Mới</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <small class="badge bg-light text-dark">@course.Category?.Name ?? "Khác"</small>
+                                </div>
+                                <h5 class="card-title">@course.Title</h5>
+                                <p class="card-text text-muted small">
+                                    @(string.IsNullOrWhiteSpace(course.Description) ? 
+                                        "Khóa học chất lượng cao" : 
+                                        course.Description?.Substring(0, Math.Min(60, course.Description.Length)) + "...")
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-file-earmark-text me-1"></i>
+                                        @(course.Sections?.Count ?? 0) chương
+                                    </span>
+                                    <span class="text-muted small">
+                                        <i class="bi bi-people me-1"></i>
+                                        @(course.Quantity ?? 0)
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-top-0">
+                                <a href="/courses/@course.Slug" class="btn btn-primary w-100">
+                                    Xem chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<!-- CTA Section -->
+@await Html.PartialAsync("_CtaSection")
+
+

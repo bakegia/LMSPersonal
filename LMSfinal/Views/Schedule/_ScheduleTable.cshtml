@@ -1,0 +1,66 @@
+﻿@using LMSfinal.Models.ViewModels
+@model List<ScheduleVM>
+
+@{
+    var days = new[]
+    {
+        DayOfWeek.Monday,
+        DayOfWeek.Tuesday,
+        DayOfWeek.Wednesday,
+        DayOfWeek.Thursday,
+        DayOfWeek.Friday,
+        DayOfWeek.Saturday
+    };
+
+    var slots = Model
+        .GroupBy(x => x.TimeSlotId)
+        .OrderBy(x => x.Key)
+        .ToList();
+}
+
+<table class="table table-bordered text-center">
+    <thead class="table-dark">
+        <tr>
+            <th>Ca</th>
+            <th>Thứ 2</th>
+            <th>Thứ 3</th>
+            <th>Thứ 4</th>
+            <th>Thứ 5</th>
+            <th>Thứ 6</th>
+            <th>Thứ 7</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var slot in slots)
+        {
+            var first = slot.First();
+
+            <tr>
+                <td>
+                    @first.TimeSlotName <br />
+                    (@first.Start - @first.End)
+                </td>
+
+                @foreach (var d in days)
+                {
+                    var cell = Model.FirstOrDefault(x =>
+                    x.TimeSlotId == slot.Key &&
+                    x.Day == d
+                    );
+
+                    <td>
+                        @if (cell != null)
+                        {
+                            <div>
+                                <b>@cell.CourseName</b><br />
+                                @cell.ClassName<br />
+                                <small>@cell.InstructorName</small>
+                            </div>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

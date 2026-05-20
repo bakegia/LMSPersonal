@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "Trang Chủ Giảng Viên";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="fw-bold">Chào mừng trở lại, Instructor!</h4>
+            <p class="text-secondary">Bạn có <span class="text-primary fw-bold">3 lớp dạy</span> trong hôm nay.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <h5 class="fw-bold mb-4"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Lịch dạy hôm nay</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Môn học</th>
+                                <th>Phòng/Link</th>
+                                <th>Sĩ số</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">07:30 - 09:30</td>
+                                <td>Lập trình ASP.NET Core</td>
+                                <td>Phòng A2.10</td>
+                                <td>45/50</td>
+                                <td class="text-end"><a href="#" class="btn btn-sm btn-outline-primary">Vào lớp</a></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">13:30 - 15:30</td>
+                                <td>Kiểm thử phần mềm</td>
+                                <td>Google Meet</td>
+                                <td>38/40</td>
+                                <td class="text-end"><a href="#" class="btn btn-sm btn-outline-primary">Vào lớp</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 mb-4 bg-primary text-white">
+                <h6>Việc cần làm</h6>
+                <hr>
+                <div class="d-flex mb-3">
+                    <input type="checkbox" class="me-2"> <span>Chấm bài tập Lab 5</span>
+                </div>
+                <div class="d-flex mb-3">
+                    <input type="checkbox" class="me-2"> <span>Phê duyệt 5 đơn xin nghỉ</span>
+                </div>
+                <div class="d-flex">
+                    <input type="checkbox" class="me-2"> <span>Upload tài liệu Chương 4</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

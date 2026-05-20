@@ -1,0 +1,51 @@
+﻿@using LMSfinal.Models.ViewModels
+@model List<ScheduleVM>
+
+<h2>DEBUG SCHEDULE</h2>
+
+<div style="margin-bottom:20px;">
+    <b>UserId:</b> @ViewBag.UserId
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Day</th>
+            <th>TimeSlotId</th>
+            <th>TimeSlot</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Course</th>
+            <th>Class</th>
+            <th>Instructor</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int i = 1;
+        }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@i</td>
+                <td>@item.Day</td>
+                <td>@item.TimeSlotId</td>
+                <td>@item.TimeSlotName</td>
+                <td>@item.Start</td>
+                <td>@item.End</td>
+                <td>@item.CourseName</td>
+                <td>@item.ClassName</td>
+                <td>@item.InstructorName</td>
+            </tr>
+            i++;
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <div style="color:red;">
+        ❌ KHÔNG CÓ DỮ LIỆU
+    </div>
+}

@@ -1,0 +1,270 @@
+﻿/* ============================================
+   COLOR SCHEME - MAIN THEME COLORS
+   ============================================ */
+
+:root {
+    /* Primary Colors */
+    --color-primary: #7A1F2B; /* Đỏ đô chính */
+    --color-primary-dark: #5A1520; /* Đỏ đô tối hơn */
+    --color-primary-light: #A83E52; /* Đỏ đô sáng hơn */
+    /* Secondary Colors */
+    --color-secondary: #A85A54; /* Đỏ nâu - dùng cho hover, accent */
+    --color-secondary-dark: #8B4A46; /* Đỏ nâu tối */
+    --color-secondary-light: #C97A72; /* Đỏ nâu sáng */
+    /* Accent Colors */
+    --color-accent: #5D4037; /* Nâu tối - dùng cho text, borders */
+    --color-accent-dark: #3E2723; /* Nâu tối đặc biệt tối */
+    --color-accent-light: #8B6F63; /* Nâu sáng */
+    /* Background Colors */
+    --color-light: #F8F4F1; /* Kem - background chính */
+    --color-light-2: #FAF8F5; /* Kem sáng hơn */
+    --color-white: #FFFFFF; /* Trắng thuần */
+    /* Neutral Colors */
+    --color-gray-100: #F5F3F0;
+    --color-gray-200: #E8E5E0;
+    --color-gray-300: #D7D3CC;
+    --color-gray-400: #C5BFB5;
+    --color-gray-500: #9E9691;
+    --color-gray-600: #7A7470;
+    --color-gray-700: #5A5450;
+    --color-gray-800: #3A3430;
+    --color-gray-900: #2A2420;
+    /* Status Colors */
+    --color-success: #6BA03A;
+    --color-warning: #E8A03A;
+    --color-danger: #C73E1D;
+    --color-info: #6B8AD3;
+}
+
+/* ============================================
+   BOOTSTRAP COLOR OVERRIDES
+   ============================================ */
+
+/* Override Bootstrap Primary */
+.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+    .btn-primary:hover {
+        background-color: var(--color-primary-dark);
+        border-color: var(--color-primary-dark);
+    }
+
+    .btn-primary:focus,
+    .btn-primary:active {
+        background-color: var(--color-primary-dark);
+        border-color: var(--color-primary-dark);
+        box-shadow: 0 0 0 0.25rem rgba(122, 31, 43, 0.25);
+    }
+
+.btn-outline-primary {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+    .btn-outline-primary:hover {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+
+    .btn-outline-primary:focus {
+        box-shadow: 0 0 0 0.25rem rgba(122, 31, 43, 0.25);
+    }
+
+/* Text Colors */
+.text-primary {
+    color: var(--color-primary) !important;
+}
+
+.text-secondary {
+    color: var(--color-accent) !important;
+}
+
+/* Link Colors */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+    a:hover {
+        color: var(--color-primary-dark);
+        text-decoration: underline;
+    }
+
+/* Badge Colors */
+.badge-primary {
+    background-color: var(--color-primary);
+}
+
+.badge-secondary {
+    background-color: var(--color-secondary);
+}
+
+/* ============================================
+   NAVIGATION BAR CUSTOMIZATION
+   ============================================ */
+
+.navbar-dark.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.navbar-dark .navbar-brand {
+    color: var(--color-white) !important;
+    font-weight: 700;
+}
+
+.navbar-dark .nav-link {
+    color: rgba(248, 244, 241, 0.85) !important;
+    transition: all 0.3s ease;
+}
+
+    .navbar-dark .nav-link:hover {
+        color: var(--color-light) !important;
+    }
+
+.navbar-dark .btn-outline-light {
+    border-color: rgba(248, 244, 241, 0.5);
+    color: var(--color-light);
+}
+
+    .navbar-dark .btn-outline-light:hover {
+        background-color: var(--color-secondary);
+        border-color: var(--color-secondary);
+    }
+
+/* ============================================
+   FOOTER CUSTOMIZATION
+   ============================================ */
+
+.bg-dark {
+    background-color: var(--color-accent-dark) !important;
+}
+
+footer {
+    background-color: var(--color-accent-dark) !important;
+}
+
+    footer .border-secondary {
+        border-color: var(--color-gray-500) !important;
+    }
+
+/* ============================================
+   CARD CUSTOMIZATION
+   ============================================ */
+
+.card {
+    border-color: var(--color-gray-200);
+    box-shadow: 0 4px 12px rgba(122, 31, 43, 0.08);
+}
+
+    .card:hover {
+        box-shadow: 0 10px 25px rgba(122, 31, 43, 0.15);
+    }
+
+/* ============================================
+   FORM ELEMENTS CUSTOMIZATION
+   ============================================ */
+
+.form-control {
+    border-color: var(--color-gray-300);
+    color: var(--color-accent);
+}
+
+    .form-control:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.2rem rgba(122, 31, 43, 0.15);
+        color: var(--color-accent);
+    }
+
+.form-select {
+    border-color: var(--color-gray-300);
+    color: var(--color-accent);
+}
+
+    .form-select:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.2rem rgba(122, 31, 43, 0.15);
+    }
+
+/* ============================================
+   INPUT & BUTTON FOCUS STATES
+   ============================================ */
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(122, 31, 43, 0.5);
+}
+
+/* ============================================
+   BADGE STYLING
+   ============================================ */
+
+.badge.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--color-secondary) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--color-danger) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--color-success) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--color-warning) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--color-info) !important;
+}
+
+.badge.bg-light {
+    background-color: var(--color-light) !important;
+    color: var(--color-accent) !important;
+}
+
+/* ============================================
+   BACKGROUND COLORS
+   ============================================ */
+
+.bg-light {
+    background-color: var(--color-light) !important;
+}
+
+.bg-secondary {
+    background-color: var(--color-secondary) !important;
+}
+
+.bg-accent {
+    background-color: var(--color-accent) !important;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.text-muted {
+    color: var(--color-gray-600) !important;
+}
+
+.border-secondary {
+    border-color: var(--color-gray-300) !important;
+}
+
+.border-primary {
+    border-color: var(--color-primary) !important;
+}

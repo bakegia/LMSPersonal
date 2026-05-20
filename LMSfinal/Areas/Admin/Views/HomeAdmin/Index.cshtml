@@ -1,0 +1,143 @@
+﻿@{
+    ViewData["Title"] = "Hệ thống quản trị LMS";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-icon bg-primary text-white">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <h6 class="text-muted fw-normal m-0">Tổng người dùng</h6>
+                        <h3 class="fw-bold mt-1">1,250</h3>
+                    </div>
+                    <span class="text-success small"><i class="fa-solid fa-arrow-up"></i> 5%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-icon bg-success text-white">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h6 class="text-muted fw-normal m-0">Môn học hiện có</h6>
+                        <h3 class="fw-bold mt-1">48</h3>
+                    </div>
+                    <span class="text-success small"><i class="fa-solid fa-plus"></i> 2 mới</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-icon bg-warning text-white">
+                            <i class="fa-solid fa-school"></i>
+                        </div>
+                        <h6 class="text-muted fw-normal m-0">Lớp học đang chạy</h6>
+                        <h3 class="fw-bold mt-1">12</h3>
+                    </div>
+                    <span class="text-danger small"><i class="fa-solid fa-clock"></i> Full</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-icon bg-info text-white">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                        </div>
+                        <h6 class="text-muted fw-normal m-0">Giảng viên</h6>
+                        <h3 class="fw-bold mt-1">32</h3>
+                    </div>
+                    <span class="text-info small"><i class="fa-solid fa-check"></i> Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-4">Xu hướng đăng ký học tập (7 ngày qua)</h5>
+                <div style="height: 300px;">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-4">Phân bổ Ngành học</h5>
+                <div style="height: 300px;">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // 1. Cấu hình Biểu đồ Đường (Line Chart)
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'],
+                datasets: [{
+                    label: 'Lượt đăng ký mới',
+                    data: @Html.Raw(Json.Serialize(ViewBag.ChartData)), // Sau này thay bằng dữ liệu từ @Model
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { drawBorder: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Cấu hình Biểu đồ Tròn (Doughnut Chart)
+        const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
+        new Chart(doughnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Công nghệ', 'Kinh tế', 'Ngoại ngữ'],
+                datasets: [{
+                    data: [45, 25, 30], // Tỷ lệ %
+                    backgroundColor: ['#38bdf8', '#10b981', '#f59e0b'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+}
+

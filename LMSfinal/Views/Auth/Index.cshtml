@@ -1,0 +1,58 @@
+﻿@using LMSfinal.Models.ViewModels
+@model List<ScheduleItem>
+@{
+    var days = new[] {
+        DayOfWeek.Monday,
+        DayOfWeek.Tuesday,
+        DayOfWeek.Wednesday,
+        DayOfWeek.Thursday,
+        DayOfWeek.Friday,
+        DayOfWeek.Saturday,
+        DayOfWeek.Sunday
+    };
+}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Tiết</th>
+            @foreach (var d in days)
+            {
+                <th>@d</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @for (int period = 1; period <= 16; period++)
+        {
+            <tr>
+                <td>Tiết @period</td>
+
+                @foreach (var day in days)
+                {
+                    var item = Model.FirstOrDefault(x =>
+                    x.Day == day &&
+                    x.PeriodStart <= period &&
+                    x.PeriodEnd >= period);
+
+                    <td>
+                        @if (item != null && item.PeriodStart == period)
+                        {
+                            var span = item.PeriodEnd - item.PeriodStart + 1;
+
+                        <td rowspan="@span" style="background:#cfe2ff;">
+                            <b>@item.Subject</b><br />
+                            Phòng: @item.Room<br />
+                            GV: @item.Teacher
+                        </td>
+                    }
+                    else if (item == null)
+                    {
+                        <td></td>
+                    }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

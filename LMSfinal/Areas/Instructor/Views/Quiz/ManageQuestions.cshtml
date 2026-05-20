@@ -1,0 +1,317 @@
+﻿@using LMSfinal.Models.EF
+@model Quiz
+
+@{
+    ViewData["Title"] = "Quản lý câu hỏi";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-tasks"></i> Quản lý câu hỏi
+            </h2>
+            <p class="text-muted">Quiz: <strong>@Model.Title</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                <i class="fas fa-plus"></i> Thêm câu hỏi
+            </button>
+        </div>
+    </div>
+
+    <!-- Thông báo -->
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Danh sách câu hỏi -->
+    @if (Model.Questions.Any())
+    {
+        <div class="row">
+            @{
+                int questionIndex = 1;
+            }
+            @foreach (var question in Model.Questions.OrderBy(q => q.Order))
+            {
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow-sm border-left-primary">
+                        <div class="card-header bg-light border-bottom-primary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-question-circle text-primary"></i>
+                                        Câu @questionIndex
+                                    </h6>
+                                    <p class="mb-0">@question.QuestionText</p>
+                                </div>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-star"></i> @question.Points điểm
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Danh sách đáp án -->
+                            @if (question.Answers.Any())
+                            {
+                                <div class="mb-3">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-list"></i> Đáp án:
+                                    </h6>
+                                    <div class="list-group list-group-sm">
+                                        @foreach (var answer in question.Answers.OrderBy(a => a.Order))
+                                        {
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <strong>@answer.AnswerLabel.</strong> @answer.AnswerText
+                                                    @if (answer.IsCorrect)
+                                                    {
+                                                        <span class="badge bg-success ms-2">
+                                                            <i class="fas fa-check"></i> Đúng
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <div class="btn-group btn-group-sm ms-2">
+                                                    <button type="button" class="btn btn-outline-warning"
+                                                            onclick="editAnswer(@answer.Id)"
+                                                            title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            onclick="confirmDeleteAnswer(@answer.Id)"
+                                                            title="Xóa">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning mb-3">
+                                    <i class="fas fa-exclamation-triangle"></i> Chưa có đáp án
+                                </div>
+                            }
+
+                            <!-- Nút hành động -->
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-info"
+                                        data-bs-toggle="modal" data-bs-target="#addAnswerModal"
+                                        onclick="setCurrentQuestionId(@question.Id)">
+                                    <i class="fas fa-plus"></i> Thêm đáp án
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning"
+                                        onclick="editQuestion(@question.Id)">
+                                    <i class="fas fa-edit"></i> Chỉnh sửa
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmDeleteQuestion(@question.Id)">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                questionIndex++;
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-info-circle fa-2x mb-3"></i>
+            <p>Chưa có câu hỏi nào. Hãy thêm câu hỏi mới!</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                <i class="fas fa-plus"></i> Thêm câu hỏi
+            </button>
+        </div>
+    }
+
+    <!-- Nút quay lại -->
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- Modal Thêm câu hỏi -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Thêm câu hỏi mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addQuestionForm" method="post" asp-action="AddQuestion" asp-route-quizId="@Model.Id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Nội dung câu hỏi <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="QuestionText" class="form-control" rows="4"
+                                  placeholder="Nhập nội dung câu hỏi" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Số điểm <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" name="Points" class="form-control"
+                               value="1" min="1" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Thêm câu hỏi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm đáp án -->
+<div class="modal fade" id="addAnswerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Thêm đáp án
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addAnswerForm" method="post" asp-action="AddAnswer">
+                <input type="hidden" id="questionIdInput" name="questionId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Ký hiệu đáp án (A, B, C, D...) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="AnswerLabel" class="form-control"
+                               maxlength="1" placeholder="A" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Nội dung đáp án <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="AnswerText" class="form-control" rows="3"
+                                  placeholder="Nhập nội dung đáp án" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="IsCorrect" class="form-check-input"
+                                   id="isCorrectCheck" />
+                            <label class="form-check-label" for="isCorrectCheck">
+                                <i class="fas fa-check"></i> Đây là đáp án đúng
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Thêm đáp án
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa câu hỏi -->
+<div class="modal fade" id="deleteQuestionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa câu hỏi này? Tất cả đáp án sẽ bị xóa theo.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteQuestionForm" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa đáp án -->
+<div class="modal fade" id="deleteAnswerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa đáp án này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteAnswerForm" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentQuestionId = 0;
+
+        function setCurrentQuestionId(questionId) {
+            currentQuestionId = questionId;
+            document.getElementById('questionIdInput').value = questionId;
+        }
+
+        function confirmDeleteQuestion(questionId) {
+            const form = document.getElementById('deleteQuestionForm');
+            form.action = `/Instructor/Quiz/DeleteQuestion/${questionId}`;
+            const modal = new bootstrap.Modal(document.getElementById('deleteQuestionModal'));
+            modal.show();
+        }
+
+        function confirmDeleteAnswer(answerId) {
+            const form = document.getElementById('deleteAnswerForm');
+            form.action = `/Instructor/Quiz/DeleteAnswer/${answerId}`;
+            const modal = new bootstrap.Modal(document.getElementById('deleteAnswerModal'));
+            modal.show();
+        }
+
+        function editQuestion(questionId) {
+            // Có thể mở modal để chỉnh sửa hoặc chuyển hướng
+            alert('Chức năng chỉnh sửa câu hỏi sẽ được thêm vào');
+        }
+
+        function editAnswer(answerId) {
+            // Có thể mở modal để chỉnh sửa hoặc chuyển hướng
+            alert('Chức năng chỉnh sửa đáp án sẽ được thêm vào');
+        }
+    </script>
+}

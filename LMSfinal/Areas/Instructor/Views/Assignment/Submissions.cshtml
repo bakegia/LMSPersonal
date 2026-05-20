@@ -1,0 +1,226 @@
+﻿@using LMSfinal.Models.EF
+@model Assignment
+@{
+    ViewData["Title"] = $"Bài nộp - {Model.Title}";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .submission-card {
+        border-left: 4px solid #0d6efd;
+        transition: all 0.3s;
+    }
+
+        .submission-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+    .submission-status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+
+    .status-submitted {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+
+    .status-late {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+
+    .score-badge {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại
+        </a>
+        <h2 class="mt-3">
+            <i class="fa-solid fa-file-export"></i> Bài Nộp: @Model.Title
+        </h2>
+        <p class="text-muted">
+            <i class="fa-solid fa-school"></i> @Model.Classroom?.NameClass
+            | <i class="fa-regular fa-calendar"></i> Hạn: @Model.DueDate.ToString("dd/MM/yyyy HH:mm")
+        </p>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center p-3">
+                <h5 class="card-title">Tổng Học Sinh</h5>
+                <h2>@Model.StudentAssignments?.Count</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center p-3">
+                <h5 class="card-title">Đã Nộp</h5>
+                <h2>@(Model.StudentAssignments?.Count(sa => sa.IsSubmitted) ?? 0)</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white text-center p-3">
+                <h5 class="card-title">Chưa Nộp</h5>
+                <h2>@(Model.StudentAssignments?.Count(sa => !sa.IsSubmitted) ?? 0)</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center p-3">
+                <h5 class="card-title">Được Chấm</h5>
+                <h2>@(Model.StudentAssignments?.Count(sa => !string.IsNullOrEmpty(sa.Score)) ?? 0)</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách bài nộp -->
+    @if (Model.StudentAssignments?.Any() == true)
+    {
+        <div class="row g-3">
+            @foreach (var studentAssignment in Model.StudentAssignments.OrderBy(sa => sa.IsSubmitted).ThenByDescending(sa => sa.LastSubmittedAt))
+            {
+                var isLate = studentAssignment.LastSubmittedAt.HasValue && studentAssignment.LastSubmittedAt > Model.DueDate;
+                var latestSubmission = studentAssignment.Submissions?.OrderByDescending(s => s.SubmittedAt).FirstOrDefault();
+
+                <div class="col-lg-6">
+                    <div class="card submission-card">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">@studentAssignment.Student?.FullName</h6>
+                                    <small class="text-muted">@studentAssignment.Student?.UserName</small>
+                                </div>
+                                @if (studentAssignment.IsSubmitted)
+                                {
+                                    @if (isLate)
+                                    {
+                                        <span class="submission-status status-late">Nộp Trễ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="submission-status status-submitted">Đã Nộp</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="submission-status status-pending">Chưa Nộp</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Thông tin nộp bài -->
+                            @if (studentAssignment.IsSubmitted && latestSubmission != null)
+                            {
+                                <div class="mb-3 p-2 bg-light rounded">
+                                    <small class="text-muted d-block">
+                                        <i class="fa-regular fa-calendar"></i> Nộp lần cuối:
+                                    </small>
+                                    <strong>@latestSubmission.SubmittedAt.ToString("dd/MM/yyyy HH:mm:ss")</strong>
+                                    @if (isLate)
+                                    {
+                                        <br />
+                                        <span class="text-danger small">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Trễ hạn
+                                        </span>
+                                    }
+                                </div>
+
+                                <!-- Nội dung bài nộp -->
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-2">
+                                        <i class="fa-solid fa-file-lines"></i> Nội dung bài nộp:
+                                    </small>
+                                    <div class="bg-white border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                                        <small>@latestSubmission.SubmissionText</small>
+                                    </div>
+                                </div>
+
+                                <!-- File đính kèm -->
+                                @if (!string.IsNullOrEmpty(latestSubmission.AttachmentUrl))
+                                {
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fa-solid fa-paperclip"></i> File đính kèm:
+                                        </small>
+                                        <br />
+                                        <a href="@latestSubmission.AttachmentUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa-solid fa-download"></i> Tải xuống
+                                        </a>
+                                    </div>
+                                }
+
+                                <!-- Số lần nộp -->
+                                <div class="mb-3 p-2 bg-info bg-opacity-10 rounded">
+                                    <small class="text-muted">
+                                        <i class="fa-solid fa-repeat"></i> Số lần nộp:
+                                        <strong>@studentAssignment.Submissions?.Count</strong>
+                                    </small>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning mb-0">
+                                    <i class="fa-solid fa-exclamation-circle"></i> Học sinh chưa nộp bài
+                                </div>
+                            }
+
+                            <!-- Điểm số và nhận xét -->
+                            @if (!string.IsNullOrEmpty(studentAssignment.Score))
+                            {
+                                <div class="p-2 bg-success bg-opacity-10 rounded mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Điểm số:</small>
+                                        <span class="score-badge text-success">@studentAssignment.Score</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(studentAssignment.Feedback))
+                                    {
+                                        <hr class="my-2" />
+                                        <small><strong>Nhận xét:</strong></small>
+                                        <p class="mb-0 small mt-2">@studentAssignment.Feedback</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-light">
+                            <a asp-action="Grade" asp-route-studentAssignmentId="@studentAssignment.Id"
+                               class="btn btn-sm btn-primary w-100">
+                                <i class="fa-solid fa-pen"></i>
+                                @if (string.IsNullOrEmpty(studentAssignment.Score))
+                                {
+                                    <span>Chấm Điểm</span>
+                                }
+                                else
+                                {
+                                    <span>Cập Nhật Điểm</span>
+                                }
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-5">
+            <i class="fa-solid fa-inbox fa-2x mb-3 d-block"></i>
+            <p>Chưa có bài nộp nào</p>
+        </div>
+    }
+</div>

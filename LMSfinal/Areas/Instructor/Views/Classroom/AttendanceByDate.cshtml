@@ -1,0 +1,46 @@
+﻿<h2>@Model.ClassroomName - Điểm danh</h2>
+
+<form method="get">
+    <input type="hidden" name="id" value="@Model.ClassroomId" />
+    <input type="date" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+    <button type="submit">Xem</button>
+</form>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tên học viên</th>
+            <th>Email</th>
+            <th>Trạng thái</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int i = 1;
+        }
+        @foreach (var s in Model.Students)
+        {
+            <tr>
+                <td>@i</td>
+                <td>@s.FullName</td>
+                <td>@s.Email</td>
+                <td>
+                    @if (s.IsPresent == true)
+                    {
+                        <span class="text-success">✔ Có mặt</span>
+                    }
+                    else if (s.IsPresent == false)
+                    {
+                        <span class="text-danger">✘ Vắng</span>
+                    }
+                    else
+                    {
+                        <span class="text-warning">Chưa điểm danh</span>
+                    }
+                </td>
+            </tr>
+            i++;
+        }
+    </tbody>
+</table>

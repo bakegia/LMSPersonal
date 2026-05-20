@@ -1,0 +1,42 @@
+﻿@using LMSfinal.Models.EF
+@model Classroom
+
+<h2>@Model.NameClass - Điểm danh</h2>
+
+<form asp-action="TakeAttendance" method="post">
+    <input type="hidden" name="classroomId" value="@Model.Id" />
+
+    <input type="date" name="attendanceDate" class="form-control mb-3" required />
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Tên</th>
+                <th>Email</th>
+                <th>Có mặt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int i = 1;
+            }
+            @foreach (var cs in Model.ClassroomStudents)
+            {
+                <tr>
+                    <td>@i</td>
+                    <td>@cs.Student.FullName</td>
+                    <td>@cs.Student.Email</td>
+                    <td>
+                        <!-- fix checkbox -->
+                        <input type="hidden" name="attendance[@cs.StudentId]" value="false" />
+                        <input type="checkbox" name="attendance[@cs.StudentId]" value="true" />
+                    </td>
+                </tr>
+                i++;
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Lưu</button>
+</form>

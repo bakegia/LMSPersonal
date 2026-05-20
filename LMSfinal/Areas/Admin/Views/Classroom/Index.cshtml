@@ -1,0 +1,107 @@
+﻿@using LMSfinal.Models.EF
+@{
+    ViewData["Title"] = "Quản lý Lớp học";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+@model List<Classroom>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">
+                <i class="fa-solid fa-school me-2 text-primary"></i>Quản lý Lớp học
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Create" class="btn btn-primary px-4">
+                <i class="fa-solid fa-plus me-2"></i>Tạo Lớp Học Mới
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="fa-solid fa-info-circle me-2"></i>Chưa có lớp học nào. <a asp-action="Create">Tạo lớp mới</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="card shadow-sm border-0 h-100 transition-all">
+                        <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fa-solid fa-school-flag me-2"></i>@item.NameClass
+                                </h6>
+                                <small class="text-light">Mã: <strong>@item.ClassCode</strong></small>
+                            </div>
+                            <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
+                                @(item.IsActive ? "Đang hoạt động" : "Tạm dừng")
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <p class="text-muted mb-2">
+                                <i class="fa-solid fa-book me-2 text-primary"></i>
+                                <strong>Môn học:</strong> @item.Course?.Title
+                            </p>
+
+                            <p class="text-muted mb-2">
+                                <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>
+                                <strong>Giảng viên:</strong> @item.Instructor?.UserName
+                            </p>
+
+                            <p class="text-muted mb-2">
+                                <i class="fa-solid fa-calendar-days me-2 text-primary"></i>
+                                <strong>Thời gian:</strong> @item.StartDate.ToString("dd/MM/yyyy") - @item.EndDate.ToString("dd/MM/yyyy")
+                            </p>
+
+                            <p class="text-muted">
+                                <i class="fa-solid fa-users me-2 text-primary"></i>
+                                <strong>Số học viên:</strong> @(item.ClassroomStudents?.Count ?? 0)
+                            </p>
+
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <p class="text-muted small border-top pt-2 mt-2">
+                                    <strong>Mô tả:</strong> @item.Description
+                                </p>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-light border-top py-3">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a asp-area="Admin" asp-controller="Classroom" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white">
+                                    <i class="fa-solid fa-eye me-1"></i>Chi tiết
+                                </a>
+                                <a asp-area="Admin" asp-controller="Classroom" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>Sửa
+                                </a>
+                                <a asp-area="Admin" asp-controller="Classroom" asp-action="IsActive" asp-route-id="@item.Id" class="btn btn-sm @(item.IsActive ? "btn-danger" : "btn-success")">
+                                    <i class="fa-solid @(item.IsActive ? "fa-lock" : "fa-unlock") me-1"></i>
+                                    @(item.IsActive ? "Tạm dừng" : "Kích hoạt")
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .transition-all:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+        transform: translateY(-2px);
+    }
+</style>

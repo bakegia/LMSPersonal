@@ -1,0 +1,34 @@
+﻿@using LMSfinal.Models.ViewModels
+@model List<ScheduleVM>
+
+<select id="weekSelect" class="form-select">
+    @foreach (var w in ViewBag.Weeks)
+    {
+        <option value="@w.WeekNumber">@w.Display</option>
+    }
+</select>
+
+<div id="tkbContainer">
+    @Html.Partial("_ScheduleTable", Model)
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $('#weekSelect').change(function () {
+
+        var week = $(this).val();
+
+        $.ajax({
+            url: '/Schedule/GetScheduleByWeek',
+            type: 'GET',
+            data: { week: week },
+            success: function (result) {
+                $('#tkbContainer').html(result);
+            },
+            error: function () {
+                alert('Load thất bại');
+            }
+        });
+
+    });
+</script>

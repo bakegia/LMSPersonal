@@ -1,0 +1,232 @@
+﻿@using LMSfinal.Models.EF
+@model Course
+@{
+    ViewData["Title"] = $"{Model?.Title} - LMS Academy";
+    ViewData["MetaDescription"] = Model?.Description ?? $"Khóa học {Model?.Title}";
+    ViewData["MetaKeywords"] = $"{Model?.Title}, {Model?.Category?.Name}";
+    ViewData["MetaImage"] = Model?.ImageUrl ?? "/images/og-course.jpg";
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="bg-light py-3 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="/courses">Khóa học</a></li>
+            <li class="breadcrumb-item"><a href="/categories/@Model?.Category?.Slug">@Model?.Category?.Name</a></li>
+            <li class="breadcrumb-item active">@Model?.Title</li>
+        </ol>
+    </div>
+</nav>
+
+<!-- Course Header -->
+<section class="course-header py-5" style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%); color: white;">
+    <div class="container">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-8">
+                <div class="mb-3">
+                    <span class="badge bg-light text-primary me-2">
+                        <i class="bi bi-folder me-1"></i>@Model?.Category?.Name
+                    </span>
+                    <span class="badge bg-warning">
+                        <i class="bi bi-star-fill me-1"></i>4.8 (128 đánh giá)
+                    </span>
+                </div>
+                <h1 class="display-4 fw-bold mb-3">@Model?.Title</h1>
+                <p class="lead">@Model?.Description</p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <button class="btn btn-light btn-lg fw-bold" data-bs-toggle="modal" data-bs-target="#enrollModal">
+                        <i class="bi bi-play-circle me-2"></i>Đăng ký khóa học
+                    </button>
+                    <button class="btn btn-outline-light btn-lg fw-bold">
+                        <i class="bi bi-share me-2"></i>Chia sẻ
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <img src="@(Model?.ImageUrl ?? "/images/course-placeholder.jpg")" 
+                     alt="@Model?.Title" 
+                     class="img-fluid rounded-3 shadow-lg" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Course Content -->
+<section class="course-content py-5">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Overview -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title fw-bold text-primary mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Tổng quan khóa học
+                        </h2>
+                        <p class="text-muted">@Model?.Description</p>
+                    </div>
+                </div>
+
+                <!-- Course Sections -->
+                @if (Model?.Sections != null && Model.Sections.Any())
+                {
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title fw-bold text-primary mb-4">
+                                <i class="bi bi-list-check me-2"></i>Nội dung khóa học
+                            </h2>
+
+                            <div class="accordion" id="courseSections">
+                                @foreach (var s in Model.Sections.OrderBy(s => s.Order))
+                                {
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section@section.Id">
+                                                <i class="bi bi-folder-fill me-2 text-primary"></i>
+                                                @s.Title
+                                                <span class="badge bg-light text-primary ms-2">@(s.Lessons?.Count ?? 0) bài học</span>
+                                            </button>
+                                        </h2>
+                                        <div id="section@s.Id" class="accordion-collapse collapse" data-bs-parent="#courseSections">
+                                            <div class="accordion-body">
+                                                @if (s.Lessons != null &&   s.Lessons.Any())
+                                                {
+                                                    <ul class="list-unstyled">
+                                                        @foreach (var lesson in s.Lessons.OrderBy(l => l.Order))
+                                                        {
+                                                            <li class="mb-2">
+                                                                <span class="badge bg-secondary me-2">
+                                                                    <i class="bi bi-play-circle me-1"></i>Bài @lesson.Order
+                                                                </span>
+                                                                <strong>@lesson.Title</strong>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Course Info Card -->
+                <div class="card border-0 shadow-sm position-sticky" style="top: 80px;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-primary mb-4">
+                            <i class="bi bi-info-square me-2"></i>Thông tin khóa học
+                        </h5>
+
+                        <div class="info-item mb-3">
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-file-earmark-text me-2"></i>Chương
+                            </p>
+                            <p class="fw-bold">@(Model?.Sections?.Count ?? 0) chương</p>
+                        </div>
+
+                        <div class="info-item mb-3">
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-play-circle me-2"></i>Bài học
+                            </p>
+                            <p class="fw-bold">@(Model?.Sections?.Sum(s => s.Lessons?.Count ?? 0) ?? 0) bài học</p>
+                        </div>
+
+                        <div class="info-item mb-3">
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-people me-2"></i>Học viên
+                            </p>
+                            <p class="fw-bold">@(Model?.Quantity ?? 0) học viên</p>
+                        </div>
+
+                        <div class="info-item mb-3">
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-star-fill me-2"></i>Đánh giá
+                            </p>
+                            <p class="fw-bold">4.8/5 (128 đánh giá)</p>
+                        </div>
+
+                        <hr>
+
+                        <button class="btn btn-primary w-100 btn-lg fw-bold" data-bs-toggle="modal" data-bs-target="#enrollModal">
+                            <i class="bi bi-play-circle me-2"></i>Đăng ký ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Related Courses -->
+<section class="related-courses py-5 bg-light">
+    <div class="container">
+        <h2 class="display-6 fw-bold text-primary mb-4">
+            <i class="bi bi-lightning me-2"></i>Khóa học liên quan
+        </h2>
+        <div class="row g-4">
+            <p class="text-muted">Các khóa học liên quan sẽ được hiển thị tại đây</p>
+        </div>
+    </div>
+</section>
+
+<!-- Enroll Modal -->
+<div class="modal fade" id="enrollModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-check-circle me-2"></i>Đăng ký khóa học
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Bạn chuẩn bị đăng ký khóa học:</p>
+                <p class="fw-bold text-primary mb-3">@Model?.Title</p>
+                <p class="text-muted">Vui lòng <a href="/auth/login">đăng nhập</a> để tiếp tục đăng ký khóa học này.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <a href="/auth/login" class="btn btn-primary fw-bold">
+                    <i class="bi bi-right-to-bracket me-2"></i>Đăng nhập
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .accordion-button {
+        color: var(--color-accent);
+        transition: all 0.3s ease;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background-color: var(--color-light);
+        color: var(--color-primary);
+    }
+
+    .accordion-button:hover {
+        background-color: var(--color-light);
+    }
+
+    .info-item {
+        padding: 1rem;
+        background-color: var(--color-light);
+        border-radius: 8px;
+    }
+
+ 
+
+        .card.position-sticky {
+            position: relative !important;
+            top: auto !important;
+            margin-top: 2rem;
+        }
+    }
+</style>

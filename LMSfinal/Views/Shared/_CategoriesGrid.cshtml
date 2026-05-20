@@ -1,0 +1,112 @@
+﻿@using LMSfinal.Models.EF
+@model List<Category>
+
+<section class="categories-section py-5 bg-white">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold mb-2">Danh mục khóa học</h2>
+                <p class="text-muted lead">Tìm khóa học theo lĩnh vực của bạn</p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <a href="/categories" class="btn btn-outline-primary">
+                    Xem tất cả <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="row g-4">
+                @foreach (var category in Model.Take(8))
+                {
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                        <a href="/categories/@category.Slug" class="text-decoration-none">
+                            <div class="category-card h-100 p-4 rounded-3 text-center transition-all">
+                                <div class="category-icon mb-3">
+                                    <i class="bi bi-book-fill" style="font-size: 3rem; color: #0d6efd;"></i>
+                                </div>
+                                <h5 class="card-title fw-bold mb-2">@category.Name</h5>
+                                <p class="card-text text-muted small">
+                                    <i class="bi bi-collection me-1"></i>
+                                    @(category.Courses?.Count ?? 0) khóa học
+                                </p>
+                                <div class="category-hover-text mt-2" style="display: none; opacity: 0;">
+                                    <small class="text-primary fw-bold">Khám phá →</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                Chưa có danh mục nào. Vui lòng quay lại sau!
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .category-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .category-card:hover::before {
+        left: 100%;
+    }
+
+    .category-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .category-card:hover .category-icon i {
+        color: #0056b3;
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .category-card .category-icon i {
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    .category-card:hover .card-title {
+        color: #0d6efd;
+    }
+
+    .card-title {
+        transition: color 0.3s ease;
+        color: #1a202c;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+
+        .category-icon i {
+            font-size: 2rem !important;
+        }
+    }
+</style>

@@ -1,0 +1,36 @@
+﻿@using LMSfinal.Models.EF
+@model Classroom
+
+<h2>@Model.NameClass - Danh sách học viên</h2>
+
+<a asp-area="Instructor"
+   asp-controller="Classroom"
+   asp-action="TakeAttendance"
+   asp-route-id="@Model.Id"
+   class="btn btn-success mb-3">
+    📋 Điểm danh
+</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Tên</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int i = 1;
+        }
+        @foreach (var cs in Model.ClassroomStudents)
+        {
+            <tr>
+                <td>@i</td>
+                <td>@cs.Student.FullName</td>
+                <td>@cs.Student.Email</td>
+            </tr>
+            i++;
+        }
+    </tbody>
+</table>

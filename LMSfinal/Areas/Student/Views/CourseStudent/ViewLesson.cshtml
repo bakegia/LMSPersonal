@@ -1,0 +1,322 @@
+﻿@using LMSfinal.Models.EF
+@model Lesson
+@{
+    ViewData["Title"] = $"{Model.Section?.Classroom?.Course?.Title} - {Model.Title}";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .quiz-container {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #0d6efd;
+    }
+
+    .question-item {
+        background: white;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .answer-option {
+        padding: 12px;
+        margin: 10px 0;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+        .answer-option:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+        }
+
+        .answer-option input[type="radio"] {
+            margin-right: 10px;
+        }
+
+            .answer-option input[type="radio"]:checked + label {
+                font-weight: bold;
+                color: #0d6efd;
+            }
+
+        .answer-option.selected {
+            background-color: #cfe2ff;
+            border-color: #0d6efd;
+        }
+
+    .quiz-result {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 6px;
+        display: none;
+    }
+
+        .quiz-result.success {
+            background-color: #d1e7dd;
+            border: 2px solid #198754;
+            color: #0f5132;
+            display: block;
+        }
+
+        .quiz-result.fail {
+            background-color: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #842029;
+            display: block;
+        }
+
+    .score-badge {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Bài học -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="fa-solid fa-book"></i> @Model.Title
+            </h4>
+        </div>
+        <div class="card-body">
+            <!-- Video -->
+            @if (!string.IsNullOrEmpty(Model.VideoUrl))
+            {
+                <div class="mb-4">
+                    <iframe width="100%" height="500"
+                            src="@Model.VideoUrl"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+                </div>
+            }
+
+            <!-- Nội dung -->
+            @if (!string.IsNullOrEmpty(Model.Content))
+            {
+                <div class="content-section mb-4">
+                    @Html.Raw(Model.Content)
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="quiz-container" id="quizContainer">
+        <div id="quizLoading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải Quiz...</span>
+            </div>
+            <span class="ms-2">Đang tải Quiz...</span>
+        </div>
+
+        <div id="quizContent" style="display: none;">
+            <h3 class="mb-4">
+                <i class="fa-solid fa-clipboard-check"></i> <span id="quizTitle"></span>
+            </h3>
+            <p id="quizDescription" class="text-muted"></p>
+
+            <form id="quizForm">
+                <div id="questionsContainer"></div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fa-solid fa-paper-plane"></i> Nộp Quiz
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Kết quả -->
+        <div id="quizResult" class="quiz-result">
+            <div class="row">
+                <div class="col-md-6 text-center">
+                    <div class="score-badge" id="scoreText"></div>
+                    <div id="passageText"></div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Điểm của bạn:</strong> <span id="earnedPoints"></span> / <span id="totalPoints"></span></p>
+                    <p><strong>Trạng thái:</strong> <span id="passedStatus"></span></p>
+                    <a href="javascript:location.reload()" class="btn btn-primary mt-3">
+                        <i class="fa-solid fa-redo"></i> Làm lại
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Không có Quiz -->
+        <div id="noQuiz" style="display: none;">
+            <div class="alert alert-info">
+                <i class="fa-solid fa-info-circle"></i> Bài học này không có Quiz
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark Completed Button -->
+    <div class="mt-4">
+        <button class="btn btn-success btn-lg w-100" onclick="markAsCompleted(@Model.Id)">
+            <i class="fa-solid fa-check"></i> Đánh Dấu Hoàn Thành
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const lessonId = @Model.Id;
+        const quizId_var = null;
+
+        // Load Quiz khi page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadQuiz();
+        });
+
+        // Load Quiz
+        function loadQuiz() {
+            fetch(`/Student/CourseStudent/GetLessonQuiz?lessonId=${lessonId}`)
+                .then(r => {
+                    if (r.status === 404) {
+                        document.getElementById('quizLoading').style.display = 'none';
+                        document.getElementById('noQuiz').style.display = 'block';
+                        return null;
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data) return;
+
+                    document.getElementById('quizLoading').style.display = 'none';
+                    document.getElementById('quizContent').style.display = 'block';
+
+                    document.getElementById('quizTitle').textContent = data.title;
+                    document.getElementById('quizDescription').textContent = data.description || '';
+                    quizId_var = data.id;
+
+                    renderQuestions(data.questions);
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('quizLoading').innerHTML = '<div class="alert alert-danger">Lỗi tải Quiz</div>';
+                });
+        }
+
+        // Render Questions
+        function renderQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            questions.forEach((q, idx) => {
+                const html = `
+                    <div class="question-item">
+                        <h5>Câu ${idx + 1}: ${q.questionText} <span class="badge bg-secondary">${q.points} điểm</span></h5>
+                        <div>
+                            ${q.answers.map(a => `
+                                <div class="answer-option">
+                                    <input type="radio" name="question_${q.id}" value="${a.id}" id="answer_${a.id}">
+                                    <label for="answer_${a.id}" style="cursor: pointer; margin: 0;">
+                                        <strong>${a.answerLabel}.</strong> ${a.answerText}
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // Submit Quiz
+        document.getElementById('quizForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const answers = [];
+
+            // Lấy tất cả câu trả lời
+            document.querySelectorAll('[name^="question_"]').forEach(radio => {
+                if (radio.checked) {
+                    const questionId = parseInt(radio.name.replace('question_', ''));
+                    answers.push({
+                        questionId: questionId,
+                        selectedAnswerId: parseInt(radio.value)
+                    });
+                }
+            });
+
+            if (answers.length === 0) {
+                alert('Vui lòng trả lời tất cả câu hỏi');
+                return;
+            }
+
+            try {
+                const response = await fetch('/Student/CourseStudent/SubmitQuiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        quizId: quizId_var,
+                        studentAnswers: answers
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showResult(result);
+                } else {
+                    alert('Lỗi: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi hệ thống');
+            }
+        });
+
+        // Show Result
+        function showResult(result) {
+            document.getElementById('quizForm').style.display = 'none';
+            document.getElementById('quizResult').className = 'quiz-result ' + (result.passed ? 'success' : 'fail');
+
+            document.getElementById('scoreText').textContent = result.score + '%';
+            document.getElementById('passageText').innerHTML = result.passed
+                ? '<span class="badge bg-success fs-6">✓ ĐẠT</span>'
+                : '<span class="badge bg-danger fs-6">✗ CHƯA ĐẠT</span>';
+            document.getElementById('earnedPoints').textContent = result.earnedPoints;
+            document.getElementById('totalPoints').textContent = result.totalPoints;
+            document.getElementById('passedStatus').innerHTML = result.passed
+                ? '<span class="badge bg-success">Hoàn thành</span>'
+                : '<span class="badge bg-danger">Chưa hoàn thành</span>';
+
+            // Nếu pass, enable button "Đánh dấu hoàn thành"
+            if (result.passed) {
+                document.querySelector('button[onclick*="markAsCompleted"]').disabled = false;
+            }
+        }
+
+        // Mark Completed
+        function markAsCompleted(lessonId) {
+            if (confirm('Xác nhận đánh dấu bài học này là hoàn thành?')) {
+                fetch('/Student/CourseStudent/MarkAsCompleted', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lessonId: lessonId })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Bài học đã được đánh dấu hoàn thành!');
+                        location.href = '/Student/CourseStudent/Index';
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                });
+            }
+        }
+    </script>
+}

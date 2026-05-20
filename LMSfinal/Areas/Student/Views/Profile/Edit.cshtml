@@ -1,0 +1,54 @@
+@model StudentProfileEditInput
+
+@{
+    ViewData["Title"] = "Cap nhat thong tin";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="mb-3">Cap nhat thong tin ca nhan</h2>
+
+<form method="post" asp-area="Student" asp-controller="Profile" asp-action="Edit" class="card">
+    @Html.AntiForgeryToken()
+    <div class="card-body">
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Ho ten</label>
+                <input asp-for="FullName" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" type="email" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">MSSV</label>
+                <input asp-for="Mssv" class="form-control" type="number" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Ngay sinh</label>
+                <input asp-for="DateOfBirth" class="form-control" type="date" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Gioi tinh</label>
+                <input asp-for="Gender" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">So dien thoai</label>
+                <input asp-for="PhoneNumber" class="form-control" required />
+            </div>
+            <div class="col-12">
+                <label class="form-label">Dia chi</label>
+                <input asp-for="Address" class="form-control" />
+            </div>
+        </div>
+    </div>
+    <div class="card-footer d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Luu thay doi</button>
+        <a asp-area="Student" asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary">Huy</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

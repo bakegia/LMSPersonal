@@ -1,0 +1,189 @@
+﻿@using LMSfinal.Models.DTOs
+@model List<UserWithRoleVM>
+@{
+    ViewData["Title"] = "Quản lí tài khoản";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        background-color: #ccc;
+        border-radius: 26px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: .4s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+    input:checked + .slider {
+        background-color: #28a745;
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+</style>
+<section class="content">
+
+    <!-- Default box -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Danh sách danh mục</h3>
+
+            <div class="card-tools">
+                <a asp-area="Admin" asp-controller="Account" asp-action="CreateStudentAccount">
+                    <i class="fa-solid fa-user-graduate"></i> Tạo Tài Khoản Student
+                </a>
+                <a asp-area="Admin" asp-controller="Account" asp-action="CreateInstructorAccount">
+                    <i class="fa-solid fa-chalkboard-user"></i> Tạo Tài Khoản Instructor
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover" id="accountTable">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên user</th>
+                        <th>Email</th>
+                        <th>tên role  </th>
+                        <th>Trạng Thái  </th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        var i = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr id="trow_@item.User.Id">
+                                <td>@i</td>
+                                <td>@item.User.UserName</td>
+                                <td>@item.User.Email</td>
+                                <td>
+                                    @string.Join(", ", item.Roles)
+                                </td>
+                                <td>
+                                    <label class="switch">
+                                        <input type="checkbox"
+                                               class="btnActive"
+                                               data-id="@item.User.Id"
+                                               @(item.User.IsActive == true ? "checked" : "") />
+                                        <span class="slider round"></span>
+                                    </label>
+                                </td>
+
+                                <td>
+                                    <a asp-area="Admin"
+                                       asp-controller="Account"
+                                       asp-action="ProfileDetail"
+                                       asp-route-Userid="@item.User.Id"
+                                       class="btn btn-sm btn-primary">
+                                        Chi tiết thông tin
+                                    </a>
+                                    <a asp-area="Admin"
+                                       asp-controller="Account"
+                                       asp-action="UpdateProfile"
+                                       asp-route-Userid="@item.User.Id"
+                                       class="btn btn-sm btn-primary">
+                                        Sửa
+                                    </a>
+
+                                    <a href="#"
+                                       data-id="@item.User.Id"
+                                       class="btn btn-sm btn-danger btnDelete">
+                                        Xóa
+                                    </a>
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+
+                    else
+                    {
+                        <tr>
+                            <td colspan="4">Không có bản ghi nào!!!</td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div>
+        <!-- /.card-body -->
+        <div class="card-footer">
+        </div>
+        <!-- /.card-footer-->
+    </div>
+    <!-- /.card -->
+
+</section>
+
+@section Scripts {
+    <script>
+        //      new DataTable('#accountTable', {
+        //     layout: {
+        //         topStart: {
+        //             buttons: ['pdf', 'excel']
+        //         }
+        //     }
+        // });
+
+                        $('body').on('change', '.btnActive', function () {
+            var checkbox = $(this);
+            var id = checkbox.data("id");
+            var isActive = checkbox.is(":checked");
+
+            $.ajax({
+                url: '/admin/account/UpdateStatus',
+                type: 'POST',
+                data: { id: id, isActive: isActive },
+                success: function (rs) {
+                    if (!rs.success) {
+                        alert("Update failed!");
+
+                        // rollback nếu lỗi
+                        checkbox.prop("checked", !isActive);
+                    }
+                },
+                error: function () {
+                    alert("Server error!");
+
+                    // rollback nếu lỗi
+                    checkbox.prop("checked", !isActive);
+                }
+            });
+        });
+        
+    </script>
+}

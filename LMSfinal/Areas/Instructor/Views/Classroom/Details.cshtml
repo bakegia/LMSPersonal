@@ -1,0 +1,130 @@
+﻿@using LMSfinal.Models.EF
+@model Classroom
+
+@{
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Classroom Details</h2>
+
+<!-- ===== THÔNG TIN LỚP ===== -->
+<div class="card mb-3 p-3">
+    <h4>Class Info</h4>
+
+    <p><strong>Class Code:</strong> @Model.ClassCode</p>
+    <p><strong>Name:</strong> @Model.NameClass</p>
+    <p><strong>Description:</strong> @Model.Description</p>
+    <p><strong>Start Date:</strong> @Model.StartDate.ToString("dd/MM/yyyy")</p>
+    <p><strong>End Date:</strong> @Model.EndDate.ToString("dd/MM/yyyy")</p>
+
+    <p>
+        <strong>Status:</strong>
+        @if (Model.IsActive)
+        {
+            <span class="badge bg-success">Active</span>
+        }
+        else
+        {
+            <span class="badge bg-secondary">Inactive</span>
+        }
+    </p>
+</div>
+
+<!-- ===== COURSE + INSTRUCTOR ===== -->
+<div class="card mb-3 p-3">
+    <h4>Course & Instructor</h4>
+
+    <p><strong>Course:</strong> @Model.Course?.Title</p>
+    <p><strong>Instructor:</strong> @Model.Instructor?.UserName</p>
+</div>
+
+<!-- ===== LỊCH HỌC ===== -->
+<div class="card mb-3 p-3">
+    <h4>Schedule</h4>
+
+    @if (Model.ClassSchedules != null && Model.ClassSchedules.Any())
+    {
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Day</th>
+                    <th>Time Slot</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ClassSchedules.OrderBy(x => x.DayOfWeek))
+                {
+                    <tr>
+                        <td>
+                            @(item.DayOfWeek == DayOfWeek.Monday ? "Thứ 2" :
+                                                item.DayOfWeek == DayOfWeek.Tuesday ? "Thứ 3" :
+                                                item.DayOfWeek == DayOfWeek.Wednesday ? "Thứ 4" :
+                                                item.DayOfWeek == DayOfWeek.Thursday ? "Thứ 5" :
+                                                item.DayOfWeek == DayOfWeek.Friday ? "Thứ 6" :
+                                                item.DayOfWeek == DayOfWeek.Saturday ? "Thứ 7" :
+                                                "Chủ nhật")
+                </td>
+
+                        <td>@item.TimeSlot?.Name</td>
+
+                        <td>
+                            @item.TimeSlot?.StartTime.ToString(@"hh\:mm")
+                            -
+                            @item.TimeSlot?.EndTime.ToString(@"hh\:mm")
+                        </td>
+                    </tr>
+                        }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No schedule available</p>
+    }
+</div>
+
+<!-- ===== DANH SÁCH HỌC VIÊN ===== -->
+<div class="card mb-3 p-3">
+    <h4>Students</h4>
+
+    @if (Model.ClassroomStudents != null && Model.ClassroomStudents.Any())
+    {
+        <table class="table table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>UserName</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int index = 1;
+                }
+
+                @foreach (var item in Model.ClassroomStudents)
+                {
+                    <tr>
+                        <td>@index</td>
+                        <td>@item.Student?.UserName</td>
+                        <td>@item.Student?.Email</td>
+                    </tr>
+                    index++;
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No students in this class</p>
+    }
+</div>
+
+<!-- ===== BUTTON ===== -->
+<a asp-area="Instructor"
+   asp-controller="Classroom"
+   asp-action="Index"
+   class="btn btn-secondary">
+    Back
+</a>
