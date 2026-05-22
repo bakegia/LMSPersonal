@@ -1,132 +1,287 @@
-﻿@model ClassroomVM
-
+﻿@using LMSfinal.Models.ViewModels
+@model ClassroomVM
 @{
-    ViewData["Title"] = "Tạo lớp học mới";
+    ViewData["Title"] = "Tạo Lớp Học Mới";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white py-3">
-                    <h5 class="mb-0"><i class="fa-solid fa-school-flag me-2"></i>Tạo lớp học mới</h5>
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fa-solid fa-plus text-success me-2"></i>Tạo Lớp Học Mới
+            </h2>
+            <p class="text-muted">Điền thông tin để tạo một lớp học mới</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <strong>Lỗi:</strong>
+                        <ul class="mb-0">
+                            @foreach (var modelState in ViewData.ModelState.Values)
+                            {
+                                foreach (var error in modelState.Errors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <!-- SECTION 1: THÔNG TIN CƠ BẢN -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-circle-info me-2 text-primary"></i>Thông Tin Cơ Bản
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mã Lớp -->
+                        <div class="mb-3">
+                            <label asp-for="ClassCode" class="form-label fw-bold">Mã Lớp <span class="text-danger">*</span></label>
+                            <input asp-for="ClassCode" class="form-control" placeholder="VD: CS101-001" required>
+                            <span asp-validation-for="ClassCode" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Tên Lớp -->
+                        <div class="mb-3">
+                            <label asp-for="NameClass" class="form-label fw-bold">Tên Lớp <span class="text-danger">*</span></label>
+                            <input asp-for="NameClass" class="form-control" placeholder="VD: Lập Trình Python - Lớp 01" required>
+                            <span asp-validation-for="NameClass" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Mô Tả -->
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Mô Tả <span class="text-danger">*</span></label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Nhập mô tả lớp học" required></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    <form asp-area="Admin" asp-controller="Classroom" asp-action="Create" method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                        <div asp-validation-summary="All" class="text-danger"></div>
+
+                <!-- SECTION 2: KHÓA HỌC & GIÁO VIÊN -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-book me-2 text-info"></i>Khóa Học & Giáo Viên
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Môn Học -->
+                        <div class="mb-3">
+                            <label asp-for="CourseId" class="form-label fw-bold">Môn Học <span class="text-danger">*</span></label>
+                            <select asp-for="CourseId" asp-items="Model.Courses" class="form-select" required>
+                                <option value="">-- Chọn Môn Học --</option>
+                            </select>
+                            <span asp-validation-for="CourseId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Giáo Viên (Optional - có thể để trống) -->
+                        <div class="mb-3">
+                            <label asp-for="InstructorId" class="form-label fw-bold">Giáo Viên (Tùy Chọn)</label>
+                            <small class="text-muted d-block mb-2">
+                                <i class="fa-solid fa-info-circle me-1"></i>
+                                Để trống để giáo viên tự đăng ký dạy lớp
+                            </small>
+                            <select asp-for="InstructorId" asp-items="Model.Instructors" class="form-select">
+                                <option value="">-- Chọn Giáo Viên (hoặc để trống) --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: THỜI KHÓA BIỂU -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-calendar me-2 text-warning"></i>Thời Khóa Biểu
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Ca Học -->
+                        <div class="mb-3">
+                            <label asp-for="TimeSlotId" class="form-label fw-bold">Ca Học <span class="text-danger">*</span></label>
+                            <select asp-for="TimeSlotId" asp-items="Model.TimeSlots" class="form-select" required>
+                                <option value="0">-- Chọn Ca Học --</option>
+                            </select>
+                            <span asp-validation-for="TimeSlotId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Ngày Học -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ngày Học Trong Tuần <span class="text-danger">*</span></label>
+                            <div class="row">
+                                @{
+                                    var days = new[]
+                                    {
+                                                                (DayOfWeek.Monday, "Thứ 2"),
+                                                                (DayOfWeek.Tuesday, "Thứ 3"),
+                                                                (DayOfWeek.Wednesday, "Thứ 4"),
+                                                                (DayOfWeek.Thursday, "Thứ 5"),
+                                                                (DayOfWeek.Friday, "Thứ 6"),
+                                                                (DayOfWeek.Saturday, "Thứ 7"),
+                                                                (DayOfWeek.Sunday, "Chủ Nhật")
+                                                                };
+                                }
+                                @foreach (var (day, dayName) in days)
+                                {
+                                    <div class="col-6 col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input"
+                                                   name="SelectedDays" value="@((int)day)"
+                                                   id="day_@day">
+                                            <label class="form-check-label" for="day_@day">
+                                                @dayName
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: NGÀY HỌC & ĐĂNG KÝ -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-clock me-2 text-success"></i>Thời Gian & Đăng Ký
+                        </h5>
+                    </div>
+                    <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label asp-for="ClassCode" class="fw-bold mb-1">Mã lớp</label>
-                                    <input asp-for="ClassCode" class="form-control" placeholder="Ví dụ: C2401L" />
-                                    <span asp-validation-for="ClassCode" class="text-danger"></span>
-                                </div>
-
-                                <div class="form-group mb-3">
-                                    <label asp-for="NameClass" class="fw-bold mb-1">Tên lớp</label>
-                                    <input asp-for="NameClass" class="form-control" />
-                                    <span asp-validation-for="NameClass" class="text-danger"></span>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label asp-for="Description" class="fw-bold mb-1">Mô tả ngắn</label>
-                                    <input asp-for="Description" class="form-control" />
-                                    <span asp-validation-for="Description" class="text-danger"></span>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="StartDate" class="fw-bold mb-1">Ngày bắt đầu</label>
-                                            <input asp-for="StartDate" type="date" class="form-control" />
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="EndDate" class="fw-bold mb-1">Ngày kết thúc</label>
-                                            <input asp-for="EndDate" type="date" class="form-control" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group mb-3">
-                                    <label class="fw-bold mb-1">Giảng viên</label>
-                                    <select asp-for="InstructorId" asp-items="Model.Instructors" class="form-select">
-                                        <option value="">-- Chọn giảng viên --</option>
-                                    </select>
-                                </div>
+                            <!-- Ngày Bắt Đầu -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartDate" class="form-label fw-bold">Ngày Bắt Đầu <span class="text-danger">*</span></label>
+                                <input asp-for="StartDate" type="date" class="form-control" required>
+                                <span asp-validation-for="StartDate" class="text-danger small"></span>
                             </div>
 
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label class="fw-bold mb-1">Môn học (Course)</label>
-                                    <select asp-for="CourseId" asp-items="Model.Courses" class="form-select">
-                                        <option value="">-- Chọn môn học --</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group mb-3">
-                                    <label class="fw-bold mb-1">Danh sách sinh viên <small class="text-muted text-italic">(Giữ Ctrl để chọn nhiều)</small></label>
-                                    <select asp-for="StudentIds" asp-items="Model.Students" class="form-control" multiple style="height: 120px;">
-                                    </select>
-                                </div>
-
-                                <div class="form-group mb-3 border rounded p-3 bg-light">
-                                    <label class="fw-bold mb-2 text-primary"><i class="fa-solid fa-clock me-1"></i> Lịch học</label>
-
-                                    <select asp-for="TimeSlotId" asp-items="Model.TimeSlots" class="form-select mb-3">
-                                        <option value="">-- Chọn ca học --</option>
-                                    </select>
-
-                                    <div class="d-flex flex-wrap gap-3 mb-2">
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="1" /> T2</label>
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="2" /> T3</label>
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="3" /> T4</label>
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="4" /> T5</label>
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="5" /> T6</label>
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="6" /> T7</label>
-                                        <label class="btn btn-outline-secondary btn-sm"><input type="checkbox" name="SelectedDays" value="0" /> CN</label>
-                                    </div>
-
-                                    <div class="btn-group w-100">
-                                        <button type="button" class="btn btn-sm btn-info text-white" onclick="select246()">Chọn 2-4-6</button>
-                                        <button type="button" class="btn btn-sm btn-dark text-white" onclick="select357()">Chọn 3-5-7</button>
-                                    </div>
-                                </div>
+                            <!-- Ngày Kết Thúc -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EndDate" class="form-label fw-bold">Ngày Kết Thúc <span class="text-danger">*</span></label>
+                                <input asp-for="EndDate" type="date" class="form-control" required>
+                                <span asp-validation-for="EndDate" class="text-danger small"></span>
                             </div>
                         </div>
 
-                        <div class="form-check form-switch mb-4">
-                            <input asp-for="IsActive" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked>
-                            <label class="form-check-label" for="flexSwitchCheckChecked">Kích hoạt lớp học ngay</label>
+                        <div class="row">
+                            <!-- Sức Chứa -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MaxCapacity" class="form-label fw-bold">Sức Chứa (Học Sinh) <span class="text-danger">*</span></label>
+                                <input asp-for="MaxCapacity" type="number" class="form-control" min="1" max="200" value="30" required>
+                                <small class="text-muted">Số lượng học sinh tối đa trong lớp</small>
+                                <span asp-validation-for="MaxCapacity" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Hạn Đăng Ký -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RegistrationDeadline" class="form-label fw-bold">Hạn Đăng Ký (Tùy Chọn)</label>
+                                <input asp-for="RegistrationDeadline" type="datetime-local" class="form-control">
+                                <small class="text-muted">Để trống = không giới hạn</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: CẤU HÌNH -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-gear me-2 text-secondary"></i>Cấu Hình
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input asp-for="IsOpenForRegistration" type="checkbox" class="form-check-input" checked>
+                            <label class="form-check-label" for="IsOpenForRegistration">
+                                <strong>Mở Đăng Ký</strong>
+                                <br>
+                                <small class="text-muted">Cho phép học sinh & giáo viên đăng ký</small>
+                            </label>
                         </div>
 
-                        <div class="text-end border-top pt-3">
-                            <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
-                            <button type="submit" class="btn btn-primary px-5"><i class="fa-solid fa-save me-1"></i> Lưu lớp học</button>
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" type="checkbox" class="form-check-input" checked>
+                            <label class="form-check-label" for="IsActive">
+                                <strong>Hoạt Động</strong>
+                                <br>
+                                <small class="text-muted">Lớp học có thể được sử dụng</small>
+                            </label>
                         </div>
-                    </form>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2 mb-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fa-solid fa-save me-2"></i>Tạo Lớp Học
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="fa-solid fa-x me-2"></i>Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Side Info -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fa-solid fa-lightbulb me-2 text-warning"></i>Gợi Ý
+                    </h5>
+                </div>
+                <div class="card-body small">
+                    <div class="mb-3">
+                        <strong>📋 Mã Lớp</strong>
+                        <p class="text-muted mb-0">Sử dụng mã duy nhất để phân biệt các lớp</p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <strong>👨‍🏫 Giáo Viên</strong>
+                        <p class="text-muted mb-0">Để trống nếu muốn giáo viên tự đăng ký</p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <strong>📅 Thời Khóa Biểu</strong>
+                        <p class="text-muted mb-0">Chọn ca học và ngày học trong tuần</p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <strong>🔓 Mở Đăng Ký</strong>
+                        <p class="text-muted mb-0">Bật để cho phép đăng ký, tắt để khóa đăng ký</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        // JS của bạn rất tốt, giữ nguyên logic nhưng update selector một chút nếu cần
-        function clearAll() {
-            document.querySelectorAll('input[name="SelectedDays"]').forEach(x => x.checked = false);
-        }
-        function select246() {
-            clearAll();
-            [1, 3, 5].forEach(v => document.querySelector(`input[name="SelectedDays"][value="${v}"]`).checked = true);
-        }
-        function select357() {
-            clearAll();
-            [2, 4, 6].forEach(v => document.querySelector(`input[name="SelectedDays"][value="${v}"]`).checked = true);
-        }
-    </script>
-}
+<style>
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .card {
+        border-radius: 0.5rem;
+    }
+
+    .sticky-top {
+        top: 20px !important;
+    }
+</style>

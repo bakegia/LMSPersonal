@@ -18,17 +18,17 @@ public class ClassroomVM
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     // Course
-    [Required]
+    [ValidateNever]
     public int CourseId { get; set; }
 
     public List<SelectListItem>? Courses { get; set; }
 
     // Instructor
-    [Required]
-    public string InstructorId { get; set; }
+    [ValidateNever]
+    public string? InstructorId { get; set; }
 
     public List<SelectListItem>? Instructors { get; set; }
 
@@ -41,5 +41,9 @@ public class ClassroomVM
     [ValidateNever]
     public List<DayOfWeek>? SelectedDays { get; set; }
     [ValidateNever]
-    public List<SelectListItem> TimeSlots { get; set; }
+    public List<SelectListItem>? TimeSlots { get; set; }
+
+    public bool IsOpenForRegistration { get; set; } = true;
+    public int MaxCapacity { get; set; } = 30;
+    public DateTime? RegistrationDeadline { get; set; }
 }

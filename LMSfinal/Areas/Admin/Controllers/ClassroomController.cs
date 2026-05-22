@@ -27,32 +27,59 @@ namespace LMSfinal.Areas.Admin.Controllers
         public async Task<IActionResult> Index()
         {
             var data = await _context.Classrooms
-            .Include(x => x.Course)
-            .Include(x => x.Instructor)
-            .ToListAsync();
+                .Include(x => x.Course)
+                .Include(x => x.Instructor)
+                .Include(x => x.ClassroomStudents)
+                .OrderByDescending(x => x.StartDate)
+                .ToListAsync();
+
+            // ✅ FIX: Set default MaxCapacity = 30 nếu = 0
+            foreach (var classroom in data)
+            {
+                if (classroom.MaxCapacity <= 0)
+                {
+                    classroom.MaxCapacity = 30;
+                }
+            }
+
             return View(data);
         }
 
+        // ==================== CREATE GET ====================
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            // Khởi tạo VM mới và load các danh sách Dropdown
             var vm = await LoadVM();
 
-            // Thiết lập ngày mặc định nếu muốn
+            // Thiết lập giá trị mặc định
             vm.StartDate = DateTime.Now;
             vm.EndDate = DateTime.Now.AddMonths(2);
+            vm.RegistrationDeadline = DateTime.Now.AddDays(7); // Mặc định: 7 ngày
+            vm.MaxCapacity = 30; // Mặc định: 30 học sinh
+            vm.IsOpenForRegistration = true; // Mặc định: mở đăng ký
 
             return View(vm);
         }
+
+        // ==================== CREATE POST ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ClassroomVM vm)
         {
-            // 1. Kiểm tra ngày học hợp lệ
+            // ===== VALIDATION =====
             if (vm.StartDate >= vm.EndDate)
             {
-                ModelState.AddModelError(string.Empty, "Ngày kết thúc phải lớn hơn ngày bắt đầu học.");
+                ModelState.AddModelError(string.Empty, "❌ Ngày kết thúc phải lớn hơn ngày bắt đầu học.");
+            }
+
+            if (vm.RegistrationDeadline.HasValue && vm.RegistrationDeadline.Value < DateTime.Now)
+            {
+                ModelState.AddModelError(string.Empty, "❌ Hạn đăng ký phải lớn hơn ngày hôm nay.");
+            }
+
+            if (vm.MaxCapacity < 1 || vm.MaxCapacity > 200)
+            {
+                ModelState.AddModelError(string.Empty, "❌ Sức chứa phải từ 1 đến 200 học sinh.");
             }
 
             if (!ModelState.IsValid)
@@ -61,7 +88,7 @@ namespace LMSfinal.Areas.Admin.Controllers
                 return View(vm);
             }
 
-            // Sử dụng Transaction để đảm bảo tính toàn vẹn dữ liệu tuyệt đối
+            // ===== TRANSACTION =====
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -74,22 +101,18 @@ namespace LMSfinal.Areas.Admin.Controllers
                     EndDate = vm.EndDate,
                     IsActive = vm.IsActive,
                     CourseId = vm.CourseId,
-                    InstructorId = vm.InstructorId
+
+                    // ✅ THÊM CÁC TRƯỜNG ĐĂNG KÝ
+                    IsOpenForRegistration = vm.IsOpenForRegistration,
+                    MaxCapacity = vm.MaxCapacity,
+                    RegistrationDeadline = vm.RegistrationDeadline,
+
+                    // ⚠️ GIÁO VIÊN & HỌC SINH = NULL
+                    InstructorId = null
                 };
 
                 _context.Classrooms.Add(classroom);
                 await _context.SaveChangesAsync(); // Lưu để sinh ra classroom.Id
-
-                // 👉 THÊM HỌC SINH VÀO LỚP
-                if (vm.StudentIds != null && vm.StudentIds.Any())
-                {
-                    var classroomStudents = vm.StudentIds.Select(studentId => new ClassroomStudent
-                    {
-                        ClassroomId = classroom.Id,
-                        StudentId = studentId
-                    });
-                    await _context.ClassroomStudents.AddRangeAsync(classroomStudents);
-                }
 
                 // 👉 THÊM THỜI KHÓA BIỂU
                 if (vm.SelectedDays != null && vm.SelectedDays.Any())
@@ -104,23 +127,27 @@ namespace LMSfinal.Areas.Admin.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync(); // Xác nhận lưu toàn bộ thay đổi thành công
+                await transaction.CommitAsync();
 
+                TempData["success"] = $"✅ Tạo lớp '{classroom.NameClass}' thành công!";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync(); // Nếu có bất kỳ lỗi nào, hủy bỏ toàn bộ dữ liệu vừa thêm tạm
-                ModelState.AddModelError(string.Empty, "Có lỗi xảy ra trong quá trình tạo lớp học: " + ex.Message);
+                await transaction.RollbackAsync();
+                ModelState.AddModelError(string.Empty, $"❌ Lỗi: {ex.Message}");
                 vm = await LoadVM(vm);
                 return View(vm);
             }
         }
+
+        // ==================== EDIT GET ====================
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var classroom = await _context.Classrooms
                 .Include(x => x.ClassroomStudents)
+                .Include(x => x.ClassSchedules)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (classroom == null) return NotFound();
@@ -137,19 +164,46 @@ namespace LMSfinal.Areas.Admin.Controllers
                 CourseId = classroom.CourseId,
                 InstructorId = classroom.InstructorId,
 
-                // 🔥 QUAN TRỌNG: load student đã chọn
+                // ✅ LOAD ĐĂNG KÝ FIELDS
+                IsOpenForRegistration = classroom.IsOpenForRegistration,
+                MaxCapacity = classroom.MaxCapacity,
+                RegistrationDeadline = classroom.RegistrationDeadline,
+
+                // Load học sinh đã chọn
                 StudentIds = classroom.ClassroomStudents
                     .Select(x => x.StudentId)
-                    .ToList()
+                    .ToList(),
+
+                // Load những ngày đã chọn
+                SelectedDays = classroom.ClassSchedules
+                    .Select(x => x.DayOfWeek)
+                    .Distinct()
+                    .ToList(),
+
+                // Load TimeSlot đã chọn (lấy cái đầu tiên nếu có)
+                TimeSlotId = classroom.ClassSchedules.FirstOrDefault()?.TimeSlotId ?? 0
             };
 
             vm = await LoadVM(vm);
-
             return View(vm);
         }
+
+        // ==================== EDIT POST ====================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ClassroomVM vm)
         {
+            // ===== VALIDATION =====
+            if (vm.StartDate >= vm.EndDate)
+            {
+                ModelState.AddModelError(string.Empty, "❌ Ngày kết thúc phải lớn hơn ngày bắt đầu học.");
+            }
+
+            if (vm.MaxCapacity < 1 || vm.MaxCapacity > 200)
+            {
+                ModelState.AddModelError(string.Empty, "❌ Sức chứa phải từ 1 đến 200 học sinh.");
+            }
+
             if (!ModelState.IsValid)
             {
                 vm = await LoadVM(vm);
@@ -158,11 +212,12 @@ namespace LMSfinal.Areas.Admin.Controllers
 
             var classroom = await _context.Classrooms
                 .Include(x => x.ClassroomStudents)
+                .Include(x => x.ClassSchedules)
                 .FirstOrDefaultAsync(x => x.Id == vm.Id);
 
             if (classroom == null) return NotFound();
 
-            // UPDATE FIELD
+            // ===== UPDATE FIELDS =====
             classroom.ClassCode = vm.ClassCode;
             classroom.NameClass = vm.NameClass;
             classroom.Description = vm.Description;
@@ -170,51 +225,134 @@ namespace LMSfinal.Areas.Admin.Controllers
             classroom.EndDate = vm.EndDate;
             classroom.IsActive = vm.IsActive;
             classroom.CourseId = vm.CourseId;
-            classroom.InstructorId = vm.InstructorId;
 
-            // 🔥 XÓA STUDENT CŨ
-            _context.ClassroomStudents.RemoveRange(classroom.ClassroomStudents);
+            // ✅ UPDATE ĐĂNG KÝ FIELDS
+            classroom.IsOpenForRegistration = vm.IsOpenForRegistration;
+            classroom.MaxCapacity = vm.MaxCapacity;
+            classroom.RegistrationDeadline = vm.RegistrationDeadline;
 
-            // 🔥 ADD STUDENT MỚI
-            if (vm.StudentIds != null)
+            // ⚠️ KHÔNG CẬP NHẬT InstructorId (giáo viên đăng ký)
+
+            // ===== UPDATE THỜI KHÓA BIỂU =====
+            // Xóa lịch cũ
+            _context.ClassSchedules.RemoveRange(classroom.ClassSchedules);
+
+            // Thêm lịch mới
+            if (vm.SelectedDays != null && vm.SelectedDays.Any())
             {
-                foreach (var studentId in vm.StudentIds)
+                var newSchedules = vm.SelectedDays.Select(day => new ClassSchedule
                 {
-                    _context.ClassroomStudents.Add(new ClassroomStudent
-                    {
-                        ClassroomId = classroom.Id,
-                        StudentId = studentId
-                    });
-                }
+                    ClassroomId = classroom.Id,
+                    TimeSlotId = vm.TimeSlotId,
+                    DayOfWeek = day
+                });
+                await _context.ClassSchedules.AddRangeAsync(newSchedules);
             }
 
             await _context.SaveChangesAsync();
 
+            TempData["success"] = $"✅ Cập nhật lớp '{classroom.NameClass}' thành công!";
             return RedirectToAction(nameof(Index));
         }
 
-        // DETAIL
+        // ==================== DETAILS ====================
         public async Task<IActionResult> Details(int id)
         {
             var classroom = await _context.Classrooms
-            .Include(x => x.Course)
-            .Include(x => x.Instructor)
-            .Include(x => x.ClassroomStudents)
-                .ThenInclude(cs => cs.Student)
-            .Include(x => x.ClassSchedules)
-                .ThenInclude(cs => cs.TimeSlot)
-            .FirstOrDefaultAsync(x => x.Id == id);
+                .Include(x => x.Course)
+                .Include(x => x.Instructor)
+                .Include(x => x.ClassroomStudents)
+                    .ThenInclude(cs => cs.Student)
+                .Include(x => x.ClassSchedules)
+                    .ThenInclude(cs => cs.TimeSlot)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (classroom == null) return NotFound();
 
             return View(classroom);
         }
 
-        // LOAD DROPDOWN
+        // ==================== DELETE ====================
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var classroom = await _context.Classrooms
+                .Include(x => x.ClassroomStudents)
+                .Include(x => x.ClassSchedules)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (classroom == null)
+            {
+                TempData["error"] = "❌ Lớp học không tồn tại.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                // Xóa liên kết
+                _context.ClassroomStudents.RemoveRange(classroom.ClassroomStudents);
+                _context.ClassSchedules.RemoveRange(classroom.ClassSchedules);
+
+                // Xóa lớp
+                _context.Classrooms.Remove(classroom);
+                await _context.SaveChangesAsync();
+
+                TempData["success"] = $"✅ Xóa lớp '{classroom.NameClass}' thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = $"❌ Lỗi xóa: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ==================== TOGGLE ACTIVE ====================
+        [HttpPost]
+        public async Task<IActionResult> ToggleActive(int id)
+        {
+            var classroom = await _context.Classrooms.FindAsync(id);
+            if (classroom == null)
+            {
+                return Json(new { success = false, message = "Lớp không tồn tại" });
+            }
+
+            classroom.IsActive = !classroom.IsActive;
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                isActive = classroom.IsActive,
+                message = classroom.IsActive ? "✅ Lớp đã được kích hoạt" : "⚠️ Lớp đã bị vô hiệu hóa"
+            });
+        }
+
+        // ==================== TOGGLE REGISTRATION ====================
+        [HttpPost]
+        public async Task<IActionResult> ToggleRegistration(int id)
+        {
+            var classroom = await _context.Classrooms.FindAsync(id);
+            if (classroom == null)
+            {
+                return Json(new { success = false, message = "Lớp không tồn tại" });
+            }
+
+            classroom.IsOpenForRegistration = !classroom.IsOpenForRegistration;
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                isOpen = classroom.IsOpenForRegistration,
+                message = classroom.IsOpenForRegistration ? "✅ Mở đăng ký thành công" : "⚠️ Đóng đăng ký thành công"
+            });
+        }
         private async Task<ClassroomVM> LoadVM(ClassroomVM vm = null)
         {
             vm ??= new ClassroomVM();
 
+            // Courses
             vm.Courses = _context.Courses
                 .Select(x => new SelectListItem
                 {
@@ -222,6 +360,7 @@ namespace LMSfinal.Areas.Admin.Controllers
                     Text = x.Title
                 }).ToList();
 
+            // Instructors
             var instructors = await _userManager.GetUsersInRoleAsync("Instructor");
             vm.Instructors = instructors.Select(x => new SelectListItem
             {
@@ -229,6 +368,7 @@ namespace LMSfinal.Areas.Admin.Controllers
                 Text = x.UserName
             }).ToList();
 
+            // Students
             var students = await _userManager.GetUsersInRoleAsync("Student");
             vm.Students = students.Select(x => new SelectListItem
             {
@@ -236,68 +376,16 @@ namespace LMSfinal.Areas.Admin.Controllers
                 Text = x.UserName
             }).ToList();
 
+            // TimeSlots - ✅ FIX: Format TimeSpan một cách an toàn
             vm.TimeSlots = await _context.TimeSlots
-            .Select(x => new SelectListItem
-            {
-                Value = x.Id.ToString(),
-                Text = x.Name + $" ({x.StartTime} - {x.EndTime})"
-            }).ToListAsync();
+                .Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    // ✅ Dùng ToString("hh\\:mm") thay vì :HH\\:mm
+                    Text = $"{x.Name} ({x.StartTime.ToString(@"hh\:mm")} - {x.EndTime.ToString(@"hh\:mm")})"
+                }).ToListAsync();
 
             return vm;
         }
-        public async Task<IActionResult> IsActive(int id)
-        {
-            var classroom = await _context.Classrooms.FindAsync(id);
-            if (classroom == null) return View("notfound");
-            classroom.IsActive = !classroom.IsActive;
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
     }
-
 }
-
-
-//// CREATE POST
-//[HttpPost]
-
-//public async Task<IActionResult> Create(ClassroomVM vm)
-//{
-//    if (!ModelState.IsValid)
-//    {
-//        vm = await LoadVM(vm);
-//        return View(vm);
-//    }
-
-//    var classroom = new Classroom
-//    {
-//        ClassCode = vm.ClassCode,
-//        NameClass = vm.NameClass,
-//        Description = vm.Description,
-//        StartDate = vm.StartDate,
-//        EndDate = vm.EndDate,
-//        IsActive = vm.IsActive,
-//        CourseId = vm.CourseId,
-//        InstructorId = vm.InstructorId
-//    };
-
-//    _context.Classrooms.Add(classroom);
-//    await _context.SaveChangesAsync();
-
-//    // ADD STUDENTS
-//    if (vm.StudentIds != null)
-//    {
-//        foreach (var studentId in vm.StudentIds)
-//        {
-//            _context.Add(new ClassroomStudent
-//            {
-//                ClassroomId = classroom.Id,
-//                StudentId = studentId
-//            });
-//        }
-
-//        await _context.SaveChangesAsync();
-//    }
-
-//    return RedirectToAction(nameof(Index));
-//}

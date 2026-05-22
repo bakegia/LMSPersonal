@@ -1,0 +1,266 @@
+﻿@using LMSfinal.Models.EF
+@model List<Classroom>
+@{
+    ViewData["Title"] = "Nhận Dạy Lớp Học";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">
+                <i class="fa-solid fa-chalkboard-user text-success me-2"></i>Nhận Dạy Lớp Học
+            </h2>
+            <p class="text-muted">Danh sách các lớp học cần giáo viên</p>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check-circle me-2"></i>
+            @TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-exclamation-circle me-2"></i>
+            @TempData["error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <!-- Statistics -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Tổng Lớp Cần GV</h6>
+                        <h3 class="fw-bold text-success">@Model.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Khóa Học Khác Nhau</h6>
+                        <h3 class="fw-bold text-info">@Model.Select(c => c.CourseId).Distinct().Count()</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Tổng Chỗ Trống</h6>
+                        <h3 class="fw-bold text-warning">@Model.Sum(c => c.MaxCapacity)</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Hạn Đăng Ký Còn</h6>
+                        <h3 class="fw-bold text-primary">
+                            @Model.Count(c => !c.RegistrationDeadline.HasValue || c.RegistrationDeadline > DateTime.Now)
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classrooms Grid -->
+        <div class="row g-4">
+            @{
+                int index = 1;
+            }
+            @foreach (var classroom in Model)
+            {
+                var isDeadlinePassed = classroom.RegistrationDeadline.HasValue && DateTime.Now > classroom.RegistrationDeadline;
+                var scheduleInfo = GetScheduleInfo(classroom);
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <!-- Card Header -->
+                        <div class="card-header bg-light border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1 fw-bold text-success">@classroom.NameClass</h5>
+                                    <small class="text-muted">@classroom.ClassCode</small>
+                                </div>
+                                <span class="badge bg-primary">@index</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <!-- Course -->
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold">MÔN HỌC</label>
+                                <div>
+                                    <i class="fa-solid fa-book me-2 text-info"></i>
+                                    <strong>@classroom.Course?.Title</strong>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            @if (!string.IsNullOrEmpty(classroom.Description))
+                            {
+                                <div class="mb-3">
+                                    <label class="text-muted small fw-bold">MÔ TẢ</label>
+                                    <p class="text-muted small mb-0">@classroom.Description</p>
+                                </div>
+                            }
+
+                            <!-- Schedule -->
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold">THỜI KHÓA BIỂU</label>
+                                <div class="bg-light p-2 rounded small">
+                                    <i class="fa-solid fa-calendar me-2 text-warning"></i>
+                                    @scheduleInfo
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="text-muted small fw-bold">NGÀY BẮT ĐẦU</label>
+                                    <small>@classroom.StartDate.ToString("dd/MM/yyyy")</small>
+                                </div>
+                                <div class="col-6">
+                                    <label class="text-muted small fw-bold">NGÀY KẾT THÚC</label>
+                                    <small>@classroom.EndDate.ToString("dd/MM/yyyy")</small>
+                                </div>
+                            </div>
+
+                            <!-- Capacity -->
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold">SỨC CHỨA</label>
+                                <small class="fw-bold">@classroom.MaxCapacity học sinh</small>
+                            </div>
+
+                            <!-- Deadline -->
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold">HẠN ĐĂNG KÝ</label>
+                                @if (classroom.RegistrationDeadline.HasValue)
+                                {
+                                    <small class="@(isDeadlinePassed ? "text-danger fw-bold" : "text-success")">
+                                        @classroom.RegistrationDeadline.Value.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">Không giới hạn</small>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer bg-light border-top">
+                            @if (!isDeadlinePassed)
+                            {
+                                <form asp-action="InstructorRegister" asp-route-classroomId="@classroom.Id" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fa-solid fa-check-circle me-2"></i>Nhận Dạy Lớp Này
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100" disabled>
+                                    <i class="fa-solid fa-clock me-2"></i>Hạn Đăng Ký Đã Hết
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                index++;
+            }
+        </div>
+    }
+    else
+    {
+        <!-- No Classrooms -->
+        <div class="alert alert-info text-center py-5" role="alert">
+            <i class="fa-solid fa-inbox fa-3x mb-3 text-info d-block"></i>
+            <h5>Không có lớp nào cần giáo viên</h5>
+            <p class="text-muted">Tất cả các lớp đã có giáo viên hoặc hạn đăng ký đã hết</p>
+        </div>
+    }
+
+    <!-- Back Button -->
+    <div class="mt-4">
+        @if (User.IsInRole("Instructor"))
+        {
+            <a asp-area="Instructor" asp-controller="HomeInstructor" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left me-1"></i>Quay Lại Dashboard
+            </a>
+        }
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+        }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    .btn {
+        font-weight: 500;
+    }
+</style>
+
+@functions {
+    private string GetDayName(DayOfWeek day)
+    {
+        return day switch
+        {
+            DayOfWeek.Monday => "Thứ 2",
+            DayOfWeek.Tuesday => "Thứ 3",
+            DayOfWeek.Wednesday => "Thứ 4",
+            DayOfWeek.Thursday => "Thứ 5",
+            DayOfWeek.Friday => "Thứ 6",
+            DayOfWeek.Saturday => "Thứ 7",
+            DayOfWeek.Sunday => "CN",
+            _ => day.ToString()
+        };
+    }
+
+    private string GetScheduleInfo(Classroom classroom)
+    {
+        if (classroom.ClassSchedules == null || classroom.ClassSchedules.Count == 0)
+            return "Chưa xác định";
+
+        var schedules = classroom.ClassSchedules.OrderBy(s => s.DayOfWeek);
+        var timeSlots = schedules.GroupBy(s => new { s.TimeSlotId, s.TimeSlot.StartTime, s.TimeSlot.EndTime });
+
+        var result = new List<string>();
+        foreach (var slot in timeSlots)
+        {
+            var days = string.Join(", ",
+                schedules
+                    .Where(s => s.TimeSlotId == slot.Key.TimeSlotId)
+                    .OrderBy(s => s.DayOfWeek)
+                    .Select(s => GetDayName(s.DayOfWeek)));
+
+            result.Add($"{days} ({slot.Key.StartTime:HH\\:mm}-{slot.Key.EndTime:HH\\:mm})");
+        }
+
+        return string.Join("<br>", result);
+    }
+}

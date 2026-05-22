@@ -1,6 +1,7 @@
 ﻿using LMSfinal.Data;
 using LMSfinal.Models;
 using LMSfinal.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -43,6 +44,7 @@ namespace LMSfinal.Controllers
 
             return View(schedule);
         }
+        [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl)
         {
 
@@ -74,6 +76,7 @@ namespace LMSfinal.Controllers
 
             return View(loginVM);
         }
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult ForgotPassword()
         {

@@ -295,6 +295,12 @@ namespace LMSfinal.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsOpenForRegistration")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxCapacity")
+                        .HasColumnType("int");
+
                     b.Property<string>("NameClass")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -302,6 +308,9 @@ namespace LMSfinal.Migrations
 
                     b.Property<string>("NumberClass")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RegistrationDeadline")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");

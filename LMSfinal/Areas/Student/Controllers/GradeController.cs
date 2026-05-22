@@ -67,11 +67,6 @@ namespace LMSfinal.Areas.Student.Controllers
 
             return View(model);
         }
-
-        // ==================== DETAIL - Chi tiết điểm của một lớp ====================
-        /// <summary>
-        /// Xem chi tiết điểm của học sinh trong một lớp cụ thể
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Detail(int classroomId)
         {
@@ -121,10 +116,6 @@ namespace LMSfinal.Areas.Student.Controllers
             return View(grade);
         }
 
-        // ==================== TRANSCRIPT - Bảng điểm tổng hợp ====================
-        /// <summary>
-        /// Hiển thị bảng điểm tổng hợp của học sinh từ tất cả các lớp
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Transcript()
         {

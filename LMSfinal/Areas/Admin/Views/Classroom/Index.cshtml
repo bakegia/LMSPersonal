@@ -1,107 +1,233 @@
 ﻿@using LMSfinal.Models.EF
+@model List<Classroom>
 @{
-    ViewData["Title"] = "Quản lý Lớp học";
+    ViewData["Title"] = "Quản Lý Lớp Học";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
-@model List<Classroom>
-
-<div class="container-fluid">
+<div class="container-fluid mt-4">
+    <!-- Header -->
     <div class="row mb-4">
         <div class="col-md-8">
-            <h2 class="mb-0">
-                <i class="fa-solid fa-school me-2 text-primary"></i>Quản lý Lớp học
+            <h2 class="fw-bold">
+                <i class="fa-solid fa-school text-primary me-2"></i>Quản Lý Lớp Học
             </h2>
+            <p class="text-muted">Tạo, chỉnh sửa và quản lý các lớp học</p>
         </div>
         <div class="col-md-4 text-end">
-            <a asp-action="Create" class="btn btn-primary px-4">
-                <i class="fa-solid fa-plus me-2"></i>Tạo Lớp Học Mới
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fa-solid fa-plus me-2"></i>Tạo Lớp Mới
             </a>
         </div>
     </div>
 
-    @if (!Model.Any())
+    <!-- Alert Messages -->
+    @if (TempData["success"] != null)
     {
-        <div class="alert alert-info" role="alert">
-            <i class="fa-solid fa-info-circle me-2"></i>Chưa có lớp học nào. <a asp-action="Create">Tạo lớp mới</a>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check-circle me-2"></i>
+            @TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-exclamation-circle me-2"></i>
+            @TempData["error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <!-- Statistics -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Tổng Lớp</h6>
+                        <h3 class="fw-bold text-primary">@Model.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Lớp Hoạt Động</h6>
+                        <h3 class="fw-bold text-success">@Model.Count(c => c.IsActive)</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Mở Đăng Ký</h6>
+                        <h3 class="fw-bold text-info">@Model.Count(c => c.IsOpenForRegistration)</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Tổng Học Sinh</h6>
+                        <h3 class="fw-bold text-warning">@Model.Sum(c => c.CurrentEnrollment)</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classrooms Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fa-solid fa-list me-2"></i>Danh Sách Lớp Học
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%">STT</th>
+                            <th style="width: 15%">Mã Lớp</th>
+                            <th style="width: 20%">Tên Lớp</th>
+                            <th style="width: 15%">Môn Học</th>
+                            <th style="width: 12%">Giáo Viên</th>
+                            <th style="width: 10%">Sức Chứa</th>
+                            <th style="width: 10%">Trạng Thái</th>
+                            <th style="width: 10%">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int index = 1;
+                        }
+                        @foreach (var classroom in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold">@index</td>
+                                <td>
+                                    <code>@classroom.ClassCode</code>
+                                </td>
+                                <td>
+                                    <strong>@classroom.NameClass</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        @classroom.Course?.Title
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(classroom.InstructorId) && classroom.Instructor != null)
+                                    {
+                                        <span class="badge bg-success">@classroom.Instructor.UserName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Chưa có</span>
+                                    }
+                                </td>
+                                <td>
+                                    <small>
+                                        <strong>@classroom.CurrentEnrollment</strong>/@classroom.MaxCapacity
+                                    </small>
+                                    @{
+                                        // ✅ FIX: Kiểm tra MaxCapacity > 0 trước khi chia
+                                        int percent = 0;
+                                        string color = "secondary";
+
+                                        if (classroom.MaxCapacity > 0)
+                                        {
+                                            percent = (classroom.CurrentEnrollment * 100) / classroom.MaxCapacity;
+                                            color = percent > 80 ? "danger" : (percent > 50 ? "warning" : "success");
+                                        }
+                                    }
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar bg-@color" style="width: @percent%"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        @if (classroom.IsActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fa-solid fa-check me-1"></i>Hoạt Động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                <i class="fa-solid fa-ban me-1"></i>Vô Hiệu
+                                            </span>
+                                        }
+                                    </div>
+                                    @if (classroom.IsOpenForRegistration)
+                                    {
+                                        <small class="text-success">
+                                            <i class="fa-solid fa-book-open me-1"></i>Mở Đăng Ký
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">
+                                            <i class="fa-solid fa-lock me-1"></i>Đóng Đăng Ký
+                                        </small>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-action="Details" asp-route-id="@classroom.Id"
+                                           class="btn btn-outline-info" title="Xem chi tiết">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@classroom.Id"
+                                           class="btn btn-outline-warning" title="Chỉnh sửa">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@classroom.Id" method="post"
+                                              style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa?');">
+                                            <button type="submit" class="btn btn-outline-danger" title="Xóa">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     }
     else
     {
-        <div class="row">
-            @foreach (var item in Model)
-            {
-                <div class="col-lg-6 col-md-12 mb-4">
-                    <div class="card shadow-sm border-0 h-100 transition-all">
-                        <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">
-                                    <i class="fa-solid fa-school-flag me-2"></i>@item.NameClass
-                                </h6>
-                                <small class="text-light">Mã: <strong>@item.ClassCode</strong></small>
-                            </div>
-                            <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
-                                @(item.IsActive ? "Đang hoạt động" : "Tạm dừng")
-                            </span>
-                        </div>
-
-                        <div class="card-body">
-                            <p class="text-muted mb-2">
-                                <i class="fa-solid fa-book me-2 text-primary"></i>
-                                <strong>Môn học:</strong> @item.Course?.Title
-                            </p>
-
-                            <p class="text-muted mb-2">
-                                <i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>
-                                <strong>Giảng viên:</strong> @item.Instructor?.UserName
-                            </p>
-
-                            <p class="text-muted mb-2">
-                                <i class="fa-solid fa-calendar-days me-2 text-primary"></i>
-                                <strong>Thời gian:</strong> @item.StartDate.ToString("dd/MM/yyyy") - @item.EndDate.ToString("dd/MM/yyyy")
-                            </p>
-
-                            <p class="text-muted">
-                                <i class="fa-solid fa-users me-2 text-primary"></i>
-                                <strong>Số học viên:</strong> @(item.ClassroomStudents?.Count ?? 0)
-                            </p>
-
-                            @if (!string.IsNullOrEmpty(item.Description))
-                            {
-                                <p class="text-muted small border-top pt-2 mt-2">
-                                    <strong>Mô tả:</strong> @item.Description
-                                </p>
-                            }
-                        </div>
-
-                        <div class="card-footer bg-light border-top py-3">
-                            <div class="d-flex gap-2 flex-wrap">
-                                <a asp-area="Admin" asp-controller="Classroom" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white">
-                                    <i class="fa-solid fa-eye me-1"></i>Chi tiết
-                                </a>
-                                <a asp-area="Admin" asp-controller="Classroom" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
-                                    <i class="fa-solid fa-pen-to-square me-1"></i>Sửa
-                                </a>
-                                <a asp-area="Admin" asp-controller="Classroom" asp-action="IsActive" asp-route-id="@item.Id" class="btn btn-sm @(item.IsActive ? "btn-danger" : "btn-success")">
-                                    <i class="fa-solid @(item.IsActive ? "fa-lock" : "fa-unlock") me-1"></i>
-                                    @(item.IsActive ? "Tạm dừng" : "Kích hoạt")
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
+        <!-- No Classrooms -->
+        <div class="alert alert-info text-center py-5" role="alert">
+            <i class="fa-solid fa-inbox fa-3x mb-3 text-info d-block"></i>
+            <h5>Chưa có lớp học nào</h5>
+            <p class="text-muted mb-3">Hãy tạo lớp học mới để bắt đầu</p>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fa-solid fa-plus me-2"></i>Tạo Lớp Mới
+            </a>
         </div>
     }
 </div>
 
 <style>
-    .transition-all {
-        transition: all 0.3s ease;
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
     }
 
-    .transition-all:hover {
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
-        transform: translateY(-2px);
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    code {
+        background-color: #f5f5f5;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
     }
 </style>
