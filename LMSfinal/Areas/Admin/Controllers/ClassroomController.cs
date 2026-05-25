@@ -108,7 +108,7 @@ namespace LMSfinal.Areas.Admin.Controllers
                     RegistrationDeadline = vm.RegistrationDeadline,
 
                     // ⚠️ GIÁO VIÊN & HỌC SINH = NULL
-                    InstructorId = null
+                    InstructorId = vm.InstructorId
                 };
 
                 _context.Classrooms.Add(classroom);
@@ -386,6 +386,100 @@ namespace LMSfinal.Areas.Admin.Controllers
                 }).ToListAsync();
 
             return vm;
+        }
+        // ==================== GET AVAILABLE STUDENTS (API for Select2) ====================
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableStudents(int classroomId, string q)
+        {
+            // Lấy danh sách ID sinh viên đã có trong lớp này
+            var enrolledStudentIds = await _context.ClassroomStudents
+                .Where(cs => cs.ClassroomId == classroomId)
+                .Select(cs => cs.StudentId)
+                .ToListAsync();
+
+            // Truy vấn danh sách Profile (chứa MSSV và Fullname) chưa có trong lớp
+            var query = _context.UserProfiles
+                .Where(u => !enrolledStudentIds.Contains(u.UserId));
+
+            // Lọc theo từ khóa (MSSV hoặc Tên)
+            if (!string.IsNullOrEmpty(q))
+            {
+                query = query.Where(u => u.Mssv.ToString().Contains(q) || u.Fullname.Contains(q));
+            }
+
+            var data = await query
+                .Take(20) // Giới hạn số lượng trả về để đạt hiệu suất
+                .Select(u => new
+                {
+                    id = u.UserId,
+                    text = $"[{u.Mssv}] - {u.Fullname}"
+                })
+                .ToListAsync();
+
+            return Json(new { results = data });
+        }
+
+        // ==================== ADD STUDENTS TO CLASS (POST) ====================
+        [HttpPost]
+        public async Task<IActionResult> AddStudentsToClass(int classroomId, List<string> studentIds)
+        {
+            if (studentIds == null || !studentIds.Any())
+            {
+                return Json(new { success = false, message = "Vui lòng chọn ít nhất một sinh viên." });
+            }
+
+            var classroom = await _context.Classrooms
+                .Include(c => c.ClassroomStudents)
+                .FirstOrDefaultAsync(c => c.Id == classroomId);
+
+            if (classroom == null)
+            {
+                return Json(new { success = false, message = "Lớp học không tồn tại." });
+            }
+
+            // Kiểm tra sức chứa
+            int currentCount = classroom.ClassroomStudents.Count;
+            if (currentCount + studentIds.Count > classroom.MaxCapacity)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Không thể thêm. Sĩ số hiện tại {currentCount}/{classroom.MaxCapacity}. Bạn đang cố thêm {studentIds.Count} sinh viên."
+                });
+            }
+
+            try
+            {
+                var newEnrolments = new List<ClassroomStudent>();
+                foreach (var studentId in studentIds)
+                {
+                    // Tránh thêm trùng lặp nếu sinh viên đã tồn tại (phòng hờ)
+                    if (!classroom.ClassroomStudents.Any(cs => cs.StudentId == studentId))
+                    {
+                        newEnrolments.Add(new ClassroomStudent
+                        {
+                            ClassroomId = classroomId,
+                            StudentId = studentId
+                        });
+                    }
+                }
+
+                if (newEnrolments.Any())
+                {
+                    _context.ClassroomStudents.AddRange(newEnrolments);
+
+                    // Cập nhật lại trường CurrentEnrollment trong bảng Classroom
+                    var updatedEnrollment = currentCount + newEnrolments.Count;
+
+                    await _context.SaveChangesAsync();
+                }
+
+                return Json(new { success = true, message = $"Đã thêm thành công {newEnrolments.Count} sinh viên vào lớp." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Có lỗi xảy ra: " + ex.Message });
+            }
         }
     }
 }

@@ -27,10 +27,6 @@ namespace LMSfinal.Controllers
         }
 
         // ==================== STUDENT REGISTRATION ====================
-
-        /// <summary>
-        /// Danh sách lớp mở đăng ký cho học sinh
-        /// </summary>
         [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> AvailableClassroomsForStudent()

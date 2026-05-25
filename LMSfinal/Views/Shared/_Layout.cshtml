@@ -26,12 +26,26 @@
                     <li class="nav-item"><a class="nav-link" asp-controller="Courses" asp-action="Index">Khóa học</a></li>
                     <li class="nav-item"><a class="nav-link" asp-controller="Categories" asp-action="Index">Danh mục</a></li>
                     <li class="nav-item"><a class="nav-link" asp-controller="Contact" asp-action="Index">Liên hệ</a></li>
+
                 </ul>
                 <div class="d-flex gap-2 align-items-center">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <span class="text-white-50 small d-none d-md-inline">@User.Identity.Name</span>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-area="Admin" asp-controller="HomeAdmin" asp-action="index">Trang admin</a></li>
+                        }
+                        @if (User.IsInRole("Instructor"))
+                        {
+                            <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-area="Instructor" asp-controller="HomeInstructor" asp-action="index">Trang giảng viên</a></li>
+                        }
+                        @if (User.IsInRole("Student"))
+                        {
+                            <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-area="Student" asp-controller="Home" asp-action="index">Trang học viên</a></li>
+                        }
                         <a class="btn btn-outline-light btn-sm" asp-area="Student" asp-controller="Dashboard" asp-action="Index">Học tập</a>
+                        
                     }
                     else
                     {

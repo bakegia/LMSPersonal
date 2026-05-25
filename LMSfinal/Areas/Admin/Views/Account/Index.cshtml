@@ -66,6 +66,28 @@
                     <i class="fa-solid fa-chalkboard-user"></i> Tạo Tài Khoản Instructor
                 </a>
             </div>
+            <form asp-area="Admin"
+                  asp-controller="ImportAccount"
+                  asp-action="Import"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                <input type="file" name="file" />
+
+                <button type="submit">Import</button>
+
+                @if (ViewBag.Errors != null)
+                {
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach (var error in ViewBag.Errors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </form>
         </div>
         <div class="card-body">
             <table class="table table-hover" id="accountTable">

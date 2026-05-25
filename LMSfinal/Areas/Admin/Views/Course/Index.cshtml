@@ -343,27 +343,63 @@
     // =========================
     // LOAD CATEGORIES
     // =========================
-    function loadCategories() {
-        fetch(categoryApi)
+        function loadCategories() {
+        fetch(`${categoryApi}?pageNumber=1&pageSize=999`)
             .then(r => {
-                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                if (!r.ok)
+                    throw new Error(`HTTP error! status: ${r.status}`);
+
                 return r.json();
             })
             .then(response => {
-                const data = response.items || response;
 
-                let html = '<option value="">-- All Categories --</option>';
+                const data = response.items;
+
+                let filterHtml =
+                    '<option value="">-- All Categories --</option>';
+
+                let modalHtml =
+                    '<option value="">-- Select Category --</option>';
+
                 data.forEach(c => {
-                    html += `<option value="${c.categoryId}">${c.name}</option>`;
+                    filterHtml += `
+                        <option value="${c.categoryId}">
+                            ${c.name}
+                        </option>
+                    `;
+
+                    modalHtml += `
+                        <option value="${c.categoryId}">
+                            ${c.name}
+                        </option>
+                    `;
                 });
 
-                document.getElementById('filterByCategory').innerHTML = html;
-                document.getElementById('categoryId').innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Error loading categories:', error);
+                document.getElementById("filterByCategory").innerHTML = filterHtml;
+                document.getElementById("categoryId").innerHTML = modalHtml;
             });
     }
+    // function loadCategories() {
+    //     fetch(categoryApi)
+    //         .then(r => {
+    //             if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+    //             return r.json();
+    //         })
+    //         .then(response => {
+    //             const data = response.items || response;
+
+    //             let html = '<option value="">-- All Categories --</option>';
+    //             data.forEach(c => {
+    //                 html += `<option value="${c.categoryId}">${c.name}</option>`;
+    //             });
+
+    //             document.getElementById('filterByCategory').innerHTML = html;
+    //             document.getElementById('categoryId').innerHTML = html;
+    //         })
+    //         .catch(error => {
+    //             console.error('Error loading categories:', error);
+    //         });
+    // }
 
     // =========================
     // OPEN CREATE

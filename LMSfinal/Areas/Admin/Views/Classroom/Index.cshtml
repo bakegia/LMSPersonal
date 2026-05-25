@@ -5,6 +5,16 @@
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+    </style>
+
+
 <div class="container-fluid mt-4">
     <!-- Header -->
     <div class="row mb-4">
@@ -26,7 +36,7 @@
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fa-solid fa-check-circle me-2"></i>
-            @TempData["success"]
+            @TempData["success"]git
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -181,6 +191,11 @@
                                            class="btn btn-outline-info" title="Xem chi tiết">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
+                                        <button type="button" class="btn btn-outline-success"
+                                                onclick="openAddStudentModal(@classroom.Id, '@classroom.NameClass')"
+                                                title="Thêm sinh viên">
+                                            <i class="fa-solid fa-user-plus"></i>
+                                        </button>
                                         <a asp-action="Edit" asp-route-id="@classroom.Id"
                                            class="btn btn-outline-warning" title="Chỉnh sửa">
                                             <i class="fa-solid fa-pen"></i>
@@ -231,3 +246,114 @@
         border-radius: 3px;
     }
 </style>
+
+
+
+
+<!-- MODAL THÊM SINH VIÊN -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-user-plus me-2"></i>Thêm sinh viên vào lớp</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalClassroomId" />
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Lớp đang chọn:</label>
+                    <p id="modalClassName" class="form-control-plaintext border-bottom text-primary fw-bold"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tìm sinh viên theo MSSV hoặc Tên:</label>
+                    <select id="studentSelect" class="form-control" multiple="multiple" style="width: 100%"></select>
+                    <div class="form-text mt-2">Gõ MSSV hoặc tên để tìm kiếm. Có thể chọn nhiều người.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="btnSaveStudents">
+                    <span id="saveSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    Xác nhận thêm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Thêm Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Khởi tạo Select2 với load dữ liệu từ API (AJAX)
+            $('#studentSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Nhập MSSV hoặc họ tên...',
+                allowClear: true,
+                dropdownParent: $('#addStudentModal'), // Quan trọng để select2 hiện được trong Modal
+                ajax: {
+                    url: '@Url.Action("GetAvailableStudents", "Classroom")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term, // Từ khóa tìm kiếm
+                            classroomId: $('#modalClassroomId').val()
+                        };
+                    },
+                    processResults: function (data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1 // Chỉ bắt đầu tìm khi gõ ít nhất 1 ký tự
+            });
+
+            // Xử lý nút lưu
+            $('#btnSaveStudents').click(function () {
+                const classroomId = $('#modalClassroomId').val();
+                const studentIds = $('#studentSelect').val();
+
+                if (!studentIds || studentIds.length === 0) {
+                    alert("Vui lòng chọn ít nhất một sinh viên.");
+                    return;
+                }
+
+                $(this).prop('disabled', true);
+                $('#saveSpinner').removeClass('d-none');
+
+                $.ajax({
+                    url: '@Url.Action("AddStudentsToClass", "Classroom")',
+                    type: 'POST',
+                    data: {
+                        classroomId: classroomId,
+                        studentIds: studentIds
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message);
+                            location.reload(); // Reload để cập nhật sĩ số
+                        } else {
+                            alert(res.message);
+                            $('#btnSaveStudents').prop('disabled', false);
+                            $('#saveSpinner').addClass('d-none');
+                        }
+                    },
+                    error: function () {
+                        alert("Có lỗi xảy ra khi gửi yêu cầu.");
+                        $('#btnSaveStudents').prop('disabled', false);
+                        $('#saveSpinner').addClass('d-none');
+                    }
+                });
+            });
+        });
+
+        function openAddStudentModal(id, name) {
+            $('#modalClassroomId').val(id);
+            $('#modalClassName').text(name);
+            $('#studentSelect').val(null).trigger('change'); // Reset select
+            $('#addStudentModal').modal('show');
+        }
+    </script>
+}

@@ -258,7 +258,7 @@
                     .OrderBy(s => s.DayOfWeek)
                     .Select(s => GetDayName(s.DayOfWeek)));
 
-            result.Add($"{days} ({slot.Key.StartTime:HH\\:mm}-{slot.Key.EndTime:HH\\:mm})");
+            result.Add($"{days} ({slot.Key.StartTime.ToString(@"hh\:mm")}-{slot.Key.EndTime.ToString(@"hh\:mm")})");
         }
 
         return string.Join("<br>", result);

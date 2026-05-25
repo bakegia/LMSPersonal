@@ -120,6 +120,9 @@
                         <a asp-area="Instructor" asp-controller="Score" asp-action="Index">
                             <i class="fa-solid fa-clipboard-list"></i> Nhập điểm
                         </a>
+                        <a asp-area=""  asp-controller="Register" asp-action="AvailableClassroomsForInstructor">
+                            <i class="fa-solid fa-clipboard-list"></i> Đăng ký lớp dạy
+                        </a>
                     }
 
                     <!-- Thay thế dòng này trong phần Student -->
@@ -132,6 +135,11 @@
                         <a asp-area="Student" asp-controller="Attendance" asp-action="MyAttendanceHistory"><i class="fa-solid fa-calendar-days"></i> Lịch sử điểm danh</a>
                         <a asp-area="Student" asp-controller="Profile" asp-action="Index"><i class="fa-solid fa-address-card"></i> Hồ sơ cá nhân</a>
                         <a asp-area="Student" asp-controller="Grade" asp-action="Index"><i class="fa-solid fa-address-card"></i> Xem điểm</a>
+                        <a asp-area=""
+                           asp-controller="Register"
+                           asp-action="AvailableClassroomsForStudent">
+                            <i class="fa-solid fa-clipboard-list"></i> Đăng ký lớp học
+                        </a>
                     }
 
 
