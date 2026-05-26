@@ -48,9 +48,9 @@ namespace LMSfinal.Areas.Student.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             // Lấy trực tiếp đối tượng Classroom từ database
             var classroom = await _context.Classrooms
-                .Include(c => c.Course)          
-                .Include(c => c.Sections)        
-                    .ThenInclude(s => s.Lessons) 
+                .Include(c => c.Course)
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Lessons)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (classroom == null)
@@ -72,7 +72,8 @@ namespace LMSfinal.Areas.Student.Controllers
         }
         public async Task<IActionResult> ViewLesson(int id)
         {
-            // Lấy bài học cùng với thông tin chương (Section) để hiển thị tiêu đề
+            var userId = _userManager.GetUserId(User);
+            // Lấy bài học cùng với thông tin chương (Section)
             var lesson = await _context.Lessons
                 .Include(l => l.Section)
                     .ThenInclude(s => s.Classroom)
@@ -83,28 +84,50 @@ namespace LMSfinal.Areas.Student.Controllers
                 return NotFound();
             }
 
+            // 1. Kiểm tra bài học đã hoàn thành chưa
+            ViewBag.IsCompleted = await _context.UserProgresses
+                .AnyAsync(p => p.UserId == userId && p.LessonId == id);
+
+            // 2. Kiểm tra bài này có Quiz hay không
+            var quiz = await _context.Set<Quiz>()
+                .FirstOrDefaultAsync(q => q.LessonId == id && q.IsActive);
+
+            bool hasQuiz = quiz != null;
+            ViewBag.HasQuiz = hasQuiz;
+            ViewBag.HasAttempted = false;
+            if (hasQuiz)
+            {
+                ViewBag.HasAttempted = await _context.Set<StudentQuizAttempt>()
+                    .AnyAsync(a => a.StudentId == userId && a.QuizId == quiz.Id);
+            }
+
             return View(lesson);
         }
         [HttpPost]
-        public async Task<IActionResult> MarkAsCompleted(int lessonId)
+        public async Task<IActionResult> MarkAsCompleted([FromBody] MarkCompletedRequest request)
         {
             try
             {
-                // 1. Kiểm tra User đã đăng nhập chưa
+                if (request == null || request.LessonId == 0)
+                {
+                    return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
+                }
+
+                int lessonId = request.LessonId;
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                
                 if (string.IsNullOrEmpty(userId))
                 {
                     return Json(new { success = false, message = "Lỗi: Chưa đăng nhập!" });
                 }
 
-                // 2. Kiểm tra LessonId có tồn tại trong database không
+                // Kiểm tra bài học tồn tại
                 var lessonExists = await _context.Lessons.AnyAsync(l => l.Id == lessonId);
                 if (!lessonExists)
                 {
                     return Json(new { success = false, message = "Lỗi: Bài học không tồn tại!" });
                 }
 
-                // 3. Kiểm tra xem đã tồn tại chưa để tránh lỗi trùng lặp (Duplicate)
                 var exists = await _context.UserProgresses
                     .AnyAsync(p => p.UserId == userId && p.LessonId == lessonId);
 
@@ -125,12 +148,16 @@ namespace LMSfinal.Areas.Student.Controllers
             }
             catch (Exception ex)
             {
-                // In lỗi chi tiết ra màn hình Output của Visual Studio để debug
                 System.Diagnostics.Debug.WriteLine("LỖI SQL/CODE: " + ex.Message);
                 return Json(new { success = false, message = "Lỗi hệ thống: " + ex.Message });
             }
         }
-        // Thêm 2 methods này
+
+        // Thêm Model này vào cuối controller cùng với các model input khác
+        public class MarkCompletedRequest
+        {
+            public int LessonId { get; set; }
+        }
 
         // ==================== GET QUIZ FOR LESSON ====================
         public async Task<IActionResult> GetLessonQuiz(int lessonId)
@@ -169,7 +196,7 @@ namespace LMSfinal.Areas.Student.Controllers
 
         // ==================== SUBMIT QUIZ ====================
         [HttpPost]
-        public async Task<IActionResult> SubmitQuiz(int quizId, [FromBody] List<StudentAnswerInput> studentAnswers)
+        public async Task<IActionResult> SubmitQuiz([FromBody] QuizSubmissionModel model)
         {
             try
             {
@@ -177,14 +204,17 @@ namespace LMSfinal.Areas.Student.Controllers
                 if (string.IsNullOrEmpty(userId))
                     return Json(new { success = false, message = "Chưa đăng nhập" });
 
+                if (model == null || model.QuizId == 0)
+                    return Json(new { success = false, message = "Dữ liệu không hợp lệ" });
+
                 // 1. Lấy Quiz và tất cả questions + answers
                 var quiz = await _context.Set<Quiz>()
                     .Include(q => q.Questions)
                         .ThenInclude(qn => qn.Answers)
-                    .FirstOrDefaultAsync(q => q.Id == quizId);
+                    .FirstOrDefaultAsync(q => q.Id == model.QuizId);
 
                 if (quiz == null)
-                    return NotFound(new { success = false, message = "Quiz không tồn tại" });
+                    return Json(new { success = false, message = "Quiz không tồn tại" });
 
                 // 2. Tính tổng điểm
                 decimal totalPoints = quiz.Questions.Sum(q => q.Points);
@@ -194,13 +224,13 @@ namespace LMSfinal.Areas.Student.Controllers
                 var quizAttempt = new StudentQuizAttempt
                 {
                     StudentId = userId,
-                    QuizId = quizId,
+                    QuizId = model.QuizId,
                     TotalPoints = totalPoints,
                     AttemptedAt = DateTime.Now,
                     Answers = new List<StudentQuizAnswer>()
                 };
 
-                foreach (var studentAnswer in studentAnswers)
+                foreach (var studentAnswer in model.Answers)
                 {
                     var question = quiz.Questions.FirstOrDefault(q => q.Id == studentAnswer.QuestionId);
                     if (question == null) continue;
@@ -210,9 +240,14 @@ namespace LMSfinal.Areas.Student.Controllers
 
                     var qAnswerRecord = new StudentQuizAnswer
                     {
+                        Attempt = quizAttempt,
+
                         QuestionId = studentAnswer.QuestionId,
+
                         SelectedAnswerId = studentAnswer.SelectedAnswerId,
+
                         IsCorrect = isCorrect,
+
                         EarnedPoints = isCorrect ? question.Points : 0
                     };
 
@@ -244,8 +279,13 @@ namespace LMSfinal.Areas.Student.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Lỗi: {ex.Message}");
-                return Json(new { success = false, message = $"Lỗi: {ex.Message}" });
+                var inner = ex.InnerException?.Message ?? ex.Message;
+
+                return Json(new
+                {
+                    success = false,
+                    message = inner
+                });
             }
         }
 
@@ -254,6 +294,11 @@ namespace LMSfinal.Areas.Student.Controllers
         {
             public int QuestionId { get; set; }
             public int SelectedAnswerId { get; set; }
+        }
+        public class QuizSubmissionModel
+        {
+            public int QuizId { get; set; }
+            public List<StudentAnswerInput> Answers { get; set; } = new List<StudentAnswerInput>();
         }
     }
 }

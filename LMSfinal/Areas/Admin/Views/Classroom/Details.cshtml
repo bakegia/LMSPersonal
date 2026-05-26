@@ -166,7 +166,8 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 50px;">#</th>
-                                        <th><i class="fa-solid fa-user me-1 text-danger"></i>Tên Người Dùng</th>
+                                        <th><i class="fa-solid fa-user me-1 text-danger"></i>MSSV</th>
+                                        <th><i class="fa-solid fa-user me-1 text-danger"></i>Tên Sinh Viên</th>
                                         <th><i class="fa-solid fa-envelope me-1 text-danger"></i>Email</th>
                                         <th style="width: 80px;">Trạng Thái</th>
                                     </tr>
@@ -179,9 +180,10 @@
                                     {
                                         <tr>
                                             <td><span class="badge bg-secondary">@index</span></td>
+                                            <td>@ViewBag.MssvLookup[student.StudentId]</td>
                                             <td>
                                                 <i class="fa-solid fa-circle me-1" style="font-size: 6px; color: #28a745;"></i>
-                                                @student.Student?.UserName
+                                                @student.Student?.FullName
                                             </td>
                                             <td>@student.Student?.Email</td>
                                             <td>

@@ -77,58 +77,77 @@ namespace LMSfinal.Data
                 .HasIndex(l => new { l.SectionId, l.Order })
                 .IsUnique();
 
-            // ========================= QUIZ =========================
+            // ========================= QUIZ CONFIGURATION =========================
 
-            // Quiz → QuizQuestion
+            // Quiz -> Lesson
             builder.Entity<Quiz>()
-                .HasMany(q => q.Questions)
-                .WithOne(qq => qq.Quiz)
+                .HasOne(q => q.Lesson)
+                .WithMany()
+                .HasForeignKey(q => q.LessonId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Quiz -> QuizQuestion (1 - Many)
+            builder.Entity<QuizQuestion>()
+                .HasOne(qq => qq.Quiz)
+                .WithMany(q => q.Questions)
                 .HasForeignKey(qq => qq.QuizId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // QuizQuestion → QuizAnswer
-            builder.Entity<QuizQuestion>()
-                .HasMany(qq => qq.Answers)
-                .WithOne(qa => qa.Question)
+            // QuizQuestion -> QuizAnswer (1 - Many)
+            builder.Entity<QuizAnswer>()
+                .HasOne(qa => qa.Question)
+                .WithMany(qq => qq.Answers)
                 .HasForeignKey(qa => qa.QuestionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Quiz → StudentQuizAttempt
-            builder.Entity<Quiz>()
-                .HasMany(q => q.StudentAttempts)
-                .WithOne(squa => squa.Quiz)
-                .HasForeignKey(squa => squa.QuizId)
+            // Quiz -> StudentQuizAttempt (1 - Many)
+            builder.Entity<StudentQuizAttempt>()
+                .HasOne(sa => sa.Quiz)
+                .WithMany(q => q.StudentAttempts)
+                .HasForeignKey(sa => sa.QuizId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // StudentQuizAttempt → StudentQuizAnswer
+            // StudentQuizAttempt -> Student (ApplicationUser)
             builder.Entity<StudentQuizAttempt>()
-                .HasMany(squa => squa.Answers)
-                .WithOne(sqa => sqa.Attempt)
+                .HasOne(sa => sa.Student)
+                .WithMany() // Nếu ApplicationUser chưa có ICollection<StudentQuizAttempt>
+                .HasForeignKey(sa => sa.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // StudentQuizAttempt -> StudentQuizAnswer (1 - Many)
+            builder.Entity<StudentQuizAnswer>()
+                .HasOne(sqa => sqa.Attempt)
+                .WithMany(sa => sa.Answers)
                 .HasForeignKey(sqa => sqa.AttemptId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // QuizQuestion → StudentQuizAnswer
-            builder.Entity<QuizQuestion>()
-                .HasMany(qq => qq.StudentAnswers)
-                .WithOne(sqa => sqa.Question)
+            // Hạn chế Cascade để tránh Multiple Cascade Paths
+            builder.Entity<StudentQuizAnswer>()
+                .HasOne(sqa => sqa.Question)
+                .WithMany(qq => qq.StudentAnswers)
                 .HasForeignKey(sqa => sqa.QuestionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // QuizAnswer → StudentQuizAnswer
-            builder.Entity<QuizAnswer>()
-                .HasMany(qa => qa.StudentAnswers)
-                .WithOne(sqa => sqa.SelectedAnswer)
+            builder.Entity<StudentQuizAnswer>()
+                .HasOne(sqa => sqa.SelectedAnswer)
+                .WithMany(qa => qa.StudentAnswers)
                 .HasForeignKey(sqa => sqa.SelectedAnswerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Nếu quiz chỉ được làm 1 lần
+            // Chỉ số và Ràng buộc
             builder.Entity<StudentQuizAttempt>()
-                .HasIndex(x => new
-                {
-                    x.StudentId,
-                    x.QuizId
-                })
-                .IsUnique();
+                .HasIndex(x => new { x.StudentId, x.QuizId });
+
+            builder.Entity<StudentQuizAttempt>()
+                .Property(x => x.Score).HasPrecision(18, 2);
+            builder.Entity<StudentQuizAttempt>()
+                .Property(x => x.TotalPoints).HasPrecision(18, 2);
+
+            builder.Entity<QuizQuestion>()
+                .HasIndex(x => new { x.QuizId, x.Order });
+
+            builder.Entity<QuizAnswer>()
+                .HasIndex(x => new { x.QuestionId, x.Order });
 
             // ========================= CATEGORY =========================
             builder.Entity<Category>(entity =>
@@ -177,31 +196,6 @@ namespace LMSfinal.Data
                     .HasMaxLength(200)
                     .IsRequired();
             });
-
-            // ========================= OPTIONAL FUTURE CONFIG =========================
-
-            /*
-            // Attendance unique
-            builder.Entity<Attendance>()
-                .HasIndex(x => new
-                {
-                    x.StudentId,
-                    x.ScheduleId,
-                    x.Date
-                })
-                .IsUnique();
-            */
-
-            /*
-            // Enrollment unique
-            builder.Entity<Enrollment>()
-                .HasIndex(x => new
-                {
-                    x.StudentId,
-                    x.CourseId
-                })
-                .IsUnique();
-            */
         }
 
     }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LMSfinal.Models.EF
@@ -66,51 +67,50 @@ namespace LMSfinal.Models.EF
         public QuizQuestion? Question { get; set; }
 
         // Navigation
-        public ICollection<StudentQuizAnswer> StudentAnswers { get; set; } = new List<StudentQuizAnswer>();
+        public virtual ICollection<StudentQuizAnswer> StudentAnswers { get; set; } = new List<StudentQuizAnswer>();
     }
 
     public class StudentQuizAttempt
     {
         public int Id { get; set; }
 
-        [ForeignKey(nameof(Student))]
         public string StudentId { get; set; } = string.Empty;
-        public ApplicationUser? Student { get; set; }
+        
+        [ForeignKey(nameof(StudentId))]
+        public virtual ApplicationUser? Student { get; set; } // THÊM THUỘC TÍNH NÀY
 
-        [ForeignKey(nameof(Quiz))]
         public int QuizId { get; set; }
-        public Quiz? Quiz { get; set; }
+        
+        [ForeignKey(nameof(QuizId))]
+        public virtual Quiz? Quiz { get; set; } // THÊM THUỘC TÍNH NÀY
 
-        public decimal Score { get; set; } = 0;
+        public decimal Score { get; set; }
 
-        public decimal TotalPoints { get; set; } = 0;
+        public decimal TotalPoints { get; set; }
 
-        public bool Passed { get; set; } = false;
+        public bool Passed { get; set; }
 
-        public DateTime AttemptedAt { get; set; } = DateTime.Now;
+        public DateTime AttemptedAt { get; set; }
 
-        // Navigation
-        public ICollection<StudentQuizAnswer> Answers { get; set; } = new List<StudentQuizAnswer>();
+        public ICollection<StudentQuizAnswer> Answers { get; set; }
+            = new List<StudentQuizAnswer>();
     }
 
     public class StudentQuizAnswer
     {
         public int Id { get; set; }
-
-        [ForeignKey(nameof(Attempt))]
+        // Đã bỏ StudentId và Student ở đây vì nó đã có ở bảng Attempt
         public int AttemptId { get; set; }
         public StudentQuizAttempt? Attempt { get; set; }
 
-        [ForeignKey(nameof(Question))]
         public int QuestionId { get; set; }
         public QuizQuestion? Question { get; set; }
 
-        [ForeignKey(nameof(SelectedAnswer))]
         public int? SelectedAnswerId { get; set; }
         public QuizAnswer? SelectedAnswer { get; set; }
 
-        public bool IsCorrect { get; set; } = false;
+        public bool IsCorrect { get; set; }
 
-        public int EarnedPoints { get; set; } = 0;
+        public int EarnedPoints { get; set; }
     }
 }

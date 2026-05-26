@@ -169,25 +169,49 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (!isFull && !isDeadlinePassed)
+                                    @if (User.IsInRole("Student"))
                                     {
-                                        <form asp-action="StudentRegister" asp-route-classroomId="@classroom.Id" method="post" style="display: inline;">
-                                            <button type="submit" class="btn btn-sm btn-primary" title="Đăng ký lớp này">
-                                                <i class="fa-solid fa-plus me-1"></i>Đăng Ký
+                                        var userEnrolledClassroomIds = ViewBag.UserEnrolledClassroomIds as List<int> ?? new List<int>();
+                                        var userEnrolledCourseIds = ViewBag.UserEnrolledCourseIds as List<int> ?? new List<int>();
+
+                                        var isEnrolledInThisClass = userEnrolledClassroomIds.Contains(classroom.Id);
+                                        var isEnrolledInThisCourse = userEnrolledCourseIds.Contains(classroom.CourseId);
+
+                                        if (isEnrolledInThisClass)
+                                        {
+                                            <form asp-action="StudentUnregister" asp-route-classroomId="@classroom.Id" method="post" 
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn hủy đăng ký lớp này?');" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Hủy đăng ký">
+                                                    <i class="fa-solid fa-trash-can me-1"></i>Hủy Đăng Ký
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (isEnrolledInThisCourse)
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled title="Bạn đã đăng ký một lớp khác của môn này">
+                                                <i class="fa-solid fa-triangle-exclamation me-1"></i>Đã Đăng Ký Môn Này
                                             </button>
-                                        </form>
-                                    }
-                                    else if (isFull)
-                                    {
-                                        <button class="btn btn-sm btn-secondary" disabled title="Lớp đã đủ">
-                                            <i class="fa-solid fa-circle-xmark me-1"></i>Đủ Chỗ
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-sm btn-secondary" disabled title="Hạn đã hết">
-                                            <i class="fa-solid fa-clock me-1"></i>Hạn Hết
-                                        </button>
+                                        }
+                                        else if (!isFull && !isDeadlinePassed)
+                                        {
+                                            <form asp-action="StudentRegister" asp-route-classroomId="@classroom.Id" method="post" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-primary" title="Đăng ký lớp này">
+                                                    <i class="fa-solid fa-plus me-1"></i>Đăng Ký
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (isFull)
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled title="Lớp đã đủ">
+                                                <i class="fa-solid fa-circle-xmark me-1"></i>Đủ Chỗ
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled title="Hạn đã hết">
+                                                <i class="fa-solid fa-clock me-1"></i>Hạn Hết
+                                            </button>
+                                        }
                                     }
                                 </td>
                             </tr>
@@ -253,3 +277,5 @@
         };
     }
 }
+
+

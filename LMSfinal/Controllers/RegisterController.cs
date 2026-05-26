@@ -31,22 +31,36 @@ namespace LMSfinal.Controllers
         [HttpGet]
         public async Task<IActionResult> AvailableClassroomsForStudent()
         {
+            var currentUserId = _userManager.GetUserId(User);
             var currentDate = DateTime.Now;
 
             // Lấy danh sách lớp mở đăng ký
             var classrooms = await _context.Classrooms
                 .Where(c => c.IsOpenForRegistration &&
-                            c.InstructorId != null && // Đã có giáo viên
-                            c.ClassroomStudents.Count() < c.MaxCapacity && // Đổi CurrentEnrollment thành đếm trực tiếp ở đây
-                            (!c.RegistrationDeadline.HasValue || c.RegistrationDeadline >= currentDate) && // Hạn chưa hết (đã bọc ngoặc)
+                            c.InstructorId != null && 
                             c.IsActive)
                 .Include(c => c.Course)
                 .Include(c => c.Instructor)
                 .Include(c => c.ClassSchedules)
                     .ThenInclude(cs => cs.TimeSlot)
-                .Include(c => c.ClassroomStudents) // Giữ nguyên để View có thể dùng nếu cần
+                .Include(c => c.ClassroomStudents)
                 .OrderBy(c => c.StartDate)
                 .ToListAsync();
+
+            // Lấy danh sách ID các lớp mà học sinh đã đăng ký
+            var userEnrolledClassroomIds = await _context.ClassroomStudents
+                .Where(cs => cs.StudentId == currentUserId)
+                .Select(cs => cs.ClassroomId)
+                .ToListAsync();
+
+            // Lấy danh sách ID các khóa học mà học sinh đã đăng ký (để check trùng course)
+            var userEnrolledCourseIds = await _context.ClassroomStudents
+                .Where(cs => cs.StudentId == currentUserId)
+                .Select(cs => cs.Classroom.CourseId)
+                .ToListAsync();
+
+            ViewBag.UserEnrolledClassroomIds = userEnrolledClassroomIds;
+            ViewBag.UserEnrolledCourseIds = userEnrolledCourseIds;
 
             return View(classrooms);
         }
@@ -142,6 +156,39 @@ namespace LMSfinal.Controllers
                 TempData["error"] = $"❌ Lỗi: {ex.Message}";
                 return RedirectToAction(nameof(AvailableClassroomsForStudent));
             }
+        }
+
+        /// <summary>
+        /// Học sinh hủy đăng ký lớp học
+        /// </summary>
+        [Authorize(Roles = "Student")]
+        [HttpPost]
+        public async Task<IActionResult> StudentUnregister(int classroomId)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            
+            var enrollment = await _context.ClassroomStudents
+                .FirstOrDefaultAsync(cs => cs.ClassroomId == classroomId && cs.StudentId == currentUserId);
+
+            if (enrollment == null)
+            {
+                TempData["error"] = "❌ Bạn chưa đăng ký lớp học này.";
+                return RedirectToAction(nameof(AvailableClassroomsForStudent));
+            }
+
+            try
+            {
+                _context.ClassroomStudents.Remove(enrollment);
+                await _context.SaveChangesAsync();
+
+                TempData["success"] = "✅ Đã hủy đăng ký lớp học thành công.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = $"❌ Lỗi khi hủy đăng ký: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(AvailableClassroomsForStudent));
         }
 
         // ==================== INSTRUCTOR REGISTRATION ====================

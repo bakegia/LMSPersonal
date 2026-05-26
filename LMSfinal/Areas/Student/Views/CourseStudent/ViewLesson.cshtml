@@ -162,17 +162,31 @@
 
     <!-- Mark Completed Button -->
     <div class="mt-4">
-        <button class="btn btn-success btn-lg w-100" onclick="markAsCompleted(@Model.Id)">
-            <i class="fa-solid fa-check"></i> Đánh Dấu Hoàn Thành
+        @{
+            bool shouldDisable = (ViewBag.HasQuiz == true && ViewBag.HasAttempted == false && ViewBag.IsCompleted == false);
+        }
+        <button id="btnMarkComplete"
+                class="btn btn-success btn-lg w-100"
+                onclick="markAsCompleted(@Model.Id)"
+                @(shouldDisable ? "disabled" : "")>
+            <i class="fa-solid fa-check"></i>
+            <span id="btnText">@(ViewBag.IsCompleted == true ? "Đã Hoàn Thành" : "Đánh Dấu Hoàn Thành")</span>
         </button>
+
+        @if (shouldDisable)
+        {
+            <p id="quizNotice" class="text-danger small mt-2 text-center">
+                <i class="fa-solid fa-lock"></i> Bạn cần thực hiện bài tập (Quiz) để hoàn thành bài học này.
+            </p>
+        }
     </div>
 </div>
 
 @section Scripts {
     <script>
         const lessonId = @Model.Id;
-        const quizId_var = null;
-
+        let quizId_var = null;
+        
         // Load Quiz khi page load
         document.addEventListener('DOMContentLoaded', function () {
             loadQuiz();
@@ -261,14 +275,22 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         quizId: quizId_var,
-                        studentAnswers: answers
+                        answers: answers
                     })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
+                    // Hiển thị khung kết quả Quiz cho người dùng thấy điểm
                     showResult(result);
+
+                    // Mở khóa nút "Đánh dấu hoàn thành"
+                    const btn = document.getElementById('btnMarkComplete');
+                    if (btn) btn.disabled = false;
+
+                    const notice = document.getElementById('quizNotice');
+                    if (notice) notice.style.display = 'none';
                 } else {
                     alert('Lỗi: ' + result.message);
                 }
@@ -295,26 +317,35 @@
 
             // Nếu pass, enable button "Đánh dấu hoàn thành"
             if (result.passed) {
-                document.querySelector('button[onclick*="markAsCompleted"]').disabled = false;
+                const btn = document.getElementById('btnMarkComplete');
+                btn.disabled = false;
+                const notice = document.getElementById('quizNotice');
+                if (notice) notice.style.display = 'none';
             }
         }
 
         // Mark Completed
-        function markAsCompleted(lessonId) {
+        function markAsCompleted(id) {
             if (confirm('Xác nhận đánh dấu bài học này là hoàn thành?')) {
                 fetch('/Student/CourseStudent/MarkAsCompleted', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lessonId: lessonId })
+                    body: JSON.stringify({ lessonId: id }) // Đảm bảo key là lessonId khớp với C#
                 })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
                         alert('Bài học đã được đánh dấu hoàn thành!');
-                        location.href = '/Student/CourseStudent/Index';
+                        // Thay đổi texte nút ngay lập tức để người dùng thấy kết quả
+                        document.getElementById('btnText').textContent = "Đã Hoàn Thành";
+                        location.href = '/Student/CourseStudent/Details/' + @Model.Section.ClassroomId;
                     } else {
                         alert('Lỗi: ' + data.message);
                     }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Lỗi kết nối máy chủ');
                 });
             }
         }
