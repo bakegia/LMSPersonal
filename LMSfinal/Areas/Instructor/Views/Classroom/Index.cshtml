@@ -3,106 +3,241 @@
 
 @{
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "My Classrooms";
 }
 
-<h2>My Classrooms</h2>
+<div class="container-fluid py-4">
 
-<table class="table table-bordered table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>#</th>
-            <th>Mã Lớp</th>
-            <th>Tên Môn Học</th>
-            <th>Khóa Học</th>
-            <th>Ngày Bắt Đầu</th>
-            <th>Ngày Kết Thúc</th>
-            <th>Sỉ Số</th>
-            <th>Trạng Thái</th>
-            <th width="250">Hành Động</th>
-        </tr>
-    </thead>
-    <tbody>
-        @{
-            int index = 1;
-        }
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary mb-1">
+                <i class="fa-solid fa-graduation-cap"></i> My Classrooms
+            </h2>
+            <p class="text-muted mb-0">
+                Quản lý lớp học, sinh viên và nội dung khóa học
+            </p>
+        </div>
+    </div>
+    <!-- View Attendance -->
+    <a asp-area="Instructor"
+       asp-controller="Classroom"
+       asp-action="OverallAttendanceHistory"
+       class="btn btn-dark btn-sm rounded-pill">
+        <i class="fa-solid fa-eye"></i>
+        Xem lịch sử điểm danh
+    </a>
+    <!-- Card -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-0">
 
-        @if (Model != null && Model.Any())
-        {
-            foreach (var item in Model)
-            {
-                <tr>
-                    <td>@index</td>
-                    <td>@item.ClassCode</td>
-                    <td>@item.NameClass</td>
-                    <td>@item.Course?.Title</td>
-                    <td>@item.StartDate.ToString("dd/MM/yyyy")</td>
-                    <td>@item.EndDate.ToString("dd/MM/yyyy")</td>
-                    <td>@item.ClassroomStudents.Count / 30</td>
-                    <td>
-                        @if (item.IsActive)
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+
+                    <thead class="table-light">
+                        <tr class="text-center">
+                            <th>#</th>
+                            <th>Mã Lớp</th>
+                            <th>Tên Môn Học</th>
+                            <th>Khóa Học</th>
+                            <th>Bắt Đầu</th>
+                            <th>Kết Thúc</th>
+                            <th>Sỉ Số</th>
+                            <th>Trạng Thái</th>
+                            <th width="420">Hành Động</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @{
+                            int index = 1;
+                        }
+
+                        @if (Model != null && Model.Any())
                         {
-                            <span class="badge bg-success">Active</span>
+                            foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <!-- STT -->
+                                    <td class="text-center fw-semibold">
+                                        @index
+                                    </td>
+
+                                    <!-- Mã lớp -->
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                                            @item.ClassCode
+                                        </span>
+                                    </td>
+
+                                    <!-- Tên lớp -->
+                                    <td>
+                                        <div class="fw-bold text-dark">
+                                            @item.NameClass
+                                        </div>
+                                    </td>
+
+                                    <!-- Course -->
+                                    <td>
+                                        @item.Course?.Title
+                                    </td>
+
+                                    <!-- Start -->
+                                    <td>
+                                        <i class="fa-regular fa-calendar text-success"></i>
+                                        @item.StartDate.ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    <!-- End -->
+                                    <td>
+                                        <i class="fa-regular fa-calendar text-danger"></i>
+                                        @item.EndDate.ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    <!-- Students -->
+                                    <td class="text-center">
+                                        <span class="badge bg-info text-dark px-3 py-2">
+                                            @item.ClassroomStudents.Count / 30
+                                        </span>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="text-center">
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge rounded-pill bg-success px-3 py-2">
+                                                <i class="fa-solid fa-circle-check"></i> Active
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill bg-secondary px-3 py-2">
+                                                <i class="fa-solid fa-circle-xmark"></i> Inactive
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+
+                                            <!-- Nội dung -->
+                                            <a asp-area="Instructor"
+                                               asp-controller="Section"
+                                               asp-action="Index"
+                                               asp-route-classroomId="@item.Id"
+                                               class="btn btn-warning btn-sm rounded-pill">
+                                                <i class="fa-solid fa-folder-open"></i>
+                                                Nội dung
+                                            </a>
+
+                                            <!-- Details -->
+                                            <a asp-area="Instructor"
+                                               asp-controller="Classroom"
+                                               asp-action="Details"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-primary btn-sm rounded-pill">
+                                                <i class="fa-solid fa-circle-info"></i>
+                                                Details
+                                            </a>
+
+                                            <!-- Students -->
+                                            <a asp-area="Instructor"
+                                               asp-controller="Classroom"
+                                               asp-action="Students"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-info btn-sm rounded-pill text-white">
+                                                <i class="fa-solid fa-users"></i>
+                                                Students
+                                            </a>
+
+                                            <!-- Attendance -->
+                                            <a asp-area="Instructor"
+                                               asp-controller="Classroom"
+                                               asp-action="Attendance"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-success btn-sm rounded-pill">
+                                                <i class="fa-solid fa-check-to-slot"></i>
+                                                Điểm danh
+                                            </a>
+
+                                            
+
+                                            <!-- Quiz -->
+                                            <a asp-area="Instructor"
+                                               asp-controller="Quiz"
+                                               asp-action="Index"
+                                               asp-route-classroomId="@item.Id"
+                                               class="btn btn-danger btn-sm rounded-pill">
+                                                <i class="fa-solid fa-file-lines"></i>
+                                                Quiz
+                                            </a>
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+
+                                index++;
+                            }
                         }
                         else
                         {
-                            <span class="badge bg-secondary">Inactive</span>
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fa-solid fa-school fa-3x text-muted mb-3"></i>
+
+                                        <h5 class="fw-bold text-muted">
+                                            No classrooms found
+                                        </h5>
+
+                                        <p class="text-secondary">
+                                            Hiện chưa có lớp học nào được tạo.
+                                        </p>
+                                    </div>
+
+                                </td>
+                            </tr>
                         }
-                    </td>
-                    <td>
-                        <a asp-area="Instructor"
-                           asp-controller="Section"
-                           asp-action="Index"
-                           asp-route-classroomId="@item.Id"
-                           class="btn btn-sm btn-warning">
-                            <i class="fa-solid fa-folder-plus"></i> Nội dung chương
-                        </a>
-                        <a asp-area="Instructor"
-                           asp-controller="Classroom"
-                           asp-action="Details"
-                           asp-route-id="@item.Id"
-                           class="btn btn-sm btn-primary">
-                            Details
-                        </a>
+                    </tbody>
 
-                        <a asp-area="Instructor"
-                           asp-controller="Classroom"
-                           asp-action="Students"
-                           asp-route-id="@item.Id"
-                           class="btn btn-sm btn-info">
-                            Students
-                        </a>
-                        <a asp-area="Instructor"
-                           asp-controller="Classroom"
-                           asp-action="Attendance"
-                           asp-route-id="@item.Id"
-                           class="btn btn-sm btn-success">
-                            <i class="fa-solid fa-check-to-slot"></i> Điểm danh
-                        </a>
-                        <a asp-controller="Classroom"
-                           asp-action="AttendanceByDate"
-                           asp-route-id="@item.Id">
-                            Xem điểm danh
-                        </a>
-                    </td>
-                    <td>
-                        <!-- Thêm vào view Classroom Details của Instructor -->
-                        <a asp-area="Instructor"
-                           asp-controller="Quiz"
-                           asp-action="Index"
-                           class="btn btn-info">
-                            <i class="fa-solid fa-file-lines"></i> Quản lý Quiz
-                        </a>
-                    </td>
-                </tr>
+                </table>
+            </div>
 
-                index++;
-            }
-        }
-        else
-        {
-            <tr>
-                <td colspan="7" class="text-center">No classrooms found</td>
-            </tr>
-        }
-    </tbody>
-</table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 20px;
+    }
+
+    .table thead th {
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        vertical-align: middle;
+    }
+
+    .btn {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .badge {
+        font-size: 12px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fbff;
+        transition: 0.2s;
+    }
+</style>

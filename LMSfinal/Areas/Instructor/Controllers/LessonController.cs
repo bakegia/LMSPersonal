@@ -31,27 +31,50 @@ namespace LMSfinal.Areas.Instructor.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(Lesson lesson)
         {
+            // DEBUG MODELSTATE
+            if (!ModelState.IsValid)
+            {
+                foreach (var item in ModelState)
+                {
+                    Console.WriteLine($"KEY: {item.Key}");
+
+                    foreach (var error in item.Value.Errors)
+                    {
+                        Console.WriteLine($"ERROR: {error.ErrorMessage}");
+                    }
+
+                    Console.WriteLine("----------------");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 if (lesson.VideoUpload != null && lesson.VideoUpload.Length > 0)
                 {
-                    var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+                    var uploadsFolder = Path.Combine(_environment.WebRootPath, "videos");
+
                     if (!Directory.Exists(uploadsFolder))
                     {
                         Directory.CreateDirectory(uploadsFolder);
                     }
-                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + lesson.VideoUpload.FileName;
+
+                    var uniqueFileName =
+                        Guid.NewGuid().ToString() + "_" + lesson.VideoUpload.FileName;
+
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         await lesson.VideoUpload.CopyToAsync(fileStream);
                     }
-                    lesson.VideoUrl = "/uploads/" + uniqueFileName;
+
+                    lesson.VideoUrl = "/videos/" + uniqueFileName;
                 }
+
                 _context.Lessons.Add(lesson);
                 await _context.SaveChangesAsync();
-                return RedirectToAction("Index");
-                
+
+                return RedirectToAction("Section","Instructor",new{area = "Instructor",classroomId = lesson.Section.ClassroomId});
             }
             return View(lesson);
         }
@@ -99,7 +122,7 @@ namespace LMSfinal.Areas.Instructor.Controllers
                 }
                  _context.Entry(lesson).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-                return RedirectToAction("Index");
+                return RedirectToAction("Section", "Instructor", new { area = "Instructor", classroomId = lesson.Section.ClassroomId });
             }
             return View(lesson);
         }
@@ -121,7 +144,7 @@ namespace LMSfinal.Areas.Instructor.Controllers
                 return null;
             }
 
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "videos");
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
@@ -134,7 +157,7 @@ namespace LMSfinal.Areas.Instructor.Controllers
                 await videoFile.CopyToAsync(fileStream);
             }
 
-            return "/uploads/" + uniqueFileName;
+            return "/videos/" + uniqueFileName;
         }
     }
 }

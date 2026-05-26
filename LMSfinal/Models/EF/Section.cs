@@ -35,7 +35,7 @@ namespace LMSfinal.Models.EF
         public Section? Section { get; set; }
         [NotMapped]
         public IFormFile? VideoUpload { get; set; } // upload file
-        public ICollection<Quiz> Quizzes { get; set; }
+        public ICollection<Quiz>? Quizzes { get; set; }
         public bool? IsPreviewFree { get; set; }
     }
 

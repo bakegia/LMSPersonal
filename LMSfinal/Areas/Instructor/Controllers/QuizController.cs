@@ -237,170 +237,112 @@ namespace LMSfinal.Areas.Instructor.Controllers
 
         // ==================== ADD QUESTION ====================
         [HttpPost]
-        public async Task<IActionResult> AddQuestion(int quizId, [FromBody] QuizQuestion model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddQuestion(int quizId, QuizQuestion model)
         {
-            var quiz = await _context.Set<Quiz>()
-                .Include(q => q.Lesson)
-                    .ThenInclude(l => l.Section)
-                        .ThenInclude(s => s.Classroom)
-                .FirstOrDefaultAsync(q => q.Id == quizId);
-
-            if (quiz == null)
-                return NotFound();
-
-            var userId = _userManager.GetUserId(User);
-            if (quiz.Lesson.Section.Classroom.InstructorId != userId)
-                return Forbid();
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return RedirectToAction(nameof(ManageQuestions), new { quizId });
 
             model.QuizId = quizId;
-            model.Order = quiz.Questions.Count + 1;
+            var existingQuestions = await _context.Set<QuizQuestion>().Where(q => q.QuizId == quizId).ToListAsync();
+            model.Order = existingQuestions.Count + 1;
 
             _context.Set<QuizQuestion>().Add(model);
             await _context.SaveChangesAsync();
 
-            return Ok(new { id = model.Id, message = "Thêm câu hỏi thành công" });
+            TempData["success"] = "Đã thêm câu hỏi mới";
+            return RedirectToAction(nameof(ManageQuestions), new { quizId });
         }
 
-        // ==================== UPDATE QUESTION ====================
+
+        // ==================== CẬP NHẬT CÂU HỎI (POST) ====================
         [HttpPost]
-        public async Task<IActionResult> UpdateQuestion(int questionId, [FromBody] QuizQuestion model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateQuestion(int id, int quizId, string QuestionText, int Points)
         {
-            var question = await _context.Set<QuizQuestion>()
-                .Include(q => q.Quiz)
-                    .ThenInclude(qz => qz.Lesson)
-                        .ThenInclude(l => l.Section)
-                            .ThenInclude(s => s.Classroom)
-                .FirstOrDefaultAsync(q => q.Id == questionId);
+            var question = await _context.Set<QuizQuestion>().FindAsync(id);
+            if (question == null) return NotFound();
 
-            if (question == null)
-                return NotFound();
-
-            var userId = _userManager.GetUserId(User);
-            if (question.Quiz.Lesson.Section.Classroom.InstructorId != userId)
-                return Forbid();
-
-            question.QuestionText = model.QuestionText;
-            question.Points = model.Points;
+            question.QuestionText = QuestionText;
+            question.Points = Points;
 
             _context.Set<QuizQuestion>().Update(question);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Cập nhật câu hỏi thành công" });
+            TempData["success"] = "Cập nhật câu hỏi thành công";
+            return RedirectToAction(nameof(ManageQuestions), new { quizId });
         }
 
         // ==================== DELETE QUESTION ====================
         [HttpPost]
-        public async Task<IActionResult> DeleteQuestion(int questionId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteQuestion(int id, int quizId)
         {
-            var question = await _context.Set<QuizQuestion>()
-                .Include(q => q.Quiz)
-                    .ThenInclude(qz => qz.Lesson)
-                        .ThenInclude(l => l.Section)
-                            .ThenInclude(s => s.Classroom)
-                .FirstOrDefaultAsync(q => q.Id == questionId);
-
-            if (question == null)
-                return NotFound();
-
-            var userId = _userManager.GetUserId(User);
-            if (question.Quiz.Lesson.Section.Classroom.InstructorId != userId)
-                return Forbid();
-
-            _context.Set<QuizQuestion>().Remove(question);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa câu hỏi thành công" });
+            var question = await _context.Set<QuizQuestion>().FindAsync(id);
+            if (question != null)
+            {
+                _context.Set<QuizQuestion>().Remove(question);
+                await _context.SaveChangesAsync();
+                TempData["success"] = "Đã xóa câu hỏi";
+            }
+            return RedirectToAction(nameof(ManageQuestions), new { quizId });
         }
 
         // ==================== ADD ANSWER ====================
         [HttpPost]
-        public async Task<IActionResult> AddAnswer(int questionId, [FromBody] QuizAnswerInput input)
+        public async Task<IActionResult> AddAnswer(int quizId, int questionId, QuizAnswer model)
         {
-            var question = await _context.Set<QuizQuestion>()
-                .Include(q => q.Quiz)
-                    .ThenInclude(qz => qz.Lesson)
-                        .ThenInclude(l => l.Section)
-                            .ThenInclude(s => s.Classroom)
-                .Include(q => q.Answers)
-                .FirstOrDefaultAsync(q => q.Id == questionId);
+            model.QuestionId = questionId;
+            var existingAnswers = await _context.Set<QuizAnswer>().Where(a => a.QuestionId == questionId).ToListAsync();
+            model.Order = existingAnswers.Count + 1;
 
-            if (question == null)
-                return NotFound();
-
-            var userId = _userManager.GetUserId(User);
-            if (question.Quiz.Lesson.Section.Classroom.InstructorId != userId)
-                return Forbid();
-
-            var answer = new QuizAnswer
-            {
-                QuestionId = questionId,
-                AnswerText = input.AnswerText,
-                AnswerLabel = input.AnswerLabel,
-                IsCorrect = input.IsCorrect,
-                Order = question.Answers.Count + 1
-            };
-
-            _context.Set<QuizAnswer>().Add(answer);
+            _context.Set<QuizAnswer>().Add(model);
             await _context.SaveChangesAsync();
 
-            return Ok(new { id = answer.Id, message = "Thêm đáp án thành công" });
+            TempData["success"] = "Đã thêm đáp án";
+            return RedirectToAction(nameof(ManageQuestions), new { quizId });
         }
 
-        // ==================== UPDATE ANSWER ====================
+        // ==================== CẬP NHẬT ĐÁP ÁN (POST) ====================
         [HttpPost]
-        public async Task<IActionResult> UpdateAnswer(int answerId, [FromBody] QuizAnswerInput input)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateAnswer(int id, int quizId, string AnswerText, string AnswerLabel, bool IsCorrect)
         {
-            var answer = await _context.Set<QuizAnswer>()
-                .Include(a => a.Question)
-                    .ThenInclude(q => q.Quiz)
-                        .ThenInclude(qz => qz.Lesson)
-                            .ThenInclude(l => l.Section)
-                                .ThenInclude(s => s.Classroom)
-                .FirstOrDefaultAsync(a => a.Id == answerId);
+            var answer = await _context.Set<QuizAnswer>().Include(a => a.Question).FirstOrDefaultAsync(a => a.Id == id);
+            if (answer == null) return NotFound();
 
-            if (answer == null)
-                return NotFound();
+            // Nếu đây là single choice và set đáp án này là đúng, thì bỏ Correct các đáp án khác cùng câu hỏi
+            if (IsCorrect)
+            {
+                var otherAnswers = await _context.Set<QuizAnswer>()
+                    .Where(a => a.QuestionId == answer.QuestionId && a.Id != id)
+                    .ToListAsync();
+                foreach (var oa in otherAnswers) oa.IsCorrect = false;
+            }
 
-            var userId = _userManager.GetUserId(User);
-            if (answer.Question.Quiz.Lesson.Section.Classroom.InstructorId != userId)
-                return Forbid();
-
-            answer.AnswerText = input.AnswerText;
-            answer.AnswerLabel = input.AnswerLabel;
-            answer.IsCorrect = input.IsCorrect;
+            answer.AnswerText = AnswerText;
+            answer.AnswerLabel = AnswerLabel;
+            answer.IsCorrect = IsCorrect;
 
             _context.Set<QuizAnswer>().Update(answer);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Cập nhật đáp án thành công" });
+            TempData["success"] = "Cập nhật đáp án thành công";
+            return RedirectToAction(nameof(ManageQuestions), new { quizId });
         }
 
         // ==================== DELETE ANSWER ====================
         [HttpPost]
-        public async Task<IActionResult> DeleteAnswer(int answerId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAnswer(int id, int quizId)
         {
-            var answer = await _context.Set<QuizAnswer>()
-                .Include(a => a.Question)
-                    .ThenInclude(q => q.Quiz)
-                        .ThenInclude(qz => qz.Lesson)
-                            .ThenInclude(l => l.Section)
-                                .ThenInclude(s => s.Classroom)
-                .FirstOrDefaultAsync(a => a.Id == answerId);
-
-            if (answer == null)
-                return NotFound();
-
-            var userId = _userManager.GetUserId(User);
-            if (answer.Question.Quiz.Lesson.Section.Classroom.InstructorId != userId)
-                return Forbid();
-
-            _context.Set<QuizAnswer>().Remove(answer);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa đáp án thành công" });
+            var answer = await _context.Set<QuizAnswer>().FindAsync(id);
+            if (answer != null)
+            {
+                _context.Set<QuizAnswer>().Remove(answer);
+                await _context.SaveChangesAsync();
+                TempData["success"] = "Đã xóa đáp án";
+            }
+            return RedirectToAction(nameof(ManageQuestions), new { quizId });
         }
 
         // ==================== RESULTS - Xem kết quả học sinh ====================
@@ -433,6 +375,23 @@ namespace LMSfinal.Areas.Instructor.Controllers
             public string AnswerText { get; set; } = string.Empty;
             public string AnswerLabel { get; set; } = "A";
             public bool IsCorrect { get; set; }
+        }
+
+        // ==================== LẤY DATA ĐỂ EDIT (API) ====================
+        [HttpGet]
+        public async Task<IActionResult> GetQuestion(int id)
+        {
+            var question = await _context.Set<QuizQuestion>().FindAsync(id);
+            if (question == null) return NotFound();
+            return Json(new { id = question.Id, text = question.QuestionText, points = question.Points });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAnswer(int id)
+        {
+            var answer = await _context.Set<QuizAnswer>().FindAsync(id);
+            if (answer == null) return NotFound();
+            return Json(new { id = answer.Id, text = answer.AnswerText, label = answer.AnswerLabel, isCorrect = answer.IsCorrect });
         }
     }
 }

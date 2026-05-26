@@ -1,4 +1,5 @@
 ﻿@model LMSfinal.Models.EF.Lesson
+
 @{
     ViewData["Title"] = "Thêm bài học mới";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
@@ -10,59 +11,108 @@
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">Tạo bài học mới</h5>
             </div>
+
             <div class="card-body">
-                @* Lưu ý: Thêm Validation Summary để dễ debug lỗi nếu không lưu được *@
+
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div asp-validation-summary="All" class="alert alert-danger"></div>
+                <form asp-area="Instructor"
+                      asp-controller="Lesson"
+                      asp-action="Create"
+                      method="post"
+                      enctype="multipart/form-data">
 
-                <form asp-area="Instructor" asp-action="Create" method="post" enctype="multipart/form-data">
-                    @* Bind SectionId từ ViewBag *@
-                    <input type="hidden" name="SectionId" value="@ViewBag.SectionId" />
+                    <input asp-for="SectionId" type="hidden" value="@ViewBag.SectionId" />
 
+                    <!-- Title -->
                     <div class="mb-3">
-                        <label asp-for="Title" class="form-label fw-bold">Tiêu đề bài học</label>
-                        <input asp-for="Title" class="form-control" placeholder="Ví dụ: Bài 1: Tổng quan về ASP.NET Core" required />
+                        <label asp-for="Title" class="form-label fw-bold"></label>
+                        <input asp-for="Title" class="form-control" />
                         <span asp-validation-for="Title" class="text-danger"></span>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label asp-for="Order" class="form-label fw-bold">Thứ tự</label>
-                            <input asp-for="Order" class="form-control" type="number" />
-                            <span asp-validation-for="Order" class="text-danger"></span>
-                        </div>
-                        @* <div class="col-md-6">
-                            <label asp-for="VideoUrl" class="form-label fw-bold">Video URL (Youtube/Drive)</label>
-                            <input asp-for="VideoUrl" class="form-control" placeholder="https://..." />
-                        </div> *@
+                    <!-- Slug -->
+                    <div class="mb-3">
+                        <label asp-for="Slug" class="form-label fw-bold"></label>
+                        <input asp-for="Slug"
+                               class="form-control"
+                               placeholder="vi-du-bai-hoc" />
                     </div>
 
+                    <!-- Summary -->
                     <div class="mb-3">
-                        <label asp-for="VideoUpload" class="form-label fw-bold">Hoặc Tải video lên</label>
-                        <input asp-for="VideoUpload" type="file" class="form-control" accept="video/*" />
-                        <small class="text-muted">Định dạng hỗ trợ: MP4, WebM. Dung lượng tối đa: 50MB</small>
+                        <label asp-for="Summary" class="form-label fw-bold"></label>
+                        <textarea asp-for="Summary"
+                                  class="form-control"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="Summary" class="text-danger"></span>
                     </div>
 
+                    <!-- Order -->
                     <div class="mb-3">
-                        <label asp-for="Content" class="form-label fw-bold">Nội dung bài học (Mô tả)</label>
-                        <textarea asp-for="Content" class="form-control" rows="6" id="editor"></textarea>
+                        <label asp-for="Order" class="form-label fw-bold"></label>
+                        <input asp-for="Order"
+                               type="number"
+                               class="form-control" />
+                    </div>
+
+                    <!-- Video URL -->
+                    <div class="mb-3">
+                        <label asp-for="VideoUrl" class="form-label fw-bold"></label>
+                        <input asp-for="VideoUrl"
+                               class="form-control"
+                               placeholder="https://youtube.com/..." />
+                    </div>
+
+                    <!-- Upload Video -->
+                    <div class="mb-3">
+                        <label asp-for="VideoUpload" class="form-label fw-bold"></label>
+                        <input asp-for="VideoUpload"
+                               type="file"
+                               class="form-control"
+                               accept="video/*" />
+                    </div>
+
+                    <!-- Preview Free -->
+                    <div class="form-check mb-3">
+                        <input asp-for="IsPreviewFree"
+                               class="form-check-input" />
+
+                        <label asp-for="IsPreviewFree"
+                               class="form-check-label">
+                            Cho phép học thử miễn phí
+                        </label>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label fw-bold"></label>
+                        <textarea asp-for="Content"
+                                  class="form-control"
+                                  rows="6"
+                                  id="editor"></textarea>
                     </div>
 
                     <div class="d-flex justify-content-between pt-3 border-top">
-                        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-                            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                        <a href="javascript:history.back()"
+                           class="btn btn-outline-secondary">
+                            Quay lại
                         </a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu bài học
+
+                        <button type="submit"
+                                class="btn btn-primary px-4">
+                            Lưu bài học
                         </button>
                     </div>
+
                 </form>
+
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @* Thêm bộ thư viện Validation của jQuery để báo lỗi ngay tại client *@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
