@@ -1,0 +1,56 @@
+﻿@model IEnumerable<LMSfinal.Models.EF.FinalExamSchedule>
+@{
+    ViewData["Title"] = "Lịch Thi Cuối Kỳ";
+    Layout = "~/Areas/admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-gradient-primary text-white py-3">
+            <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Lịch Thi Cuối Kỳ Của Bạn</h5>
+        </div>
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Môn Thi / Lớp</th>
+                                <th>Thời Gian</th>
+                                <th>Phòng Thi</th>
+                                <th>Thời Lượng</th>
+                                <th>Ghi Chú</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-primary">@item.Classroom?.Course?.Title</div>
+                                        <small class="text-muted">Mã lớp: @item.Classroom?.ClassCode</small>
+                                    </td>
+                                    <td>
+                                        <div><i class="far fa-calendar-alt me-1"></i> @item.ExamDate.ToString("dd/MM/yyyy")</div>
+                                        <div class="small fw-bold"><i class="far fa-clock me-1"></i> @item.StartTime.ToString(@"hh\:mm")</div>
+                                    </td>
+                                    <td><span class="badge bg-info text-dark">@item.RoomName</span></td>
+                                    <td>@item.DurationInMinutes phút</td>
+                                    <td class="small text-muted">@item.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-light mb-3"></i>
+                    <p class="text-muted">Bạn hiện chưa có lịch thi nào được sắp xếp.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

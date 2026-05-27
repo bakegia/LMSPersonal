@@ -28,6 +28,7 @@ namespace LMSfinal.Data
         public DbSet<Instructor> Instructors { get; set; }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<ClassroomGrade> ClassroomGrades { get; set; } = null!;
+        public DbSet<FinalExamSchedule> FinalExamSchedules { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -196,7 +197,15 @@ namespace LMSfinal.Data
                     .HasMaxLength(200)
                     .IsRequired();
             });
+            builder.Entity<FinalExamSchedule>(entity =>
+            {
+                entity.HasOne(e => e.Classroom)
+                      .WithMany() // Một lớp có thể có 1 lịch thi cuối kỳ (hoặc để WithMany nếu muốn linh hoạt)
+                      .HasForeignKey(e => e.ClassroomId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
         }
 
     }
 }
+

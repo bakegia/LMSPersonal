@@ -93,7 +93,7 @@
                         <a asp-area="Admin" asp-controller="Account" asp-action="InstructorList">
                             <i class="fa-solid fa-chalkboard-user"></i> Danh Sách Instructor
                         </a>
-
+                        <a asp-area="Admin" asp-controller="FinalExamAdmin" asp-action="Index"><i class="fa-solid fa-school"></i>Tạo lịch thi</a>
                     }
 
                     <!-- Thêm vào _Layout.cshtml phần Instructor -->
@@ -122,6 +122,9 @@
                         </a>
                         <a asp-area=""  asp-controller="Register" asp-action="AvailableClassroomsForInstructor">
                             <i class="fa-solid fa-clipboard-list"></i> Đăng ký lớp dạy
+                        </a>
+                        <a asp-area="Instructor" asp-controller="FinalExamInstructor" asp-action="Index">
+                            <i class="fa-solid fa-clipboard-list"></i> Xem lịch giám sát thi
                         </a>
                     }
 

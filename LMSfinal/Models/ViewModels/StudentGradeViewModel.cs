@@ -2,9 +2,7 @@
 
 namespace LMSfinal.Models.ViewModels
 {
-    /// <summary>
-    /// ViewModel cho danh sách điểm của học sinh
-    /// </summary>
+
     public class StudentGradeItemVM
     {
         public int ClassroomId { get; set; }
@@ -16,9 +14,16 @@ namespace LMSfinal.Models.ViewModels
         public ClassroomGrade? Grade { get; set; }
     }
 
-    /// <summary>
-    /// ViewModel cho view Index của Grade
-    /// </summary>
+
+    public class MonthlyMilestoneVM
+    {
+        public string MonthYear { get; set; } = string.Empty;
+        public int PassedCount { get; set; }
+        public int FailedCount { get; set; }
+        public DateTime SortDate { get; set; }
+    }
+
+
     public class StudentGradeIndexVM
     {
         public List<StudentGradeItemVM> Items { get; set; } = new();
@@ -28,6 +33,13 @@ namespace LMSfinal.Models.ViewModels
         public decimal AverageScore => Items.Where(x => x.Grade != null).Any()
             ? Items.Where(x => x.Grade != null).Average(x => x.Grade.FinalScore)
             : 0m;
+
+        // Thêm mới các thuộc tính thống kê
+        public decimal OverallGPA => GradedCourses > 0
+            ? Items.Where(x => x.Grade != null).Average(x => x.Grade.GPA)
+            : 0m;
+
+        public List<MonthlyMilestoneVM> Milestones { get; set; } = new();
     }
 
     public class StudentCourseCompletionVM

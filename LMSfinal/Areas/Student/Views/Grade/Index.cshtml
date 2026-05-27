@@ -9,59 +9,109 @@
 <div class="container-fluid mt-4">
     <!-- Header -->
     <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="fw-bold">
-                <i class="fa-solid fa-star text-warning me-2"></i>Điểm Của Tôi
-            </h2>
-            <p class="text-muted">Xem điểm các lớp học mà bạn đã tham gia</p>
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold">
+                    <i class="fa-solid fa-star text-warning me-2"></i>Điểm Của Tôi
+                </h2>
+                <p class="text-muted">Xem điểm các lớp học mà bạn đã tham gia</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="Transcript" class="btn btn-outline-success">
+                    <i class="fa-solid fa-file-invoice me-2"></i>Bảng điểm tổng hợp
+                </a>
+                <a asp-action="Completed" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-graduation-cap me-2"></i>Tiến độ hoàn thành
+                </a>
+            </div>
         </div>
     </div>
 
     @if (Model != null && Model.Items.Count > 0)
     {
-        <!-- Quick Stats -->
+        <!-- Quick Stats & GPA -->
         <div class="row mb-4 g-3">
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm bg-primary text-white">
                     <div class="card-body text-center">
-                        <h6 class="text-muted mb-2">Tổng Lớp</h6>
-                        <h3 class="fw-bold text-primary">@Model.TotalCourses</h3>
+                        <h6 class="text-white-50 mb-2">GPA TÍCH LŨY</h6>
+                        <h2 class="fw-bold mb-0">@Model.OverallGPA.ToString("F2")</h2>
+                        <small>/ 4.0</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm border-start border-5 border-success">
                     <div class="card-body text-center">
-                        <h6 class="text-muted mb-2">Đã Ghi Điểm</h6>
+                        <h6 class="text-muted mb-2">Đã Hoàn Thành</h6>
                         <h3 class="fw-bold text-success">@Model.GradedCourses</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm border-start border-5 border-info">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Điểm Trung Bình</h6>
+                        <h3 class="fw-bold text-info">@Model.AverageScore.ToString("F2")</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm border-start border-5 border-danger">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-2">Chưa Ghi Điểm</h6>
                         <h3 class="fw-bold text-danger">@Model.UngradedCourses</h3>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center">
-                        <h6 class="text-muted mb-2">Điểm Trung Bình</h6>
-                        <h3 class="fw-bold text-info">
-                            @Model.AverageScore.ToString("F2")
-                        </h3>
-                    </div>
-                </div>
-            </div>
         </div>
 
+        <!-- Monthly Milestones Timeline -->
+        @if (Model.Milestones.Any())
+        {
+            @if (Model.Milestones != null && Model.Milestones.Any())
+            {
+                <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Cột Mốc Kết Quả Theo Tháng
+                        </h5>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div class="d-flex flex-nowrap overflow-auto py-3 gap-3 milestone-container" style="scrollbar-width: thin;">
+                            @foreach (var m in Model.Milestones)
+                            {
+                                <div class="card border shadow-none flex-shrink-0 milestone-card">
+                                    <div class="card-body p-3">
+                                        <div class="fw-bold text-primary mb-2 border-bottom pb-2">
+                                            <i class="fa-solid fa-calendar-day me-1"></i> @m.MonthYear
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted">Hoàn thành:</small>
+                                            <span class="badge bg-success-subtle text-success rounded-pill px-3">
+                                                @m.PassedCount môn
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">Chưa đạt:</small>
+                                            <span class="badge bg-danger-subtle text-danger rounded-pill px-3">
+                                                @m.FailedCount môn
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
         <!-- Grades Table -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light border-bottom">
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white py-3">
                 <h5 class="mb-0 fw-bold">
-                    <i class="fa-solid fa-table me-2"></i>Danh Sách Điểm
+                    <i class="fa-solid fa-table me-2 text-primary"></i>Danh sách kết quả chi tiết
                 </h5>
             </div>
             <div class="table-responsive">
@@ -69,16 +119,13 @@
                     <thead class="table-light">
                         <tr>
                             <th style="width: 5%">STT</th>
-                            <th style="width: 20%">Tên Lớp</th>
-                            <th style="width: 20%">Môn Học</th>
-                            <th style="width: 12%">Mã Lớp</th>
-                            <th style="width: 12%">Quá Trình</th>
-                            <th style="width: 12%">Giữa Kỳ</th>
-                            <th style="width: 12%">Thi</th>
-                            <th style="width: 10%">Điểm Tổng</th>
-                            <th style="width: 8%">Hạng</th>
-                            <th style="width: 8%">GPA</th>
-                            <th style="width: 10%">Hành Động</th>
+                            <th>Môn Học / Lớp</th>
+                            <th class="text-center">Quá Trình</th>
+                            <th class="text-center">Giữa Kỳ</th>
+                            <th class="text-center">Thi</th>
+                            <th class="text-center">Tổng Kết</th>
+                            <th class="text-center">GPA / Hạng</th>
+                            <th class="text-center">Hành Động</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,100 +135,45 @@
                         @foreach (var item in Model.Items)
                         {
                             <tr>
-                                <td class="fw-bold">@index</td>
+                                <td class="text-center fw-bold">@index</td>
                                 <td>
-                                    <strong>@item.ClassroomName</strong>
+                                    <div class="fw-bold text-dark">@item.CourseName</div>
+                                    <small class="text-muted">Lớp: @item.ClassroomCode - @item.ClassroomName</small>
                                 </td>
-                                <td>
-                                    <span class="badge bg-light text-dark">
-                                        <i class="fa-solid fa-book me-1"></i>@item.CourseName
-                                    </span>
+                                <td class="text-center">
+                                    @(item.Grade?.ProcessScore?.ToString("F1") ?? "—")
                                 </td>
-                                <td>
-                                    <small class="text-muted">@item.ClassroomCode</small>
+                                <td class="text-center">
+                                    @(item.Grade?.MidtermScore?.ToString("F1") ?? "—")
                                 </td>
-                                <td>
-                                    @if (item.Grade?.ProcessScore.HasValue == true)
-                                    {
-                                        <span class="badge bg-info">@item.Grade.ProcessScore.Value.ToString("F1")</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">—</span>
-                                    }
+                                <td class="text-center">
+                                    @(item.Grade?.FinalExamScore?.ToString("F1") ?? "—")
                                 </td>
-                                <td>
-                                    @if (item.Grade?.MidtermScore.HasValue == true)
-                                    {
-                                        <span class="badge bg-info">@item.Grade.MidtermScore.Value.ToString("F1")</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">—</span>
-                                    }
+                                <td class="text-center fw-bold text-primary">
+                                    @(item.Grade?.FinalScore.ToString("F2") ?? "—")
                                 </td>
-                                <td>
-                                    @if (item.Grade?.FinalExamScore.HasValue == true)
-                                    {
-                                        <span class="badge bg-info">@item.Grade.FinalExamScore.Value.ToString("F1")</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">—</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (item.Grade != null && item.Grade.FinalScore > 0)
-                                    {
-                                        <strong class="text-primary">@item.Grade.FinalScore.ToString("F2")</strong>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">—</span>
-                                    }
-                                </td>
-                                <td>
+                                <td class="text-center">
                                     @if (item.Grade != null)
                                     {
-                                        var gradeColor = item.Grade.GradeLetterClass switch
-                                        {
-                                            GradeLetterEnum.A => "success",
-                                            GradeLetterEnum.B => "info",
-                                            GradeLetterEnum.C => "warning",
-                                            GradeLetterEnum.D => "danger",
-                                            _ => "secondary"
-                                        };
-                                        <span class="badge bg-@gradeColor fw-bold">
-                                            <i class="fa-solid fa-medal me-1"></i>@item.Grade.GradeLetterClass
-                                        </span>
+                                        <div><strong>@item.Grade.GPA.ToString("F2")</strong></div>
+                                        <span class="badge @(item.Grade.FinalScore >= 4.0m ? "bg-success" : "bg-danger")">@item.Grade.GradeLetterClass</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">—</span>
+                                        <span class="text-muted small">Chưa có điểm</span>
                                     }
                                 </td>
-                                <td>
-                                    @if (item.Grade?.GPA > 0)
-                                    {
-                                        <span class="badge bg-primary">@item.Grade.GPA.ToString("F2")</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">—</span>
-                                    }
-                                </td>
-                                <td>
+                                <td class="text-center">
                                     @if (item.Grade != null)
                                     {
-                                        <a asp-action="Detail" asp-route-classroomId="@item.ClassroomId"
-                                           class="btn btn-sm btn-primary" title="Xem chi tiết">
-                                            <i class="fa-solid fa-eye"></i>
+                                        <a asp-action="Detail" asp-route-classroomId="@item.ClassroomId" class="btn btn-sm btn-info text-white" title="Xem chi tiết điểm">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
                                         </a>
                                     }
                                     else
                                     {
-                                        <button class="btn btn-sm btn-secondary" disabled title="Chờ ghi điểm">
-                                            <i class="fa-solid fa-hourglass"></i>
+                                        <button class="btn btn-sm btn-secondary" disabled title="Giảng viên chưa nhập điểm">
+                                            <i class="fa-solid fa-clock"></i>
                                         </button>
                                     }
                                 </td>
@@ -192,35 +184,51 @@
                 </table>
             </div>
         </div>
-
-        <!-- View Transcript Button -->
-        <div class="mt-4 text-center">
-            <a asp-action="Transcript" class="btn btn-outline-primary btn-lg">
-                <i class="fa-solid fa-file-excel me-2"></i>Xem Bảng Điểm Tổng Hợp
-            </a>
-        </div>
-    }
-    else
-    {
-        <!-- No Classrooms -->
-        <div class="alert alert-info text-center py-5" role="alert">
-            <i class="fa-solid fa-inbox fa-3x mb-3 text-info d-block"></i>
-            <h5>Bạn chưa tham gia lớp nào</h5>
-            <p class="text-muted">Vui lòng liên hệ quản trị viên để được ghi danh vào các lớp học</p>
-        </div>
     }
 </div>
 
 <style>
-    .table-hover tbody tr:hover {
-        background-color: #f8f9fa;
+    .btn-outline-success {
+        border-color: #198754;
+        color: #198754;
     }
 
-    .badge {
-        font-weight: 500;
+        .btn-outline-success:hover {
+            background-color: #198754;
+            color: white;
+        }
+
+    .milestone-container {
+        scrollbar-height: 6px;
+        padding-bottom: 10px;
     }
 
-    .btn-sm {
-        padding: 0.5rem 0.75rem;
+        .milestone-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .milestone-container::-webkit-scrollbar-thumb {
+            background: #dee2e6;
+            border-radius: 10px;
+        }
+
+    .milestone-card {
+        min-width: 220px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-color: #e9ecef !important;
+    }
+
+        .milestone-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+            border-color: var(--bs-primary) !important;
+        }
+
+    .bg-success-subtle {
+        background-color: #d1e7dd;
+    }
+
+    .bg-danger-subtle {
+        background-color: #f8d7da;
     }
 </style>

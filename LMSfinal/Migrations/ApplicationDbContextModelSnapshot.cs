@@ -488,6 +488,49 @@ namespace LMSfinal.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.FinalExamSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClassroomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DurationInMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExamDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ProctorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.ToTable("FinalExamSchedules");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.Instructor", b =>
                 {
                     b.Property<string>("Id")
@@ -1197,6 +1240,17 @@ namespace LMSfinal.Migrations
                         .HasForeignKey("InstructorId");
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("LMSfinal.Models.EF.FinalExamSchedule", b =>
+                {
+                    b.HasOne("LMSfinal.Models.EF.Classroom", "Classroom")
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
                 });
 
             modelBuilder.Entity("LMSfinal.Models.EF.Instructor", b =>
