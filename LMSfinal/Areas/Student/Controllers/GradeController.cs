@@ -25,9 +25,7 @@ namespace LMSfinal.Areas.Student.Controllers
         }
 
         // ==================== INDEX - Danh sách điểm ====================
-        /// <summary>
-        /// Hiển thị danh sách các lớp và điểm của học sinh
-        /// </summary>
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -60,9 +58,24 @@ namespace LMSfinal.Areas.Student.Controllers
                 .OrderByDescending(x => x.StartDate)
                 .ToList();
 
+            // Tính toán Milestones theo tháng
+            var milestones = items
+                .Where(x => x.Grade != null)
+                .GroupBy(x => new { x.EndDate.Month, x.EndDate.Year })
+                .Select(g => new MonthlyMilestoneVM
+                {
+                    MonthYear = $"Tháng {g.Key.Month:D2}/{g.Key.Year}",
+                    PassedCount = g.Count(x => x.Grade!.FinalScore >= 4.0m),
+                    FailedCount = g.Count(x => x.Grade!.FinalScore < 4.0m),
+                    SortDate = new DateTime(g.Key.Year, g.Key.Month, 1)
+                })
+                .OrderByDescending(m => m.SortDate)
+                .ToList();
+
             var model = new StudentGradeIndexVM
             {
-                Items = items
+                Items = items,
+                Milestones = milestones
             };
 
             return View(model);
@@ -115,7 +128,6 @@ namespace LMSfinal.Areas.Student.Controllers
 
             return View(grade);
         }
-
         [HttpGet]
         public async Task<IActionResult> Transcript()
         {
@@ -159,11 +171,6 @@ namespace LMSfinal.Areas.Student.Controllers
 
             return View(items);
         }
-
-        // ==================== COMPLETED - Xem khóa học hoàn thành/chưa hoàn thành ====================
-        /// <summary>
-        /// Xem danh sách khóa học đã hoàn thành (D-A) và chưa hoàn thành (F hoặc không có điểm)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Completed()
         {

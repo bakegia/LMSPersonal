@@ -1,0 +1,144 @@
+﻿@model IEnumerable<LMSfinal.Models.EF.FinalExamSchedule>
+@{
+    ViewData["Title"] = "Quản Lý Lịch Thi (Admin)";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-primary">Quản Lý Lịch Thi Cuối Kỳ</h3>
+        <button class="btn btn-primary" onclick="openModal(0)">
+            <i class="fas fa-plus"></i> Tạo Lịch Thi Mới
+        </button>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            @if (TempData["success"] != null)
+            {
+                <div class="alert alert-success">@TempData["success"]</div>
+            }
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Lớp / Môn Học</th>
+                            <th>Ngày & Giờ</th>
+                            <th>Phòng</th>
+                            <th>Giám Thị</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr id="row-@item.Id">
+                                <td>
+                                    <strong>@item.Classroom?.ClassCode</strong><br />
+                                    <small>@item.Classroom?.Course?.Title</small>
+                                </td>
+                                <td>@item.ExamDate.ToString("dd/MM/yyyy") <br /> @item.StartTime.ToString(@"hh\:mm")</td>
+                                <td><span class="badge bg-info text-dark">@item.RoomName</span></td>
+                                <td><strong class="text-primary">@item.ProctorName</strong></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="openModal(@item.Id)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteExam(@item.Id)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dùng chung cho Thêm/Sửa -->
+<div class="modal fade" id="examModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Upsert" method="post" id="examForm">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Tạo Lịch Thi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="examId" value="0" />
+                    <div class="mb-3">
+                        <label class="form-label">Lớp học</label>
+                        <select name="ClassroomId" id="classroomId" class="form-select" asp-items="ViewBag.Classrooms" required>
+                            <option value="">-- Chọn lớp --</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Ngày thi</label>
+                            <input type="date" name="ExamDate" id="examDate" class="form-control" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Giờ bắt đầu</label>
+                            <input type="time" name="StartTime" id="startTime" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Thời lượng (p)</label>
+                            <input type="number" name="DurationInMinutes" id="duration" class="form-control" value="90" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Phòng thi</label>
+                            <input type="text" name="RoomName" id="roomName" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea name="Notes" id="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Xác nhận Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const modal = new bootstrap.Modal(document.getElementById('examModal'));
+
+        function openModal(id) {
+            document.getElementById('examForm').reset();
+            document.getElementById('examId').value = id;
+
+            if (id === 0) {
+                document.getElementById('modalTitle').innerText = "Tạo Lịch Thi & Gán NN";
+                modal.show();
+            } else {
+                document.getElementById('modalTitle').innerText = "Cập Nhật Lịch Thi";
+                $.get("/Admin/FinalExamAdmin/GetById/" + id, function (data) {
+                    $('#classroomId').val(data.classroomId);
+                    $('#examDate').val(data.examDate.split('T')[0]);
+                    $('#startTime').val(data.startTime.substring(0, 5));
+                    $('#duration').val(data.durationInMinutes);
+                    $('#roomName').val(data.roomName);
+                    $('#notes').val(data.notes);
+                    modal.show();
+                });
+            }
+        }
+
+        function deleteExam(id) {
+            if (confirm("Xóa lịch thi này?")) {
+                $.post("/Admin/FinalExamAdmin/Delete/" + id, function (res) {
+                    if (res.success) $("#row-" + id).fadeOut();
+                });
+            }
+        }
+    </script>
+}

@@ -488,6 +488,49 @@ namespace LMSfinal.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.FinalExamSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClassroomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DurationInMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExamDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ProctorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.ToTable("FinalExamSchedules");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.Instructor", b =>
                 {
                     b.Property<string>("Id")
@@ -589,6 +632,55 @@ namespace LMSfinal.Migrations
                     b.ToTable("Lessons");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecipientUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipientUserId", "IsRead", "CreatedAt");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.Quiz", b =>
                 {
                     b.Property<int>("Id")
@@ -609,6 +701,9 @@ namespace LMSfinal.Migrations
                     b.Property<int>("LessonId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("LessonId1")
+                        .HasColumnType("int");
+
                     b.Property<int>("PassingScore")
                         .HasColumnType("int");
 
@@ -619,6 +714,8 @@ namespace LMSfinal.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LessonId");
+
+                    b.HasIndex("LessonId1");
 
                     b.ToTable("Quizzes");
                 });
@@ -650,7 +747,7 @@ namespace LMSfinal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("QuestionId");
+                    b.HasIndex("QuestionId", "Order");
 
                     b.ToTable("QuizAnswer");
                 });
@@ -678,7 +775,7 @@ namespace LMSfinal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("QuizId");
+                    b.HasIndex("QuizId", "Order");
 
                     b.ToTable("QuizQuestion");
                 });
@@ -808,6 +905,7 @@ namespace LMSfinal.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Score")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("StudentId")
@@ -815,14 +913,14 @@ namespace LMSfinal.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal>("TotalPoints")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("QuizId");
 
-                    b.HasIndex("StudentId", "QuizId")
-                        .IsUnique();
+                    b.HasIndex("StudentId", "QuizId");
 
                     b.ToTable("StudentQuizAttempt");
                 });
@@ -1193,6 +1291,17 @@ namespace LMSfinal.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.FinalExamSchedule", b =>
+                {
+                    b.HasOne("LMSfinal.Models.EF.Classroom", "Classroom")
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.Instructor", b =>
                 {
                     b.HasOne("LMSfinal.Models.ApplicationUser", "User")
@@ -1215,13 +1324,28 @@ namespace LMSfinal.Migrations
                     b.Navigation("Section");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.Notification", b =>
+                {
+                    b.HasOne("LMSfinal.Models.ApplicationUser", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RecipientUser");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.Quiz", b =>
                 {
                     b.HasOne("LMSfinal.Models.EF.Lesson", "Lesson")
-                        .WithMany("Quizzes")
+                        .WithMany()
                         .HasForeignKey("LessonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("LMSfinal.Models.EF.Lesson", null)
+                        .WithMany("Quizzes")
+                        .HasForeignKey("LessonId1");
 
                     b.Navigation("Lesson");
                 });
@@ -1319,7 +1443,7 @@ namespace LMSfinal.Migrations
                     b.HasOne("LMSfinal.Models.ApplicationUser", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Quiz");

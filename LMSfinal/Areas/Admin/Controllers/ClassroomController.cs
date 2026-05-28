@@ -268,7 +268,10 @@ namespace LMSfinal.Areas.Admin.Controllers
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (classroom == null) return NotFound();
-
+            var mssv = await _context.UserProfiles
+                .Where(up => classroom.ClassroomStudents.Select(cs => cs.StudentId).Contains(up.UserId))
+                .ToDictionaryAsync(up => up.UserId, up => up.Mssv);
+            ViewBag.MssvLookup = mssv; // Truyền dictionary UserId -> MSSV cho View để hiển thị
             return View(classroom);
         }
 

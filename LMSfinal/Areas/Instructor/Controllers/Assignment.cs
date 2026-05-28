@@ -1,6 +1,7 @@
 ﻿using LMSfinal.Data;
 using LMSfinal.Models;
 using LMSfinal.Models.EF;
+using LMSfinal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,16 @@ namespace LMSfinal.Areas.Instructor.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public AssignmentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public AssignmentController(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            INotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         // ==================== INDEX - Danh sách bài tập ====================
@@ -113,6 +119,16 @@ namespace LMSfinal.Areas.Instructor.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            // 🔔 Notification: Assignment mới
+            var studentIds = classroomStudents.Select(s => s.StudentId).ToList();
+            await _notificationService.CreateManyAsync(
+                studentIds,
+                "Bài tập mới",
+                $"Bài tập '{model.Title}' vừa được tạo. Hạn nộp: {model.DueDate:dd/MM/yyyy HH:mm}.",
+                "AssignmentNew",
+                "Assignment",
+                model.Id);
 
             TempData["success"] = "Tạo bài tập thành công";
             return RedirectToAction(nameof(Index));
@@ -262,6 +278,18 @@ namespace LMSfinal.Areas.Instructor.Controllers
 
             _context.Set<StudentAssignment>().Update(studentAssignment);
             await _context.SaveChangesAsync();
+
+            // 🔔 Notification: Assignment đã được chấm
+            await _notificationService.CreateAsync(new Notification
+            {
+                RecipientUserId = studentAssignment.StudentId,
+                Title = "Bài tập đã được chấm",
+                Message = $"Bài tập '{studentAssignment.Assignment?.Title}' đã được chấm điểm. Điểm: {score}.",
+                Type = "AssignmentGraded",
+                EntityType = "Assignment",
+                EntityId = studentAssignment.AssignmentId,
+                CreatedAt = DateTime.Now
+            });
 
             TempData["success"] = "Chấm điểm thành công";
             return RedirectToAction(nameof(Submissions), new { assignmentId = studentAssignment.AssignmentId });

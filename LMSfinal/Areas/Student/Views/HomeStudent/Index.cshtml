@@ -1,155 +1,450 @@
-﻿@model IEnumerable<LMSfinal.Models.EF.ClassroomStudent>
-
-@{
-    ViewData["Title"] = "Khóa học của tôi";
+﻿@{
+    ViewData["Title"] = "Student Dashboard";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
-    var completedIds = ViewBag.CompletedLessonIds as List<int> ?? new List<int>();
 }
 
-<div class="container py-5">
-    <h2 class="text-white mb-4 fw-bold">Khóa học của tôi</h2>
+<div class="container-fluid py-4">
 
-    <div class="row">
-        @foreach (var item in Model)
-        {
-            // Tính toán phần trăm hoàn thành dựa trên UserProgress
-            var allLessons = item.Classroom.Sections.SelectMany(s => s.Lessons).ToList();
-            int total = allLessons.Count();
-            int completed = allLessons.Count(l => completedIds.Contains(l.Id));
-            int percent = total > 0 ? (int)((double)completed / total * 100) : 0;
+    <!-- HEADER -->
+    <div class="row mb-4">
 
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="course-card shadow-lg">
-                    <div class="course-header" style="background-image: url('@(item.Classroom.Course?.ImageUrl ?? "/images/default-bg.jpg")');">
-                        <div class="overlay"></div>
+        <div class="col-lg-8">
+
+            <h2 class="fw-bold text-primary mb-2">
+                <i class="fa-solid fa-graduation-cap"></i>
+                Student Dashboard
+            </h2>
+
+            <p class="text-muted mb-0">
+                Welcome back! Continue your learning journey 🚀
+            </p>
+
+        </div>
+
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+
+            <a href="#"
+               class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="fa-solid fa-book-open"></i>
+                My Courses
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card dashboard-card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Enrolled Courses
+                            </p>
+
+                            <h3 class="fw-bold text-primary mb-0">
+                                12
+                            </h3>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-primary-subtle text-primary">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+
                     </div>
 
-                    <div class="course-body">
-                        <h5 class="course-title text-truncate">
-                            [@item.Classroom.ClassCode] @item.Classroom.NameClass
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card dashboard-card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Completed Lessons
+                            </p>
+
+                            <h3 class="fw-bold text-success mb-0">
+                                48
+                            </h3>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-success-subtle text-success">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card dashboard-card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Pending Assignments
+                            </p>
+
+                            <h3 class="fw-bold text-warning mb-0">
+                                5
+                            </h3>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-warning-subtle text-warning">
+                            <i class="fa-solid fa-file-pen"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card dashboard-card border-0 shadow-sm rounded-4">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Average Score
+                            </p>
+
+                            <h3 class="fw-bold text-danger mb-0">
+                                8.7
+                            </h3>
+
+                        </div>
+
+                        <div class="dashboard-icon bg-danger-subtle text-danger">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="row g-4">
+
+        <!-- MY COURSES -->
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-header bg-white border-0 pt-4 px-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <h5 class="fw-bold mb-0">
+                            <i class="fa-solid fa-book-open text-primary"></i>
+                            My Courses
                         </h5>
 
-                        <div class="course-subtitle mb-4">
-                            Học phần giảng dạy bằng tiếng Việt
-                        </div>
+                        <a href="#" class="text-decoration-none">
+                            View All
+                        </a>
 
-                        <div class="progress-container">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fa-solid fa-chart-line me-2 progress-icon"></i>
-                                <span class="progress-text">@percent% complete</span>
-                            </div>
-
-                            <div class="progress-track">
-                                <div class="progress-bar-fill" style="width: @percent%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <a asp-action="Details" asp-route-id="@item.ClassroomId" class="btn btn-view-details w-100">
-                                Vào học ngay
-                            </a>
-                        </div>
                     </div>
+
                 </div>
+
+                <div class="card-body px-4 pb-4">
+
+                    <!-- COURSE ITEM -->
+                    <div class="course-item mb-4">
+
+                        <div class="d-flex align-items-center">
+
+                            <img src="https://via.placeholder.com/100x70"
+                                 class="rounded-3 me-3"
+                                 width="100">
+
+                            <div class="flex-grow-1">
+
+                                <h6 class="fw-bold mb-1">
+                                    ASP.NET Core MVC
+                                </h6>
+
+                                <p class="text-muted small mb-2">
+                                    Learn fullstack web development
+                                </p>
+
+                                <div class="progress rounded-pill"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-primary"
+                                         style="width:75%">
+                                    </div>
+
+                                </div>
+
+                                <small class="text-muted">
+                                    75% completed
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- COURSE ITEM -->
+                    <div class="course-item mb-4">
+
+                        <div class="d-flex align-items-center">
+
+                            <img src="https://via.placeholder.com/100x70"
+                                 class="rounded-3 me-3"
+                                 width="100">
+
+                            <div class="flex-grow-1">
+
+                                <h6 class="fw-bold mb-1">
+                                    SQL Server Database
+                                </h6>
+
+                                <p class="text-muted small mb-2">
+                                    Database design & optimization
+                                </p>
+
+                                <div class="progress rounded-pill"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-success"
+                                         style="width:55%">
+                                    </div>
+
+                                </div>
+
+                                <small class="text-muted">
+                                    55% completed
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- COURSE ITEM -->
+                    <div class="course-item">
+
+                        <div class="d-flex align-items-center">
+
+                            <img src="https://via.placeholder.com/100x70"
+                                 class="rounded-3 me-3"
+                                 width="100">
+
+                            <div class="flex-grow-1">
+
+                                <h6 class="fw-bold mb-1">
+                                    Frontend Bootstrap 5
+                                </h6>
+
+                                <p class="text-muted small mb-2">
+                                    Modern UI/UX Design
+                                </p>
+
+                                <div class="progress rounded-pill"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-warning"
+                                         style="width:90%">
+                                    </div>
+
+                                </div>
+
+                                <small class="text-muted">
+                                    90% completed
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
-        }
+
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="col-lg-4">
+
+            <!-- UPCOMING -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+                <div class="card-header bg-white border-0 pt-4 px-4">
+
+                    <h5 class="fw-bold mb-0">
+                        <i class="fa-solid fa-calendar-days text-danger"></i>
+                        Upcoming Tasks
+                    </h5>
+
+                </div>
+
+                <div class="card-body px-4">
+
+                    <div class="task-item mb-3">
+
+                        <div class="d-flex align-items-start">
+
+                            <div class="task-badge bg-danger"></div>
+
+                            <div class="ms-3">
+
+                                <h6 class="mb-1">
+                                    Quiz ASP.NET
+                                </h6>
+
+                                <small class="text-muted">
+                                    Due tomorrow
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="task-item mb-3">
+
+                        <div class="d-flex align-items-start">
+
+                            <div class="task-badge bg-warning"></div>
+
+                            <div class="ms-3">
+
+                                <h6 class="mb-1">
+                                    Submit Assignment
+                                </h6>
+
+                                <small class="text-muted">
+                                    Friday, 10:00 AM
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="task-item">
+
+                        <div class="d-flex align-items-start">
+
+                            <div class="task-badge bg-success"></div>
+
+                            <div class="ms-3">
+
+                                <h6 class="mb-1">
+                                    Final Exam
+                                </h6>
+
+                                <small class="text-muted">
+                                    Next Week
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
+
 </div>
 
 <style>
-    /* Tổng thể Dark Mode */
+
     body {
-        background-color: #121212;
+        background: #f5f7fb;
     }
 
-    .course-card {
-        background-color: #1e1e1e;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: transform 0.3s ease;
-        border: 1px solid #333;
+    .dashboard-card {
+        transition: 0.25s ease;
     }
 
-        .course-card:hover {
-            transform: translateY(-5px);
-            border-color: #4facfe;
+        .dashboard-card:hover {
+            transform: translateY(-4px);
         }
 
-    .course-header {
-        height: 140px;
-        background-size: cover;
-        background-position: center;
-        position: relative;
+    .dashboard-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
     }
 
-    .overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 50%;
-        background: linear-gradient(transparent, #1e1e1e);
+    .course-item {
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f1f1f1;
     }
 
-    .course-body {
-        padding: 20px;
-    }
-
-    .course-title {
-        color: #ffffff;
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-
-    .course-subtitle {
-        color: #888;
-        font-size: 0.85rem;
-        background: #2a2a2a;
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 4px;
-    }
-
-    /* Tùy chỉnh thanh Progress giống ảnh mẫu */
-    .progress-icon {
-        color: #aaa;
-        font-size: 0.8rem;
-    }
-
-    .progress-text {
-        color: #ccc;
-        font-size: 0.9rem;
-        font-weight: bold;
-    }
-
-    .progress-track {
-        height: 8px;
-        background-color: #333;
-        border-radius: 10px;
-        width: 100%;
-        overflow: hidden;
-    }
-
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 10px;
-        /* Màu Gradient xanh giống ảnh */
-        background: linear-gradient(90deg, #3a7bd5 0%, #3aedb8 100%);
-        box-shadow: 0 0 10px rgba(58, 237, 184, 0.3);
-        transition: width 0.5s ease-in-out;
-    }
-
-    .btn-view-details {
-        background-color: transparent;
-        color: #4facfe;
-        border: 1px solid #4facfe;
-        font-weight: 600;
-        border-radius: 6px;
-    }
-
-        .btn-view-details:hover {
-            background-color: #4facfe;
-            color: white;
+        .course-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
+
+    .task-badge {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-top: 6px;
+    }
+
 </style>

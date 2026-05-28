@@ -1,5 +1,7 @@
 ﻿@using LMSfinal.Models.Enums
 @using LMSfinal.Models.Utilities
+@using LMSfinal.Models.ViewModels
+@model List<StudentGradeItemVM>
 @{
     ViewData["Title"] = "Bảng Điểm Tổng Hợp";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
@@ -84,11 +86,11 @@
                             <tr>
                                 <td class="fw-bold">@index</td>
                                 <td>
-                                    <strong>@item.NameClass</strong>
+                                    <strong>@item.ClassroomName</strong>
                                     <br>
-                                    <small class="text-muted">@item.ClassCode</small>
+                                    <small class="text-muted">@item.ClassroomCode</small>
                                 </td>
-                                <td>@item.Title</td>
+                                <td>@item.CourseName</td>
                                 <td>
                                     @if (item.Grade?.ProcessScore.HasValue == true)
                                     {
@@ -160,7 +162,7 @@
                                 <td>
                                     @if (item.Grade != null)
                                     {
-                                        <a asp-action="Detail" asp-route-classroomId="@item.Id"
+                                        <a asp-action="Detail" asp-route-classroomId="@item.ClassroomId"
                                            class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>

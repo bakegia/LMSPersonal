@@ -18,6 +18,10 @@ namespace LMSfinal.Areas.Student.Controllers
             _context = context;
             _userManager = userManager;
         }
+        public async Task<IActionResult> Index()
+        {
+            return View();
+        }
         public async Task<IActionResult> Details(int id)
         {
             var userId = _userManager.GetUserId(User);
