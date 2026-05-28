@@ -4,8 +4,10 @@ using LMSfinal.Models.EF;
 using LMSfinal.Models.Enums;
 using LMSfinal.Models.Utilities;
 using LMSfinal.Models.ViewModels;
+using LMSfinal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,11 +19,19 @@ namespace LMSfinal.Areas.Instructor.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
+        private readonly IEmailSender _emailSender;
 
-        public ScoreController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ScoreController(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            INotificationService notificationService,
+            IEmailSender emailSender)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
+            _emailSender = emailSender;
         }
 
         // ==================== INDEX - Danh sách lớp để ghi điểm ====================
@@ -101,9 +111,6 @@ namespace LMSfinal.Areas.Instructor.Controllers
         }
 
         // ==================== GRADEINPUT - Form nhập/sửa điểm ====================
-        /// <summary>
-        /// Hiển thị form nhập/sửa điểm cho một học sinh
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GradeInput(int classroomId, string studentId)
         {
@@ -321,10 +328,6 @@ namespace LMSfinal.Areas.Instructor.Controllers
             }
         }
 
-        // ==================== BULK IMPORT - Nhập điểm hàng loạt ====================
-        /// <summary>
-        /// Hiển thị form nhập điểm hàng loạt (CSV/Excel)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> BulkImport(int classroomId)
         {
@@ -343,17 +346,11 @@ namespace LMSfinal.Areas.Instructor.Controllers
 
             return View();
         }
-
-        // ==================== EXPORT - Xuất danh sách điểm ====================
-        /// <summary>
-        /// Xuất danh sách điểm thành CSV/Excel
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(int classroomId)
         {
             var userId = _userManager.GetUserId(User);
 
-            // Kiểm tra quyền truy cập
             var classroom = await _context.Classrooms
                 .Where(c => c.Id == classroomId && c.InstructorId == userId)
                 .Include(c => c.Course)
@@ -362,29 +359,274 @@ namespace LMSfinal.Areas.Instructor.Controllers
             if (classroom == null)
                 return Forbid();
 
-            // Lấy danh sách điểm
             var grades = await _context.ClassroomGrades
                 .Where(g => g.ClassroomId == classroomId)
                 .Include(g => g.Student)
                 .OrderBy(g => g.Student!.FullName)
                 .ToListAsync();
 
-            // Tạo CSV
+            var studentIds = grades.Select(g => g.StudentId).Distinct().ToList();
+
+            var profileLookup = await _context.UserProfiles
+                .Where(up => studentIds.Contains(up.UserId))
+                .ToDictionaryAsync(up => up.UserId, up => up);
+
+            const string sep = ";";
             var csv = new System.Text.StringBuilder();
-            csv.AppendLine("STT,Mã Số Sinh Viên,Tên Sinh Viên,Email,Điểm Quá Trình,Điểm Giữa Kỳ,Điểm Thi,Điểm Tổng,GPA,Hạng Điểm,Ghi Chú");
+            csv.AppendLine("sep=;");
+            csv.AppendLine(string.Join(sep,
+                "STT", "MSSV", "Tên Sinh Viên", "Email", "Điểm Quá Trình", "Điểm Giữa Kỳ",
+                "Điểm Thi", "Điểm Tổng", "GPA", "Hạng Điểm", "Ghi Chú"));
 
             int index = 1;
             foreach (var grade in grades)
             {
-                csv.AppendLine($"{index},\"{grade.StudentId}\",\"{grade.Student?.FullName}\",\"{grade.Student?.Email}\"," +
-                    $"{grade.ProcessScore:F2},{grade.MidtermScore:F2},{grade.FinalExamScore:F2}," +
-                    $"{grade.FinalScore:F2},{grade.GPA:F2},{grade.GradeLetterClass},\"{grade.Comments}\"");
+                profileLookup.TryGetValue(grade.StudentId, out var profile);
+
+                var mssv = profile?.Mssv.ToString() ?? string.Empty;
+                var studentName = grade.Student?.FullName ?? profile?.Fullname ?? "N/A";
+                var studentEmail = grade.Student?.Email ?? profile?.Email ?? "N/A";
+
+                var processScore = FormatNumber(grade.ProcessScore);
+                var midtermScore = FormatNumber(grade.MidtermScore);
+                var finalExamScore = FormatNumber(grade.FinalExamScore);
+                var finalScore = FormatNumber(grade.FinalScore);
+                var gpa = FormatNumber(grade.GPA);
+
+                var row = string.Join(sep,
+                    CsvValue(index.ToString()),
+                    CsvValue(mssv),
+                    CsvValue(studentName),
+                    CsvValue(studentEmail),
+                    CsvValue(processScore),
+                    CsvValue(midtermScore),
+                    CsvValue(finalExamScore),
+                    CsvValue(finalScore),
+                    CsvValue(gpa),
+                    CsvValue(grade.GradeLetterClass.ToString()),
+                    CsvValue(grade.Comments ?? string.Empty));
+
+                csv.AppendLine(row);
                 index++;
             }
 
-            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()),
-                "text/csv",
-                $"Scores_{classroom.ClassCode}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            var bytes = System.Text.Encoding.UTF8.GetPreamble()
+                .Concat(System.Text.Encoding.UTF8.GetBytes(csv.ToString()))
+                .ToArray();
+
+            return File(bytes, "text/csv", $"Scores_{classroom.ClassCode}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+        }
+
+        private static string CsvValue(string value)
+        {
+            if (value == null)
+                return "\"\"";
+
+            var cleaned = value.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ").Trim();
+            return $"\"{cleaned}\"";
+        }
+
+        private static string FormatNumber(decimal? value)
+        {
+            return value.HasValue
+                ? value.Value.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
+                : string.Empty;
+        }
+
+        private static string FormatNumber(decimal value)
+        {
+            return value.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private static string BuildGradeMessage(ClassroomGrade grade, Classroom classroom)
+        {
+            return $"Lớp: {classroom.NameClass} | Môn: {classroom.Course?.Title ?? "N/A"} | " +
+                   $"Điểm tổng: {grade.FinalScore:F2} | GPA: {grade.GPA:F2} | Hạng: {grade.GradeLetterClass}.";
+        }
+
+        private static string BuildGradeEmail(ClassroomGrade grade, Classroom classroom)
+        {
+            return $@"
+                        <h3>Thông báo điểm</h3>
+                        <p><strong>Lớp:</strong> {classroom.NameClass}</p>
+                        <p><strong>Môn:</strong> {classroom.Course?.Title ?? "N/A"}</p>
+                        <p><strong>Điểm tổng:</strong> {grade.FinalScore:F2}</p>
+                        <p><strong>GPA:</strong> {grade.GPA:F2}</p>
+                        <p><strong>Hạng điểm:</strong> {grade.GradeLetterClass}</p>
+                        <p><strong>Nhận xét:</strong> {grade.Comments ?? "Không có"}</p>";
+        }
+        // ==================== SEND GRADE NOTIFICATION - SINGLE ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendGradeNotification(int classroomId, string studentId, bool sendEmail)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var classroom = await _context.Classrooms
+                .Include(c => c.Course)
+                .FirstOrDefaultAsync(c => c.Id == classroomId && c.InstructorId == userId);
+
+            if (classroom == null)
+                return Forbid();
+
+            var grade = await _context.ClassroomGrades
+                .Include(g => g.Student)
+                .FirstOrDefaultAsync(g => g.ClassroomId == classroomId && g.StudentId == studentId);
+
+            if (grade?.Student == null)
+            {
+                TempData["error"] = "Không tìm thấy điểm hoặc học sinh.";
+                return RedirectToAction(nameof(GradeList), new { classroomId });
+            }
+
+            var title = "Thông báo điểm";
+            var message = BuildGradeMessage(grade, classroom);
+
+            await _notificationService.CreateAsync(new Notification
+            {
+                RecipientUserId = grade.StudentId,
+                Title = title,
+                Message = message,
+                Type = "GradeUpdated",
+                EntityType = "ClassroomGrade",
+                EntityId = grade.Id,
+                CreatedAt = DateTime.Now
+            });
+
+            if (sendEmail && !string.IsNullOrWhiteSpace(grade.Student.Email))
+            {
+                var emailBody = BuildGradeEmail(grade, classroom);
+                await _emailSender.SendEmailAsync(grade.Student.Email, title, emailBody);
+            }
+
+            TempData["success"] = $"Đã gửi thông báo điểm cho {grade.Student.FullName}";
+            return RedirectToAction(nameof(GradeList), new { classroomId });
+        }
+
+        // ==================== SEND GRADE NOTIFICATION - ALL ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendAllGradeNotifications(int classroomId, bool sendEmail)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var classroom = await _context.Classrooms
+                .Include(c => c.Course)
+                .FirstOrDefaultAsync(c => c.Id == classroomId && c.InstructorId == userId);
+
+            if (classroom == null)
+                return Forbid();
+
+            var grades = await _context.ClassroomGrades
+                .Include(g => g.Student)
+                .Where(g => g.ClassroomId == classroomId)
+                .ToListAsync();
+
+            if (!grades.Any())
+            {
+                TempData["error"] = "Chưa có dữ liệu điểm để gửi.";
+                return RedirectToAction(nameof(GradeList), new { classroomId });
+            }
+
+            var notifications = new List<Notification>();
+
+            foreach (var grade in grades)
+            {
+                if (grade.Student == null)
+                    continue;
+
+                notifications.Add(new Notification
+                {
+                    RecipientUserId = grade.StudentId,
+                    Title = "Thông báo điểm",
+                    Message = BuildGradeMessage(grade, classroom),
+                    Type = "GradeUpdated",
+                    EntityType = "ClassroomGrade",
+                    EntityId = grade.Id,
+                    CreatedAt = DateTime.Now
+                });
+
+                if (sendEmail && !string.IsNullOrWhiteSpace(grade.Student.Email))
+                {
+                    var emailBody = BuildGradeEmail(grade, classroom);
+                    await _emailSender.SendEmailAsync(grade.Student.Email, "Thông báo điểm", emailBody);
+                }
+            }
+
+            if (notifications.Count > 0)
+            {
+                _context.Notifications.AddRange(notifications);
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["success"] = $"Đã gửi thông báo điểm cho {notifications.Count} học sinh";
+            return RedirectToAction(nameof(GradeList), new { classroomId });
+        }
+
+        // ==================== SEND GRADE NOTIFICATION - SELECTED ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendSelectedGradeNotifications(int classroomId, List<string> studentIds, bool sendEmail)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var classroom = await _context.Classrooms
+                .Include(c => c.Course)
+                .FirstOrDefaultAsync(c => c.Id == classroomId && c.InstructorId == userId);
+
+            if (classroom == null)
+                return Forbid();
+
+            if (studentIds == null || studentIds.Count == 0)
+            {
+                TempData["error"] = "Vui lòng chọn ít nhất một học sinh.";
+                return RedirectToAction(nameof(GradeList), new { classroomId });
+            }
+
+            var grades = await _context.ClassroomGrades
+                .Include(g => g.Student)
+                .Where(g => g.ClassroomId == classroomId && studentIds.Contains(g.StudentId))
+                .ToListAsync();
+
+            if (!grades.Any())
+            {
+                TempData["error"] = "Không tìm thấy điểm của học sinh đã chọn.";
+                return RedirectToAction(nameof(GradeList), new { classroomId });
+            }
+
+            var notifications = new List<Notification>();
+
+            foreach (var grade in grades)
+            {
+                if (grade.Student == null)
+                    continue;
+
+                notifications.Add(new Notification
+                {
+                    RecipientUserId = grade.StudentId,
+                    Title = "Thông báo điểm",
+                    Message = BuildGradeMessage(grade, classroom),
+                    Type = "GradeUpdated",
+                    EntityType = "ClassroomGrade",
+                    EntityId = grade.Id,
+                    CreatedAt = DateTime.Now
+                });
+
+                if (sendEmail && !string.IsNullOrWhiteSpace(grade.Student.Email))
+                {
+                    var emailBody = BuildGradeEmail(grade, classroom);
+                    await _emailSender.SendEmailAsync(grade.Student.Email, "Thông báo điểm", emailBody);
+                }
+            }
+
+            if (notifications.Count > 0)
+            {
+                _context.Notifications.AddRange(notifications);
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["success"] = $"Đã gửi thông báo điểm cho {notifications.Count} học sinh";
+            return RedirectToAction(nameof(GradeList), new { classroomId });
         }
     }
 }

@@ -1,11 +1,16 @@
-﻿using LMSfinal.Data;
+﻿using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using LMSfinal.Data;
 using LMSfinal.Models;
 using LMSfinal.Models.EF;
+using LMSfinal.Models.Imports;
+using LMSfinal.Models.ViewModels.Instructor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace LMSfinal.Areas.Instructor.Controllers
 {
@@ -392,6 +397,328 @@ namespace LMSfinal.Areas.Instructor.Controllers
             var answer = await _context.Set<QuizAnswer>().FindAsync(id);
             if (answer == null) return NotFound();
             return Json(new { id = answer.Id, text = answer.AnswerText, label = answer.AnswerLabel, isCorrect = answer.IsCorrect });
+        }
+        // ==================== IMPORT QUESTIONS ====================
+        [HttpGet]
+        public async Task<IActionResult> Import(int quizId)
+        {
+            var quiz = await _context.Set<Quiz>()
+                .Include(q => q.Lesson)
+                    .ThenInclude(l => l.Section)
+                        .ThenInclude(s => s.Classroom)
+                .FirstOrDefaultAsync(q => q.Id == quizId);
+
+            if (quiz == null)
+                return NotFound();
+
+            var userId = _userManager.GetUserId(User);
+            if (quiz.Lesson.Section.Classroom.InstructorId != userId)
+                return Forbid();
+
+            var vm = new QuizImportViewModel
+            {
+                QuizId = quizId,
+                QuizTitle = quiz.Title
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(QuizImportViewModel model)
+        {
+            var quiz = await _context.Set<Quiz>()
+                .Include(q => q.Lesson)
+                    .ThenInclude(l => l.Section)
+                        .ThenInclude(s => s.Classroom)
+                .FirstOrDefaultAsync(q => q.Id == model.QuizId);
+
+            if (quiz == null)
+                return NotFound();
+
+            var userId = _userManager.GetUserId(User);
+            if (quiz.Lesson.Section.Classroom.InstructorId != userId)
+                return Forbid();
+
+            if (model.File == null || model.File.Length == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Vui lòng chọn file Excel (.xlsx).");
+                model.QuizTitle = quiz.Title;
+                return View(model);
+            }
+
+            if (!Path.GetExtension(model.File.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(string.Empty, "Chỉ hỗ trợ file .xlsx.");
+                model.QuizTitle = quiz.Title;
+                return View(model);
+            }
+
+            QuizImportResult result;
+            using (var stream = model.File.OpenReadStream())
+            {
+                result = ParseQuizImport(stream);
+            }
+
+            if (result.HasErrors)
+            {
+                model.QuizTitle = quiz.Title;
+                model.Result = result;
+                return View(model);
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var existingCount = await _context.Set<QuizQuestion>()
+                    .Where(q => q.QuizId == quiz.Id)
+                    .CountAsync();
+
+                var order = existingCount + 1;
+
+                foreach (var q in result.Questions)
+                {
+                    var question = new QuizQuestion
+                    {
+                        QuizId = quiz.Id,
+                        QuestionText = q.QuestionText,
+                        Points = q.Points,
+                        Order = order++
+                    };
+
+                    var answerOrder = 1;
+                    foreach (var a in q.Answers)
+                    {
+                        question.Answers.Add(new QuizAnswer
+                        {
+                            AnswerLabel = a.AnswerLabel,
+                            AnswerText = a.AnswerText,
+                            IsCorrect = a.IsCorrect,
+                            Order = answerOrder++
+                        });
+                    }
+
+                    _context.Set<QuizQuestion>().Add(question);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["success"] = $"Import thành công {result.ValidQuestions} câu hỏi.";
+                return RedirectToAction(nameof(ManageQuestions), new { quizId = quiz.Id });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError(string.Empty, $"Lỗi import: {ex.Message}");
+                model.QuizTitle = quiz.Title;
+                model.Result = result;
+                return View(model);
+            }
+        }
+
+        private static QuizImportResult ParseQuizImport(Stream stream)
+        {
+            var result = new QuizImportResult();
+
+            using var document = SpreadsheetDocument.Open(stream, false);
+            var workbookPart = document.WorkbookPart;
+            if (workbookPart == null)
+            {
+                result.Errors.Add(new QuizImportError { RowIndex = 0, ColumnName = "", Message = "File Excel không hợp lệ." });
+                return result;
+            }
+
+            var sheet = workbookPart.Workbook.Sheets?.Elements<Sheet>().FirstOrDefault();
+            if (sheet == null)
+            {
+                result.Errors.Add(new QuizImportError { RowIndex = 0, ColumnName = "", Message = "Không tìm thấy sheet." });
+                return result;
+            }
+
+            var worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id!);
+            var rows = worksheetPart.Worksheet.Descendants<Row>().ToList();
+
+            if (rows.Count == 0)
+            {
+                result.Errors.Add(new QuizImportError { RowIndex = 0, ColumnName = "", Message = "Sheet rỗng." });
+                return result;
+            }
+
+            var headerRow = rows.First();
+            var headerMap = BuildHeaderMap(document, headerRow);
+
+            var requiredHeaders = new[]
+            {
+                "QuestionText", "Points", "AnswerA", "AnswerB", "AnswerC", "AnswerD", "CorrectLabel"
+            };
+
+            foreach (var h in requiredHeaders)
+            {
+                if (!headerMap.ContainsKey(h))
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = 1, ColumnName = h, Message = "Thiếu cột bắt buộc." });
+                }
+            }
+
+            if (result.Errors.Any())
+                return result;
+
+            foreach (var row in rows.Skip(1))
+            {
+                var rowIndex = (int)(row.RowIndex?.Value ?? 0);
+                var questionText = GetCellValue(document, row, headerMap["QuestionText"]).Trim();
+                var pointsText = GetCellValue(document, row, headerMap["Points"]).Trim();
+                var answerA = GetCellValue(document, row, headerMap["AnswerA"]).Trim();
+                var answerB = GetCellValue(document, row, headerMap["AnswerB"]).Trim();
+                var answerC = GetCellValue(document, row, headerMap["AnswerC"]).Trim();
+                var answerD = GetCellValue(document, row, headerMap["AnswerD"]).Trim();
+                var correctLabel = GetCellValue(document, row, headerMap["CorrectLabel"]).Trim();
+
+                if (string.IsNullOrWhiteSpace(questionText) &&
+                    string.IsNullOrWhiteSpace(answerA) &&
+                    string.IsNullOrWhiteSpace(answerB) &&
+                    string.IsNullOrWhiteSpace(answerC) &&
+                    string.IsNullOrWhiteSpace(answerD))
+                {
+                    continue;
+                }
+
+                result.TotalRows++;
+
+                if (string.IsNullOrWhiteSpace(questionText))
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = rowIndex, ColumnName = "QuestionText", Message = "Câu hỏi không được để trống." });
+                    continue;
+                }
+
+                var points = 1;
+                if (!string.IsNullOrEmpty(pointsText) && !int.TryParse(pointsText, NumberStyles.Integer, CultureInfo.InvariantCulture, out points))
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = rowIndex, ColumnName = "Points", Message = "Điểm không hợp lệ." });
+                    continue;
+                }
+
+                if (points < 1 || points > 4)
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = rowIndex, ColumnName = "Points", Message = "Điểm phải từ 1-4." });
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(answerA) || string.IsNullOrWhiteSpace(answerB))
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = rowIndex, ColumnName = "AnswerA/AnswerB", Message = "Tối thiểu phải có đáp án A và B." });
+                    continue;
+                }
+
+                correctLabel = correctLabel.Trim().ToUpperInvariant();
+                if (correctLabel is not ("A" or "B" or "C" or "D"))
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = rowIndex, ColumnName = "CorrectLabel", Message = "CorrectLabel phải là A, B, C hoặc D." });
+                    continue;
+                }
+
+                var answerMap = new Dictionary<string, string>
+                {
+                    { "A", answerA },
+                    { "B", answerB },
+                    { "C", answerC },
+                    { "D", answerD }
+                };
+
+                if (string.IsNullOrWhiteSpace(answerMap[correctLabel]))
+                {
+                    result.Errors.Add(new QuizImportError { RowIndex = rowIndex, ColumnName = "CorrectLabel", Message = "Đáp án đúng không được để trống." });
+                    continue;
+                }
+
+                var question = new QuizImportQuestion
+                {
+                    RowIndex = rowIndex,
+                    QuestionText = questionText,
+                    Points = points
+                };
+
+                var order = 1;
+                foreach (var kvp in answerMap)
+                {
+                    if (string.IsNullOrWhiteSpace(kvp.Value)) continue;
+
+                    question.Answers.Add(new QuizImportAnswer
+                    {
+                        AnswerLabel = kvp.Key,
+                        AnswerText = kvp.Value,
+                        IsCorrect = kvp.Key == correctLabel,
+                        Order = order++
+                    });
+                }
+
+                result.Questions.Add(question);
+            }
+
+            result.ValidQuestions = result.Questions.Count;
+            return result;
+        }
+
+        private static Dictionary<string, int> BuildHeaderMap(SpreadsheetDocument document, Row headerRow)
+        {
+            var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var cell in headerRow.Elements<Cell>())
+            {
+                var headerText = GetCellValue(document, cell).Trim();
+                if (string.IsNullOrWhiteSpace(headerText)) continue;
+
+                var columnIndex = GetColumnIndexFromCellReference(cell.CellReference?.Value);
+                if (columnIndex > 0 && !map.ContainsKey(headerText))
+                {
+                    map.Add(headerText, columnIndex);
+                }
+            }
+
+            return map;
+        }
+
+        private static string GetCellValue(SpreadsheetDocument document, Row row, int columnIndex)
+        {
+            var cell = row.Elements<Cell>().FirstOrDefault(c =>
+                GetColumnIndexFromCellReference(c.CellReference?.Value) == columnIndex);
+
+            return GetCellValue(document, cell);
+        }
+
+        private static string GetCellValue(SpreadsheetDocument document, Cell? cell)
+        {
+            if (cell == null) return string.Empty;
+
+            var value = cell.CellValue?.InnerText ?? string.Empty;
+
+            if (cell.DataType?.Value == CellValues.SharedString)
+            {
+                var sst = document.WorkbookPart?.SharedStringTablePart?.SharedStringTable;
+                if (sst != null && int.TryParse(value, out var index))
+                {
+                    return sst.ElementAt(index).InnerText;
+                }
+            }
+
+            return value;
+        }
+
+        private static int GetColumnIndexFromCellReference(string? cellReference)
+        {
+            if (string.IsNullOrWhiteSpace(cellReference)) return 0;
+
+            var columnName = new string(cellReference.Where(char.IsLetter).ToArray()).ToUpperInvariant();
+            var columnNumber = 0;
+
+            foreach (var ch in columnName)
+            {
+                columnNumber = (columnNumber * 26) + (ch - 'A' + 1);
+            }
+
+            return columnNumber;
         }
     }
 }

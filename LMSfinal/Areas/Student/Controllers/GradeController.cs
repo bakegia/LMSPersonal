@@ -128,7 +128,6 @@ namespace LMSfinal.Areas.Student.Controllers
 
             return View(grade);
         }
-
         [HttpGet]
         public async Task<IActionResult> Transcript()
         {
@@ -172,11 +171,6 @@ namespace LMSfinal.Areas.Student.Controllers
 
             return View(items);
         }
-
-        // ==================== COMPLETED - Xem khóa học hoàn thành/chưa hoàn thành ====================
-        /// <summary>
-        /// Xem danh sách khóa học đã hoàn thành (D-A) và chưa hoàn thành (F hoặc không có điểm)
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Completed()
         {

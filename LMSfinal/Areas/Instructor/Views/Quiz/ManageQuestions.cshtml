@@ -7,7 +7,13 @@
 }
 
 <div class="container-fluid py-4">
-
+    <!-- In header button group, add this next to "Thêm câu hỏi" -->
+    <a asp-action="Import"
+       asp-route-quizId="@Model.Id"
+       class="btn btn-outline-primary rounded-pill shadow-sm px-4">
+        <i class="fa-solid fa-file-import"></i>
+        Import Excel
+    </a>
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

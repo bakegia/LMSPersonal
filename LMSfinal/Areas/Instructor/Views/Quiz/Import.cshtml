@@ -1,0 +1,97 @@
+﻿@using LMSfinal.Models.ViewModels.Instructor
+@model QuizImportViewModel
+
+@{
+    ViewData["Title"] = "Import câu hỏi";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h3 class="fw-bold">Import câu hỏi cho Quiz</h3>
+            <p class="text-muted">
+                Quiz: <strong>@Model.QuizTitle</strong>
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="ManageQuestions" asp-route-quizId="@Model.QuizId" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="mb-3">File Excel (.xlsx)</h5>
+            <p class="text-muted">
+                Cột bắt buộc: <code>QuestionText, Points, AnswerA, AnswerB, AnswerC, AnswerD, CorrectLabel</code>
+            </p>
+
+            <form method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="QuizId" />
+                <div class="mb-3">
+                    <input type="file" asp-for="File" class="form-control" accept=".xlsx" />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-file-import"></i> Import
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Result != null)
+    {
+        <div class="mt-4">
+            <h5>Kết quả import</h5>
+
+            @if (Model.Result.HasErrors)
+            {
+                <div class="alert alert-warning">
+                    Có lỗi ở một số dòng. Vui lòng sửa và import lại.
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Dòng</th>
+                                <th>Cột</th>
+                                <th>Lỗi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var err in Model.Result.Errors)
+                            {
+                                <tr>
+                                    <td>@err.RowIndex</td>
+                                    <td>@err.ColumnName</td>
+                                    <td>@err.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success">
+                    Import thành công @Model.Result.ValidQuestions câu hỏi.
+                </div>
+            }
+        </div>
+    }
+</div>

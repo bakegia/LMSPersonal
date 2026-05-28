@@ -18,7 +18,7 @@ namespace LMSfinal.Data
         public DbSet<Lesson> Lessons { get; set; }
         public DbSet<UserProgress> UserProgresses { get; set; }
         public DbSet<Classroom> Classrooms { get; set; }
-        public DbSet<ClassroomStudent> ClassroomStudents { get; set; }  
+        public DbSet<ClassroomStudent> ClassroomStudents { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<TimeSlot> TimeSlots { get; set; }
         public DbSet<ClassSchedule> ClassSchedules { get; set; }
@@ -29,6 +29,8 @@ namespace LMSfinal.Data
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<ClassroomGrade> ClassroomGrades { get; set; } = null!;
         public DbSet<FinalExamSchedule> FinalExamSchedules { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -111,7 +113,7 @@ namespace LMSfinal.Data
             // StudentQuizAttempt -> Student (ApplicationUser)
             builder.Entity<StudentQuizAttempt>()
                 .HasOne(sa => sa.Student)
-                .WithMany() // Nếu ApplicationUser chưa có ICollection<StudentQuizAttempt>
+                .WithMany()
                 .HasForeignKey(sa => sa.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -150,6 +152,17 @@ namespace LMSfinal.Data
             builder.Entity<QuizAnswer>()
                 .HasIndex(x => new { x.QuestionId, x.Order });
 
+            // ========================= NOTIFICATION =========================
+            builder.Entity<Notification>(entity =>
+            {
+                entity.HasOne(n => n.RecipientUser)
+                    .WithMany()
+                    .HasForeignKey(n => n.RecipientUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(n => new { n.RecipientUserId, n.IsRead, n.CreatedAt });
+            });
+
             // ========================= CATEGORY =========================
             builder.Entity<Category>(entity =>
             {
@@ -178,9 +191,6 @@ namespace LMSfinal.Data
                 entity.Property(x => x.Title)
                     .HasMaxLength(250)
                     .IsRequired();
-
-                // Nếu có Slug
-                // entity.HasIndex(x => x.Slug).IsUnique();
             });
 
             // ========================= CLASSROOM =========================
@@ -200,12 +210,11 @@ namespace LMSfinal.Data
             builder.Entity<FinalExamSchedule>(entity =>
             {
                 entity.HasOne(e => e.Classroom)
-                      .WithMany() // Một lớp có thể có 1 lịch thi cuối kỳ (hoặc để WithMany nếu muốn linh hoạt)
+                      .WithMany()
                       .HasForeignKey(e => e.ClassroomId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }
-
     }
 }
 

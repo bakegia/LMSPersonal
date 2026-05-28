@@ -1,0 +1,58 @@
+﻿@using LMSfinal.Models.ViewModels.Student
+@model NotificationListViewModel
+
+@{
+    ViewData["Title"] = "Thông báo";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold">
+                <i class="fa-solid fa-bell me-2"></i>Thông báo
+            </h3>
+            <p class="text-muted mb-0">Chưa đọc: <strong>@Model.UnreadCount</strong></p>
+        </div>
+        <form asp-action="MarkAllAsRead" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fa-solid fa-check-double"></i> Đánh dấu tất cả đã đọc
+            </button>
+        </form>
+    </div>
+
+    @if (Model.Notifications.Any())
+    {
+        <div class="list-group">
+            @foreach (var item in Model.Notifications)
+            {
+                <div class="list-group-item list-group-item-action @(item.IsRead ? "" : "list-group-item-warning")">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1 fw-bold">@item.Title</h6>
+                            <p class="mb-1">@item.Message</p>
+                            <small class="text-muted">@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                        @if (!item.IsRead)
+                        {
+                            <form asp-action="MarkAsRead" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fa-solid fa-check"></i> Đã đọc
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <i class="fa-solid fa-circle-info me-2"></i>Không có thông báo
+        </div>
+    }
+</div>
