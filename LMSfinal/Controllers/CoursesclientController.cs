@@ -1,27 +1,30 @@
-using LMSfinal.Data;
+﻿using LMSfinal.Data;
 using LMSfinal.Models.EF;
+using LMSfinal.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMSfinal.Controllers
 {
-    public class CoursesController : Controller
+    public class CoursesclientController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPricingService _pricingService;
 
-        public CoursesController(ApplicationDbContext context)
+        public CoursesclientController(ApplicationDbContext context, IPricingService pricingService)
         {
             _context = context;
+            _pricingService = pricingService;
         }
 
         // GET: /courses
-        public async Task<IActionResult> Index(int page = 1, string? categorySlug = null)
+        public async Task<IActionResult> Index1(int page = 1, string? categorySlug = null)
         {
             const int pageSize = 12;
 
-            ViewData["Title"] = "T?t c? kh�a h?c - LMS Academy";
-            ViewData["MetaDescription"] = "Danh s�ch �?y �? c�c kh�a h?c c� s?n tr�n n?n t?ng";
-            ViewData["MetaKeywords"] = "kh�a h?c, l?p tr?nh, thi?t k?, kinh doanh";
+            ViewData["Title"] = "Tất cả khóa học - LMS Academy";
+            ViewData["MetaDescription"] = "Danh sách đầy đủ các khóa học có sẵn trên nền tảng LMS Academy";
+            ViewData["MetaKeywords"] = "khóa học, lập trình, thiết kế, kinh doanh";
 
             var query = _context.Courses
                 .Include(c => c.Category)
@@ -51,6 +54,7 @@ namespace LMSfinal.Controllers
             ViewData["CurrentPage"] = page;
             ViewData["TotalPages"] = totalPages;
             ViewData["PageSize"] = pageSize;
+            ViewBag.CurrentPricePerCredit = await _pricingService.GetCurrentPriceAsync();
 
             return View(courses);
         }
@@ -71,7 +75,7 @@ namespace LMSfinal.Controllers
                 return NotFound();
 
             ViewData["Title"] = $"{course.Title} - LMS Academy";
-            ViewData["MetaDescription"] = course.Description ?? $"Kh�a h?c {course.Title}";
+            ViewData["MetaDescription"] = course.Description ?? $"Khóa h?c {course.Title}";
             ViewData["MetaKeywords"] = $"{course.Title}, {course.Category?.Name}";
 
             return View(course);

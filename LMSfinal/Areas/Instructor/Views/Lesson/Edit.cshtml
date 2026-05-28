@@ -1,15 +1,15 @@
 ﻿@model LMSfinal.Models.EF.Lesson
 
 @{
-    ViewData["Title"] = "Thêm bài học mới";
+    ViewData["Title"] = "Chỉnh sửa bài học";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Tạo bài học mới</h5>
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Chỉnh sửa bài học</h5>
             </div>
 
             <div class="card-body">
@@ -18,11 +18,12 @@
                 <div asp-validation-summary="All" class="alert alert-danger"></div>
                 <form asp-area="Instructor"
                       asp-controller="Lesson"
-                      asp-action="Create"
+                      asp-action="Edit"
                       method="post"
                       enctype="multipart/form-data">
 
-                    <input asp-for="SectionId" type="hidden" value="@ViewBag.SectionId" />
+                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="SectionId" type="hidden" />
 
                     <!-- Title -->
                     <div class="mb-3">
@@ -71,6 +72,12 @@
                                type="file"
                                class="form-control"
                                accept="video/*" />
+                        @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                        {
+                            <small class="text-muted d-block mt-2">
+                                Video hiện tại: <a href="@Model.VideoUrl" target="_blank">@Model.VideoUrl</a>
+                            </small>
+                        }
                     </div>
 
                     <!-- Completion Rules -->
@@ -144,8 +151,8 @@
                         </a>
 
                         <button type="submit"
-                                class="btn btn-primary px-4">
-                            Lưu bài học
+                                class="btn btn-warning px-4">
+                            Cập nhật
                         </button>
                     </div>
 

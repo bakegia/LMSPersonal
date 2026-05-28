@@ -1,14 +1,58 @@
-﻿@{
+﻿@using System.Globalization
+@using System.Linq
+
+@{
     ViewData["Title"] = "Lịch sử điểm danh";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var items = Model as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    int totalSessions = items.Count();
+    int totalPresent = items.Sum(x => (int)x.PresentCount);
+    int totalCount = items.Sum(x => (int)x.TotalCount);
+    int avgRate = totalCount > 0 ? (totalPresent * 100) / totalCount : 0;
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử điểm danh lớp</h3>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="mb-0"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử điểm danh lớp</h3>
         <a asp-action="Attendance" asp-route-id="@ViewBag.ClassroomId" class="btn btn-success">
             <i class="fa-solid fa-plus"></i> Điểm danh mới
         </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-muted small">Tổng số buổi</div>
+                    <div class="fw-bold fs-4">@totalSessions</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-muted small">Tổng hiện diện</div>
+                    <div class="fw-bold fs-4">@totalPresent</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-muted small">Tổng sĩ số</div>
+                    <div class="fw-bold fs-4">@totalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-muted small">Tỉ lệ trung bình</div>
+                    <div class="fw-bold fs-4">@avgRate%</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card mb-4 border-0 shadow-sm bg-light">
@@ -49,20 +93,23 @@
                 </tr>
             </thead>
             <tbody>
-                @if (Model != null)
+                @if (items.Any())
                 {
-                    foreach (var item in Model)
+                    foreach (var item in items)
                     {
+                        int percent = item.TotalCount > 0 ? (item.PresentCount * 100) / item.TotalCount : 0;
+                        string barColor = percent >= 80 ? "bg-success" : (percent >= 50 ? "bg-warning" : "bg-danger");
+                        string dayLabel = item.Date.ToString("dddd", new CultureInfo("vi-VN"));
+
                         <tr>
-                            <td class="text-center fw-bold">@item.Date.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center fw-bold">
+                                @item.Date.ToString("dd/MM/yyyy")
+                                <div class="text-muted small">@dayLabel</div>
+                            </td>
                             <td class="text-center">
                                 <span class="badge bg-info text-dark">@item.PresentCount / @item.TotalCount</span>
                             </td>
                             <td>
-                                @{
-                                    var percent = item.TotalCount > 0 ? (item.PresentCount * 100) / item.TotalCount : 0;
-                                    var barColor = percent >= 80 ? "bg-success" : (percent >= 50 ? "bg-warning" : "bg-danger");
-                                }
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar @barColor progress-bar-striped"
                                          role="progressbar"
@@ -85,7 +132,9 @@
                 else
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">Không có dữ liệu lịch sử trong khoảng thời gian này.</td>
+                        <td colspan="4" class="text-center text-muted py-5">
+                            Không có dữ liệu lịch sử trong khoảng thời gian này.
+                        </td>
                     </tr>
                 }
             </tbody>

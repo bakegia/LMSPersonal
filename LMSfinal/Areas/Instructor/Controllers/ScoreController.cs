@@ -35,9 +35,6 @@ namespace LMSfinal.Areas.Instructor.Controllers
         }
 
         // ==================== INDEX - Danh sách lớp để ghi điểm ====================
-        /// <summary>
-        /// Hiển thị danh sách lớp của giáo viên để chọn ghi điểm
-        /// </summary>
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
@@ -53,9 +50,6 @@ namespace LMSfinal.Areas.Instructor.Controllers
         }
 
         // ==================== GRADELIST - Danh sách học sinh để ghi điểm ====================
-        /// <summary>
-        /// Hiển thị danh sách học sinh trong lớp để ghi điểm
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GradeList(int classroomId)
         {
@@ -237,9 +231,6 @@ namespace LMSfinal.Areas.Instructor.Controllers
         }
 
         // ==================== GRADEDETAIL - Xem chi tiết điểm ====================
-        /// <summary>
-        /// Xem chi tiết điểm của một học sinh
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GradeDetail(int classroomId, string studentId)
         {

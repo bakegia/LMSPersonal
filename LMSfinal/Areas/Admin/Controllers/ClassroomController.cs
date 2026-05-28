@@ -1,4 +1,5 @@
 ﻿using LMSfinal.Data;
+using LMSfinal.Models.Enums;
 using LMSfinal.Models;
 using LMSfinal.Models.EF;
 using Microsoft.AspNetCore.Identity;
@@ -54,7 +55,7 @@ namespace LMSfinal.Areas.Admin.Controllers
             // Thiết lập giá trị mặc định
             vm.StartDate = DateTime.Now;
             vm.EndDate = DateTime.Now.AddMonths(2);
-            vm.RegistrationDeadline = DateTime.Now.AddDays(7); // Mặc định: 7 ngày
+            vm.RegistrationDeadline = DateTime.Now.AddDays(2); // Mặc định: 7 ngày
             vm.MaxCapacity = 30; // Mặc định: 30 học sinh
             vm.IsOpenForRegistration = true; // Mặc định: mở đăng ký
 
@@ -432,6 +433,7 @@ namespace LMSfinal.Areas.Admin.Controllers
             }
 
             var classroom = await _context.Classrooms
+                .Include(c => c.Course)
                 .Include(c => c.ClassroomStudents)
                 .FirstOrDefaultAsync(c => c.Id == classroomId);
 
@@ -440,7 +442,6 @@ namespace LMSfinal.Areas.Admin.Controllers
                 return Json(new { success = false, message = "Lớp học không tồn tại." });
             }
 
-            // Kiểm tra sức chứa
             int currentCount = classroom.ClassroomStudents.Count;
             if (currentCount + studentIds.Count > classroom.MaxCapacity)
             {
@@ -451,18 +452,64 @@ namespace LMSfinal.Areas.Admin.Controllers
                 });
             }
 
+            var now = DateTime.Now;
+
+            var pricePerCredit = await _context.PricePerCreditHistories
+                .Where(p => p.EffectiveFrom <= now && (p.EffectiveTo == null || p.EffectiveTo >= now))
+                .OrderByDescending(p => p.EffectiveFrom)
+                .Select(p => p.Price)
+                .FirstOrDefaultAsync();
+
+            if (pricePerCredit <= 0)
+            {
+                return Json(new { success = false, message = "Chưa thiết lập giá tín chỉ hợp lệ." });
+            }
+
+            if (classroom.Course == null || classroom.Course.Credits <= 0)
+            {
+                return Json(new { success = false, message = "Môn học chưa có tín chỉ hợp lệ." });
+            }
+
             try
             {
                 var newEnrolments = new List<ClassroomStudent>();
+                var newPayments = new List<ClassroomPayment>();
+
                 foreach (var studentId in studentIds)
                 {
-                    // Tránh thêm trùng lặp nếu sinh viên đã tồn tại (phòng hờ)
-                    if (!classroom.ClassroomStudents.Any(cs => cs.StudentId == studentId))
+                    if (classroom.ClassroomStudents.Any(cs => cs.StudentId == studentId))
                     {
-                        newEnrolments.Add(new ClassroomStudent
+                        continue;
+                    }
+
+                    var totalPrice = pricePerCredit * classroom.Course.Credits;
+
+                    var enrollment = new ClassroomStudent
+                    {
+                        ClassroomId = classroomId,
+                        StudentId = studentId,
+                        EnrolledAt = now,
+                        PricePerCreditAtEnroll = pricePerCredit,
+                        TotalPrice = totalPrice
+                    };
+
+                    newEnrolments.Add(enrollment);
+
+                    var paymentExists = await _context.ClassroomPayments
+                        .AnyAsync(p => p.ClassroomId == classroomId && p.StudentId == studentId);
+
+                    if (!paymentExists)
+                    {
+                        var dueDate = classroom.RegistrationDeadline ?? now.AddDays(2);
+
+                        newPayments.Add(new ClassroomPayment
                         {
                             ClassroomId = classroomId,
-                            StudentId = studentId
+                            StudentId = studentId,
+                            Amount = totalPrice,
+                            DueDate = dueDate,
+                            Status = PaymentStatus.Pending,
+                            CreatedAt = now
                         });
                     }
                 }
@@ -470,12 +517,14 @@ namespace LMSfinal.Areas.Admin.Controllers
                 if (newEnrolments.Any())
                 {
                     _context.ClassroomStudents.AddRange(newEnrolments);
-
-                    // Cập nhật lại trường CurrentEnrollment trong bảng Classroom
-                    var updatedEnrollment = currentCount + newEnrolments.Count;
-
-                    await _context.SaveChangesAsync();
                 }
+
+                if (newPayments.Any())
+                {
+                    _context.ClassroomPayments.AddRange(newPayments);
+                }
+
+                await _context.SaveChangesAsync();
 
                 return Json(new { success = true, message = $"Đã thêm thành công {newEnrolments.Count} sinh viên vào lớp." });
             }

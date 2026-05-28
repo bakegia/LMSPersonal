@@ -3,6 +3,15 @@
 @{
     ViewData["Title"] = $"{Model.Section?.Classroom?.Course?.Title} - {Model.Title}";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    bool isCompleted = ViewBag.IsCompleted == true;
+    bool canMarkComplete = ViewBag.CanMarkComplete == true;
+    bool requireVideo = ViewBag.RequireVideo == true;
+    bool videoCompleted = ViewBag.VideoCompleted == true;
+    bool requireQuiz = ViewBag.RequireQuiz == true && ViewBag.HasQuiz == true;
+    bool quizPassed = ViewBag.QuizPassed == true || ViewBag.RequireQuizPass != true;
+
+    bool shouldDisable = isCompleted || !canMarkComplete;
 }
 
 <style>
@@ -78,7 +87,6 @@
 </style>
 
 <div class="container-fluid">
-    <!-- Bài học -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
             <h4 class="mb-0">
@@ -86,20 +94,32 @@
             </h4>
         </div>
         <div class="card-body">
-            <!-- Video -->
             @if (!string.IsNullOrEmpty(Model.VideoUrl))
             {
                 <div class="mb-4">
-                    <iframe width="100%" height="500"
-                            src="@Model.VideoUrl"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen>
-                    </iframe>
+                    @if (Model.VideoUrl.Contains("youtube.com") || Model.VideoUrl.Contains("youtu.be"))
+                    {
+                        <iframe width="100%" height="500"
+                                src="@Model.VideoUrl"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen>
+                        </iframe>
+                    }
+                    else
+                    {
+                        <video id="lessonVideo" width="100%" height="500" controls>
+                            <source src="@Model.VideoUrl" type="video/mp4" />
+                        </video>
+                    }
                 </div>
             }
 
-            <!-- Nội dung -->
+            <div id="lessonProgressData"
+                 data-required-watch-percent="@Model.RequiredWatchPercent"
+                 data-video-duration-seconds="@Model.VideoDurationSeconds">
+            </div>
+
             @if (!string.IsNullOrEmpty(Model.Content))
             {
                 <div class="content-section mb-4">
@@ -109,7 +129,6 @@
         </div>
     </div>
 
-    <!-- QUIZ -->
     <div class="quiz-container" id="quizContainer">
         <div id="quizLoading">
             <div class="spinner-border text-primary" role="status">
@@ -135,7 +154,6 @@
             </form>
         </div>
 
-        <!-- Kết quả -->
         <div id="quizResult" class="quiz-result">
             <div class="row">
                 <div class="col-md-6 text-center">
@@ -152,7 +170,6 @@
             </div>
         </div>
 
-        <!-- Không có Quiz -->
         <div id="noQuiz" style="display: none;">
             <div class="alert alert-info">
                 <i class="fa-solid fa-info-circle"></i> Bài học này không có Quiz
@@ -160,23 +177,26 @@
         </div>
     </div>
 
-    <!-- Mark Completed Button -->
     <div class="mt-4">
-        @{
-            bool shouldDisable = (ViewBag.HasQuiz == true && ViewBag.HasAttempted == false && ViewBag.IsCompleted == false);
-        }
         <button id="btnMarkComplete"
                 class="btn btn-success btn-lg w-100"
                 onclick="markAsCompleted(@Model.Id)"
                 @(shouldDisable ? "disabled" : "")>
             <i class="fa-solid fa-check"></i>
-            <span id="btnText">@(ViewBag.IsCompleted == true ? "Đã Hoàn Thành" : "Đánh Dấu Hoàn Thành")</span>
+            <span id="btnText">@(isCompleted ? "Đã Hoàn Thành" : "Đánh Dấu Hoàn Thành")</span>
         </button>
 
-        @if (shouldDisable)
+        @if (!isCompleted && requireVideo && !videoCompleted)
+        {
+            <p id="videoNotice" class="text-danger small mt-2 text-center">
+                <i class="fa-solid fa-lock"></i> Bạn cần xem đủ @Model.RequiredWatchPercent% thời lượng video.
+            </p>
+        }
+
+        @if (!isCompleted && requireQuiz && !quizPassed)
         {
             <p id="quizNotice" class="text-danger small mt-2 text-center">
-                <i class="fa-solid fa-lock"></i> Bạn cần thực hiện bài tập (Quiz) để hoàn thành bài học này.
+                <i class="fa-solid fa-lock"></i> Bạn cần làm Quiz và đạt yêu cầu để hoàn thành bài học.
             </p>
         }
     </div>
@@ -186,13 +206,56 @@
     <script>
         const lessonId = @Model.Id;
         let quizId_var = null;
-        
-        // Load Quiz khi page load
+        let lastWatchedSeconds = 0;
+
         document.addEventListener('DOMContentLoaded', function () {
             loadQuiz();
+            initVideoTracking();
         });
 
-        // Load Quiz
+        function initVideoTracking() {
+            const video = document.getElementById('lessonVideo');
+            if (!video) return;
+
+            const progressData = document.getElementById('lessonProgressData');
+            const initialDuration = parseInt(progressData.dataset.videoDurationSeconds || '0', 10);
+
+            const sendProgress = async (force) => {
+                const duration = Math.floor(video.duration || initialDuration || 0);
+                const currentSeconds = Math.floor(video.currentTime || 0);
+
+                if (!force && currentSeconds - lastWatchedSeconds < 10) return;
+
+                lastWatchedSeconds = currentSeconds;
+
+                const response = await fetch('/Student/CourseStudent/UpdateLessonProgress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lessonId: lessonId,
+                        watchedSeconds: currentSeconds,
+                        videoDurationSeconds: duration
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    if (result.isVideoCompleted) {
+                        const notice = document.getElementById('videoNotice');
+                        if (notice) notice.style.display = 'none';
+                    }
+
+                    if (result.canMarkComplete) {
+                        const btn = document.getElementById('btnMarkComplete');
+                        if (btn && btn.disabled) btn.disabled = false;
+                    }
+                }
+            };
+
+            video.addEventListener('timeupdate', () => sendProgress(false));
+            video.addEventListener('ended', () => sendProgress(true));
+        }
+
         function loadQuiz() {
             fetch(`/Student/CourseStudent/GetLessonQuiz?lessonId=${lessonId}`)
                 .then(r => {
@@ -221,7 +284,6 @@
                 });
         }
 
-        // Render Questions
         function renderQuestions(questions) {
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '';
@@ -246,14 +308,11 @@
             });
         }
 
-        // Submit Quiz
         document.getElementById('quizForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const formData = new FormData(this);
             const answers = [];
 
-            // Lấy tất cả câu trả lời
             document.querySelectorAll('[name^="question_"]').forEach(radio => {
                 if (radio.checked) {
                     const questionId = parseInt(radio.name.replace('question_', ''));
@@ -282,15 +341,15 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Hiển thị khung kết quả Quiz cho người dùng thấy điểm
                     showResult(result);
 
-                    // Mở khóa nút "Đánh dấu hoàn thành"
-                    const btn = document.getElementById('btnMarkComplete');
-                    if (btn) btn.disabled = false;
+                    if (result.canMarkComplete) {
+                        const btn = document.getElementById('btnMarkComplete');
+                        if (btn) btn.disabled = false;
 
-                    const notice = document.getElementById('quizNotice');
-                    if (notice) notice.style.display = 'none';
+                        const notice = document.getElementById('quizNotice');
+                        if (notice) notice.style.display = 'none';
+                    }
                 } else {
                     alert('Lỗi: ' + result.message);
                 }
@@ -300,7 +359,6 @@
             }
         });
 
-        // Show Result
         function showResult(result) {
             document.getElementById('quizForm').style.display = 'none';
             document.getElementById('quizResult').className = 'quiz-result ' + (result.passed ? 'success' : 'fail');
@@ -314,30 +372,21 @@
             document.getElementById('passedStatus').innerHTML = result.passed
                 ? '<span class="badge bg-success">Hoàn thành</span>'
                 : '<span class="badge bg-danger">Chưa hoàn thành</span>';
-
-            // Nếu pass, enable button "Đánh dấu hoàn thành"
-            if (result.passed) {
-                const btn = document.getElementById('btnMarkComplete');
-                btn.disabled = false;
-                const notice = document.getElementById('quizNotice');
-                if (notice) notice.style.display = 'none';
-            }
         }
 
-        // Mark Completed
         function markAsCompleted(id) {
             if (confirm('Xác nhận đánh dấu bài học này là hoàn thành?')) {
                 fetch('/Student/CourseStudent/MarkAsCompleted', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lessonId: id }) // Đảm bảo key là lessonId khớp với C#
+                    body: JSON.stringify({ lessonId: id })
                 })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
                         alert('Bài học đã được đánh dấu hoàn thành!');
-                        // Thay đổi texte nút ngay lập tức để người dùng thấy kết quả
                         document.getElementById('btnText').textContent = "Đã Hoàn Thành";
+                        document.getElementById('btnMarkComplete').disabled = true;
                         location.href = '/Student/CourseStudent/Details/' + @Model.Section.ClassroomId;
                     } else {
                         alert('Lỗi: ' + data.message);

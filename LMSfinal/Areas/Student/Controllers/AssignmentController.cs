@@ -1,4 +1,5 @@
 ﻿using LMSfinal.Data;
+using LMSfinal.Services;
 using LMSfinal.Models;
 using LMSfinal.Models.EF;
 using LMSfinal.Models.ViewModels.Student;
@@ -16,12 +17,14 @@ namespace LMSfinal.Areas.Student.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IClassroomAccessService _classroomAccessService;
 
-        public AssignmentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment webHostEnvironment)
+        public AssignmentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment webHostEnvironment, IClassroomAccessService classroomAccessService)
         {
             _context = context;
             _userManager = userManager;
             _webHostEnvironment = webHostEnvironment;
+            _classroomAccessService = classroomAccessService;
         }
 
         // ==================== INDEX - Danh sách bài tập ====================
@@ -31,11 +34,16 @@ namespace LMSfinal.Areas.Student.Controllers
 
             var now = DateTime.Now;
 
+            var accessibleClassroomIds = await _context.Set<ClassroomStudent>()
+                .Where(cs => cs.StudentId == userId && !cs.IsLocked)
+                .Select(cs => cs.ClassroomId)
+                .ToListAsync();
+
             var allAssignments = await _context.Set<StudentAssignment>()
                 .Include(sa => sa.Assignment)
                     .ThenInclude(a => a.Classroom)
                         .ThenInclude(c => c.Course)
-                .Where(sa => sa.StudentId == userId)
+                .Where(sa => sa.StudentId == userId && accessibleClassroomIds.Contains(sa.Assignment.ClassroomId))
                 .ToListAsync();
 
             var viewModel = new StudentAssignmentIndexViewModel

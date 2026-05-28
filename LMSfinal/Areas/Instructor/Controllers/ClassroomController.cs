@@ -77,59 +77,167 @@ namespace LMSfinal.Areas.Instructor.Controllers
         // Action 1: Giao diện điểm danh
         public async Task<IActionResult> Attendance(int id, DateTime? date)
         {
+            var userId = _userManager.GetUserId(User);
+
             var classroom = await _context.Classrooms
-                .Include(c => c.ClassroomStudents).ThenInclude(cs => cs.Student)
+                .Where(c => c.Id == id && c.InstructorId == userId)
+                .Include(c => c.ClassroomStudents)
+                    .ThenInclude(cs => cs.Student)
                 .Include(c => c.ClassSchedules)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync();
 
-            if (classroom == null) return NotFound();
+            if (classroom == null) { return View("NotFound"); }
 
-            // Lấy ngày điểm danh (mặc định là hôm nay nếu không chọn)
-            DateTime selectedDate = date ?? DateTime.Today;
+            DateTime selectedDate = (date ?? DateTime.Today).Date;
 
-            // Lấy danh sách sinh viên đã điểm danh trong ngày này (nếu có)
+            if (selectedDate < classroom.StartDate.Date || selectedDate > classroom.EndDate.Date)
+            {
+                TempData["Error"] = "Ngày điểm danh không nằm trong thời gian lớp học.";
+                ViewBag.Classroom = classroom;
+                ViewBag.SelectedDate = selectedDate;
+                ViewBag.ExistingIsPresent = new Dictionary<string, bool>();
+                ViewBag.ExistingIsLate = new Dictionary<string, bool>();
+                ViewBag.ExistingNote = new Dictionary<string, string>();
+                return View(new List<ApplicationUser>());
+            }
+
+            bool isScheduleDay = classroom.ClassSchedules.Any(s => s.DayOfWeek == selectedDate.DayOfWeek);
+            if (!isScheduleDay)
+            {
+                TempData["Error"] = "Ngày này không có lịch học.";
+                ViewBag.Classroom = classroom;
+                ViewBag.SelectedDate = selectedDate;
+                ViewBag.ExistingIsPresent = new Dictionary<string, bool>();
+                ViewBag.ExistingIsLate = new Dictionary<string, bool>();
+                ViewBag.ExistingNote = new Dictionary<string, string>();
+                return View(new List<ApplicationUser>());
+            }
+
+            DateTime dayStart = selectedDate;
+            DateTime dayEnd = selectedDate.AddDays(1);
+
             var existingAttendance = await _context.Attendances
-                .Where(a => a.ClassroomId == id && a.AttendanceDate.Date == selectedDate.Date)
-                .ToDictionaryAsync(a => a.StudentId, a => a.IsPresent);
+                .Where(a => a.ClassroomId == id && a.AttendanceDate >= dayStart && a.AttendanceDate < dayEnd)
+                .Select(a => new { a.StudentId, a.IsPresent, a.IsLate, a.Note })
+                .ToListAsync();
 
             ViewBag.Classroom = classroom;
             ViewBag.SelectedDate = selectedDate;
-            ViewBag.ExistingAttendance = existingAttendance;
+            ViewBag.ExistingIsPresent = existingAttendance.ToDictionary(x => x.StudentId, x => x.IsPresent);
+            ViewBag.ExistingIsLate = existingAttendance.ToDictionary(x => x.StudentId, x => x.IsLate);
+            ViewBag.ExistingNote = existingAttendance
+                .Where(x => !string.IsNullOrWhiteSpace(x.Note))
+                .ToDictionary(x => x.StudentId, x => x.Note ?? string.Empty);
 
-            return View(classroom.ClassroomStudents.Select(cs => cs.Student).ToList());
+            var students = classroom.ClassroomStudents
+                .Where(cs => !cs.IsLocked)
+                .Select(cs => cs.Student)
+                .ToList();
+
+            return View(students);
         }
 
         // Action 2: Lưu điểm danh
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveAttendance(int classroomId, DateTime attendanceDate, List<AttendanceSubmitModel> models)
         {
+            const int AttendanceNoteMaxLength = 500;
+
+            var userId = _userManager.GetUserId(User);
+
+            var classroom = await _context.Classrooms
+                .Where(c => c.Id == classroomId && c.InstructorId == userId)
+                .Include(c => c.ClassSchedules)
+                .Include(c => c.ClassroomStudents)
+                .FirstOrDefaultAsync();
+
+            if (classroom == null) { return View("NotFound"); }
+
+            DateTime normalizedDate = attendanceDate.Date;
+
+            if (normalizedDate < classroom.StartDate.Date || normalizedDate > classroom.EndDate.Date)
+            {
+                TempData["Error"] = "Ngày điểm danh không nằm trong thời gian lớp học.";
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
+            }
+
+            bool isScheduleDay = classroom.ClassSchedules.Any(s => s.DayOfWeek == normalizedDate.DayOfWeek);
+            if (!isScheduleDay)
+            {
+                TempData["Error"] = "Ngày này không có lịch học.";
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
+            }
+
             if (models == null || !models.Any())
             {
                 TempData["Error"] = "Không có dữ liệu điểm danh!";
-                return RedirectToAction("Attendance", new { id = classroomId });
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
             }
 
-            // 1. Xóa dữ liệu cũ của ngày đó
+            if (models.Any(m => string.IsNullOrWhiteSpace(m.StudentId)))
+            {
+                TempData["Error"] = "Có sinh viên không hợp lệ trong danh sách điểm danh.";
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
+            }
+
+            var duplicateIds = models
+                .GroupBy(m => m.StudentId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (duplicateIds.Any())
+            {
+                TempData["Error"] = "Danh sách điểm danh bị trùng sinh viên.";
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
+            }
+
+            if (models.Any(m => !string.IsNullOrWhiteSpace(m.Note) && m.Note.Length > AttendanceNoteMaxLength))
+            {
+                TempData["Error"] = "Ghi chú vượt quá 500 ký tự.";
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
+            }
+
+            var validStudentIds = classroom.ClassroomStudents
+                .Where(cs => !cs.IsLocked)
+                .Select(cs => cs.StudentId)
+                .ToHashSet();
+
+            var validModels = models
+                .Where(m => validStudentIds.Contains(m.StudentId))
+                .ToList();
+
+            if (!validModels.Any())
+            {
+                TempData["Error"] = "Danh sách điểm danh không hợp lệ.";
+                return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
+            }
+
+            DateTime dayStart = normalizedDate;
+            DateTime dayEnd = normalizedDate.AddDays(1);
+
             var oldData = _context.Attendances
-                .Where(a => a.ClassroomId == classroomId && a.AttendanceDate.Date == attendanceDate.Date);
+                .Where(a => a.ClassroomId == classroomId && a.AttendanceDate >= dayStart && a.AttendanceDate < dayEnd);
             _context.Attendances.RemoveRange(oldData);
 
-            // 2. Thêm dữ liệu mới từ danh sách models
-            foreach (var item in models)
+            foreach (var item in validModels)
             {
                 _context.Attendances.Add(new Attendance
                 {
                     ClassroomId = classroomId,
                     StudentId = item.StudentId,
-                    AttendanceDate = attendanceDate,
-                    IsPresent = item.IsPresent // Ở đây IsPresent sẽ nhận giá trị true nếu checkbox được tích
+                    AttendanceDate = normalizedDate,
+                    IsPresent = item.IsPresent,
+                    IsLate = item.IsPresent && item.IsLate,
+                    Note = string.IsNullOrWhiteSpace(item.Note) ? null : item.Note.Trim()
                 });
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = $"Đã cập nhật điểm danh ngày {attendanceDate:dd/MM/yyyy}";
+            TempData["Success"] = $"Đã cập nhật điểm danh ngày {normalizedDate:dd/MM/yyyy}";
 
-            return RedirectToAction("Attendance", new { id = classroomId, date = attendanceDate });
+            return RedirectToAction("Attendance", new { id = classroomId, date = normalizedDate });
         }
 
         // Action 3: Xem lịch sử điểm danh

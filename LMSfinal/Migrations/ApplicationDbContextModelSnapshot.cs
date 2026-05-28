@@ -194,8 +194,14 @@ namespace LMSfinal.Migrations
                     b.Property<int>("ClassroomId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsLate")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsPresent")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StudentId")
                         .IsRequired()
@@ -384,6 +390,57 @@ namespace LMSfinal.Migrations
                     b.ToTable("ClassroomGrades");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.ClassroomPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ClassroomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.HasIndex("StudentId", "ClassroomId")
+                        .IsUnique();
+
+                    b.ToTable("ClassroomPayments");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.ClassroomStudent", b =>
                 {
                     b.Property<int>("ClassroomId")
@@ -392,8 +449,28 @@ namespace LMSfinal.Migrations
                     b.Property<string>("StudentId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime>("EnrolledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsPresent")
                         .HasColumnType("bit");
+
+                    b.Property<string>("LockReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PricePerCreditAtEnroll")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("ClassroomId", "StudentId");
 
@@ -455,6 +532,11 @@ namespace LMSfinal.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Credits")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -607,11 +689,21 @@ namespace LMSfinal.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<bool>("RequireQuiz")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RequireQuizPass")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RequiredWatchPercent")
+                        .HasColumnType("int");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
                     b.Property<string>("Slug")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Summary")
                         .HasMaxLength(500)
@@ -620,6 +712,9 @@ namespace LMSfinal.Migrations
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("VideoDurationSeconds")
+                        .HasColumnType("int");
 
                     b.Property<string>("VideoUrl")
                         .HasColumnType("nvarchar(max)");
@@ -679,6 +774,39 @@ namespace LMSfinal.Migrations
                     b.HasIndex("RecipientUserId", "IsRead", "CreatedAt");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("LMSfinal.Models.EF.PricePerCreditHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveFrom", "EffectiveTo");
+
+                    b.ToTable("PricePerCreditHistories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            EffectiveFrom = new DateTime(2026, 5, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Price = 2500000m
+                        });
                 });
 
             modelBuilder.Entity("LMSfinal.Models.EF.Quiz", b =>
@@ -853,6 +981,53 @@ namespace LMSfinal.Migrations
                     b.ToTable("StudentAssignment");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.StudentPreference", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InstructorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("TimeSlotId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("InstructorId");
+
+                    b.HasIndex("TimeSlotId");
+
+                    b.HasIndex("StudentId", "CreatedAt");
+
+                    b.ToTable("StudentPreferences");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.StudentQuizAnswer", b =>
                 {
                     b.Property<int>("Id")
@@ -1007,15 +1182,36 @@ namespace LMSfinal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CompletedDate")
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsQuizPassed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVideoCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastWatchedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("LessonId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("QuizPassedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("WatchedPercent")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WatchedSeconds")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1259,6 +1455,25 @@ namespace LMSfinal.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("LMSfinal.Models.EF.ClassroomPayment", b =>
+                {
+                    b.HasOne("LMSfinal.Models.EF.Classroom", "Classroom")
+                        .WithMany()
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LMSfinal.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("LMSfinal.Models.EF.ClassroomStudent", b =>
                 {
                     b.HasOne("LMSfinal.Models.EF.Classroom", "Classroom")
@@ -1404,6 +1619,40 @@ namespace LMSfinal.Migrations
                     b.Navigation("Assignment");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("LMSfinal.Models.EF.StudentPreference", b =>
+                {
+                    b.HasOne("LMSfinal.Models.EF.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LMSfinal.Models.ApplicationUser", "Instructor")
+                        .WithMany()
+                        .HasForeignKey("InstructorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LMSfinal.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LMSfinal.Models.EF.TimeSlot", "TimeSlot")
+                        .WithMany()
+                        .HasForeignKey("TimeSlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Instructor");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("TimeSlot");
                 });
 
             modelBuilder.Entity("LMSfinal.Models.EF.StudentQuizAnswer", b =>

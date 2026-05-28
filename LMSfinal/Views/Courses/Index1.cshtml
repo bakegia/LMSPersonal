@@ -1,0 +1,88 @@
+﻿@using LMSfinal.Models.EF
+@model List<Course>
+@{
+    ViewData["Title"] = "Tất cả khóa học - LMS Academy";
+    ViewData["MetaDescription"] = "Khám phá danh sách đầy đủ các khóa học có sẵn trên nền tảng LMS Academy. Lập trình, thiết kế, kinh doanh và nhiều lĩnh vực khác.";
+    ViewData["MetaKeywords"] = "khóa học, lập trình, thiết kế, kinh doanh, kỹ năng";
+    ViewData["MetaImage"] = "/images/og-courses.jpg";
+
+    var currentPage = (int?)ViewData["CurrentPage"] ?? 1;
+    var totalPages = (int?)ViewData["TotalPages"] ?? 1;
+    var currentCategory = ViewData["CurrentCategory"] as Category;
+    var pricePerCredit = ViewBag.CurrentPricePerCredit is decimal currentPrice ? currentPrice : 0m;
+}
+@foreach (var course in Model)
+{
+    var totalPrice = course.Credits > 0 && pricePerCredit > 0
+        ? course.Credits * pricePerCredit
+        : 0m;
+
+    <div class="col-lg-4 col-md-6 col-sm-12">
+        <a href="/courses/@course.Slug" class="text-decoration-none">
+            <div class="course-item card h-100 border-0 shadow-sm">
+                <!-- Course Image -->
+                <div class="position-relative overflow-hidden course-image-wrapper" style="height: 220px;">
+                    <img src="@(course.ImageUrl ?? "/images/course-placeholder.jpg")"
+                         alt="@course.Title"
+                         class="card-img-top course-image"
+                         style="height: 100%; object-fit: cover;" />
+
+                    <!-- Category Badge -->
+                    <div class="position-absolute top-0 start-0 m-3">
+                        <span class="badge bg-primary">
+                            @(course.Category?.Name ?? "Khác")
+                        </span>
+                    </div>
+
+                    <!-- Rating Badge -->
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-warning">
+                            <i class="bi bi-star-fill me-1"></i>4.8
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Course Body -->
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-accent mb-2">@course.Title</h5>
+                    <p class="card-text text-muted small mb-3">
+                        @(string.IsNullOrWhiteSpace(course.Description) ?
+                                            "Khóa học chất lượng cao" :
+                                            course.Description.Length > 80 ?
+                                            course.Description.Substring(0, 80) + "..." :
+                                            course.Description)
+                </p>
+
+                    <!-- Course Stats -->
+                    <div class="course-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-light text-primary">
+                                <i class="bi bi-file-earmark-text me-1"></i>
+                                @(course.Sections?.Count ?? 0) chương
+                            </span>
+                            <span class="badge bg-light text-secondary">
+                                <i class="bi bi-people me-1"></i>
+                                @(course.Quantity ?? 0)
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-mortarboard me-1"></i>@course.Credits tín chỉ
+                            </span>
+                            <span class="badge bg-light text-success">
+                                @(totalPrice > 0 ? $"{totalPrice:N0} VND" : "Chưa cập nhật")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Footer -->
+                <div class="card-footer bg-light border-top">
+                    <span class="text-primary fw-bold d-flex align-items-center justify-content-center">
+                        Xem chi tiết <i class="bi bi-arrow-right ms-2"></i>
+                    </span>
+                </div>
+            </div>
+        </a>
+    </div>
+}

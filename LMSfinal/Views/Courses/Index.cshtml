@@ -9,6 +9,7 @@
     var currentPage = (int?)ViewData["CurrentPage"] ?? 1;
     var totalPages = (int?)ViewData["TotalPages"] ?? 1;
     var currentCategory = ViewData["CurrentCategory"] as Category;
+    var pricePerCredit = ViewBag.CurrentPricePerCredit is decimal currentPrice ? currentPrice : 0m;
 }
 
 <!-- Breadcrumb -->
@@ -85,6 +86,10 @@
             <div class="row g-4">
                 @foreach (var course in Model)
                 {
+                    var totalPrice = course.Credits > 0 && pricePerCredit > 0
+                        ? course.Credits * pricePerCredit
+                        : 0m;
+
                     <div class="col-lg-4 col-md-6 col-sm-12">
                         <a href="/courses/@course.Slug" class="text-decoration-none">
                             <div class="course-item card h-100 border-0 shadow-sm">
@@ -131,6 +136,14 @@
                                             <span class="badge bg-light text-secondary">
                                                 <i class="bi bi-people me-1"></i>
                                                 @(course.Quantity ?? 0)
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="badge bg-light text-dark">
+                                                <i class="bi bi-mortarboard me-1"></i>@course.Credits tín chỉ
+                                            </span>
+                                            <span class="badge bg-light text-success">
+                                                @(totalPrice > 0 ? $"{totalPrice:N0} VND" : "Chưa cập nhật")
                                             </span>
                                         </div>
                                     </div>

@@ -30,7 +30,7 @@ namespace LMSfinal.Areas.Student.Controllers
 
             // 1. Lấy danh sách ID các lớp mà học sinh này tham gia từ bảng ClassroomStudent
             var enrolledClassIds = await _context.Set<ClassroomStudent>()
-                .Where(cs => cs.StudentId == userId)
+                .Where(cs => cs.StudentId == userId && !cs.IsLocked)
                 .Select(cs => cs.ClassroomId)
                 .ToListAsync();
 
@@ -75,7 +75,7 @@ namespace LMSfinal.Areas.Student.Controllers
             // 1. Lấy tất cả thông tin lớp học của học sinh này
             var studentClasses = await _context.Set<ClassroomStudent>()
                 .Include(cs => cs.Classroom)
-                .Where(cs => cs.StudentId == userId && cs.Classroom.IsActive)
+                .Where(cs => cs.StudentId == userId && cs.Classroom.IsActive && !cs.IsLocked)
                 .Select(cs => cs.Classroom)
                 .ToListAsync();
 

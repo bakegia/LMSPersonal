@@ -69,6 +69,7 @@ namespace LMSfinal.ApiControllers
                         description = c.Description,
                         imageUrl = c.ImageUrl,
                         categoryId = c.CategoryId,
+                        credits = c.Credits,
                         category = c.Category == null
                             ? null
                             : new
@@ -112,7 +113,8 @@ namespace LMSfinal.ApiControllers
                         x.Slug,
                         x.Description,
                         x.ImageUrl,
-                        x.CategoryId
+                        x.CategoryId,
+                        x.Credits
                     })
                     .FirstOrDefaultAsync();
 
@@ -141,7 +143,8 @@ namespace LMSfinal.ApiControllers
                     Title = dto.Title,
                     Slug = dto.Slug,
                     Description = dto.Description,
-                    CategoryId = dto.CategoryId
+                    CategoryId = dto.CategoryId,
+                    Credits = dto.Credits
                 };
 
                 if (dto.ImageUpload != null)
@@ -176,6 +179,9 @@ namespace LMSfinal.ApiControllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
                 var course = await _context.Courses.FindAsync(id);
                 if (course == null)
                     return NotFound();
@@ -185,6 +191,7 @@ namespace LMSfinal.ApiControllers
                 course.Slug = dto.Slug;
                 course.Description = dto.Description;
                 course.CategoryId = dto.CategoryId;
+                course.Credits = dto.Credits;
 
                 if (dto.ImageUpload != null)
                 {
