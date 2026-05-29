@@ -51,6 +51,14 @@
                                 <strong class="text-muted d-block mb-1">Ngày Kết Thúc</strong>
                                 <span class="h6">@Model.EndDate.ToString("dd/MM/yyyy")</span>
                             </p>
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Niên Học Kỳ</strong>
+                                <span class="h6">@(!string.IsNullOrWhiteSpace(Model.Semester) ? Model.Semester : "Chưa thiết lập")</span>
+                            </p>
+                            <p class="mb-3">
+                                <strong class="text-muted d-block mb-1">Học Phí</strong>
+                                <span class="h6">@Model.TotalPrice.ToString("N0") VND</span>
+                            </p>
                         </div>
                     </div>
                     @if (!string.IsNullOrEmpty(Model.Description))

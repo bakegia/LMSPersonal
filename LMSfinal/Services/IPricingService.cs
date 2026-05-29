@@ -8,6 +8,7 @@ namespace LMSfinal.Services
     {
         Task<decimal> GetCurrentPriceAsync();
         Task SetNewPriceAsync(decimal newPrice, DateTime effectiveFrom);
+        Task<decimal> CalculateTuitionAsync(int courseId);
     }
 
     public class PricingService : IPricingService
@@ -21,13 +22,25 @@ namespace LMSfinal.Services
 
         public async Task<decimal> GetCurrentPriceAsync()
         {
+            var now = DateTime.Now;
             var price = await _context.PricePerCreditHistories
-                .Where(x => x.EffectiveTo == null)
+                .Where(x => x.EffectiveFrom <= now && (x.EffectiveTo == null || x.EffectiveTo >= now))
                 .OrderByDescending(x => x.EffectiveFrom)
                 .Select(x => x.Price)
                 .FirstOrDefaultAsync();
 
             return price;
+        }
+
+        public async Task<decimal> CalculateTuitionAsync(int courseId)
+        {
+            var currentPrice = await GetCurrentPriceAsync();
+            var credits = await _context.Courses
+                .Where(c => c.Id == courseId)
+                .Select(c => c.Credits)
+                .FirstOrDefaultAsync();
+
+            return currentPrice * credits;
         }
 
         public async Task SetNewPriceAsync(decimal newPrice, DateTime effectiveFrom)

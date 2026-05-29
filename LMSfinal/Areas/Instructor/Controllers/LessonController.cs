@@ -107,7 +107,7 @@ namespace LMSfinal.Areas.Instructor.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction("Section", "Instructor", new { area = "Instructor", classroomId = existingLesson.Section?.ClassroomId });
+            return RedirectToAction("Section", new { area = "Instructor", classroomId = existingLesson.Section?.ClassroomId });
         }
 
         [HttpGet]

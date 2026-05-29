@@ -18,7 +18,13 @@ namespace LMSfinal.Models.EF
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsActive { get; set; }
-        
+
+        [StringLength(50)]
+        public string? Semester { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Học phí phải >= 0")]
+        public decimal TotalPrice { get; set; } = 0m;
+
         // ==================== ĐĂNG KÝ LỚP ====================
         /// <summary>
         /// Lớp có mở đăng ký không?

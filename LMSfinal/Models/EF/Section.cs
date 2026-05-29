@@ -63,6 +63,6 @@ namespace LMSfinal.Models.EF
 
         public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 
-        public bool? IsPreviewFree { get; set; }
+        public bool IsPreviewFree { get; set; } = false;
     }
 }

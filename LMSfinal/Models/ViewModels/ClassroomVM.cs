@@ -20,6 +20,12 @@ public class ClassroomVM
 
     public bool IsActive { get; set; } = true;
 
+    [StringLength(50)]
+    public string? Semester { get; set; }
+
+    [Range(0, double.MaxValue, ErrorMessage = "Học phí phải >= 0")]
+    public decimal TotalPrice { get; set; } = 0m;
+
     // Course
     [ValidateNever]
     public int CourseId { get; set; }
@@ -35,7 +41,7 @@ public class ClassroomVM
     // MULTI STUDENT (QUAN TRỌNG)
     public List<string> StudentIds { get; set; } = new();
     public List<SelectListItem> Students { get; set; } = new();
-    //ca hoc
+
     [Required(ErrorMessage = "Vui lòng chọn ca học")]
     public int TimeSlotId { get; set; }
     [ValidateNever]

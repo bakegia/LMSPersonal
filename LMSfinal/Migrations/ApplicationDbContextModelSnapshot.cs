@@ -318,8 +318,15 @@ namespace LMSfinal.Migrations
                     b.Property<DateTime?>("RegistrationDeadline")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Semester")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -683,7 +690,7 @@ namespace LMSfinal.Migrations
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool?>("IsPreviewFree")
+                    b.Property<bool>("IsPreviewFree")
                         .HasColumnType("bit");
 
                     b.Property<int>("Order")
