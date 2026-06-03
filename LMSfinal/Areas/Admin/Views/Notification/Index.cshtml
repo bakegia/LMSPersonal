@@ -14,6 +14,8 @@
             </h3>
             <p class="text-muted mb-0">Chưa đọc: <strong>@Model.UnreadCount</strong></p>
         </div>
+
+
         <form asp-action="MarkAllAsRead" method="post">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-outline-primary">
@@ -56,3 +58,16 @@
         </div>
     }
 </div>
+@section Scripts {
+    <script>
+
+        document.addEventListener("notification:received", function (e) {
+
+            console.log("Notification Page Event:", e.detail);
+
+            location.reload();
+
+        });
+
+    </script>
+}

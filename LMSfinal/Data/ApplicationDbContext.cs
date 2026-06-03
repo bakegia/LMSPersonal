@@ -33,7 +33,7 @@ namespace LMSfinal.Data
         public DbSet<StudentPreference> StudentPreferences { get; set; }
         public DbSet<PricePerCreditHistory> PricePerCreditHistories { get; set; }
         public DbSet<ClassroomPayment> ClassroomPayments { get; set; }
-
+        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -294,6 +294,10 @@ namespace LMSfinal.Data
                     .HasForeignKey(x => x.StudentId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+            builder.Entity<UserRefreshToken>()
+    .HasOne(x => x.User)
+    .WithMany()
+    .HasForeignKey(x => x.UserId);
         }
     }
 }

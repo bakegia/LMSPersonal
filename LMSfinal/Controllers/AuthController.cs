@@ -1,6 +1,7 @@
 ﻿using LMSfinal.Data;
 using LMSfinal.Models;
 using LMSfinal.Models.ViewModels;
+using LMSfinal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -18,13 +19,15 @@ namespace LMSfinal.Controllers
         private readonly ApplicationDbContext _DataContext;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IEmailSender _emailSender;
-        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ApplicationDbContext _Context, RoleManager<IdentityRole> roleManager, IEmailSender emailSender)
+        private readonly ITokenService _tokenService;
+        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ApplicationDbContext _Context, RoleManager<IdentityRole> roleManager, IEmailSender emailSender, ITokenService tokenService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _DataContext = _Context;
             _roleManager = roleManager;
             _emailSender = emailSender;
+            _tokenService = tokenService;
         }
 
         public IActionResult Index()
@@ -47,35 +50,109 @@ namespace LMSfinal.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl)
         {
-
             return View(new LoginVM { ReturnUrl = returnUrl });
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginVM loginVM)
         {
             if (!ModelState.IsValid)
                 return View(loginVM);
 
-            var result = await _signInManager.PasswordSignInAsync(
-                loginVM.UserName,
-                loginVM.Password,
-                false,
-                false
-            );
+            // Tìm User bằng UserManager của Identity thông qua UserName người dùng nhập vào
+            var user = await _userManager.FindByNameAsync(loginVM.UserName);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Sai tài khoản hoặc mật khẩu");
+                return View(loginVM);
+            }
+
+            // Kiểm tra mật khẩu (tham số thứ 3 là lockoutOnFailure - cấu hình true nếu muốn khóa tài khoản khi nhập sai nhiều lần)
+            var result = await _signInManager.CheckPasswordSignInAsync(user, loginVM.Password, lockoutOnFailure: true);
 
             if (result.Succeeded)
+            {
+                // 1. Tạo cặp Token (Access Token và Refresh Token)
+                var (accessToken, refreshToken) = await _tokenService.GenerateTokensAsync(user);
+
+                // 2. Nạp Access Token vào HttpOnly Cookie
+                Response.Cookies.Append("X-Access-Token", accessToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true, // Sử dụng trong Production chạy HTTPS
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTime.UtcNow.AddMinutes(15) // Hết hạn sau 15 phút
+                });
+
+                // 3. Nạp Refresh Token vào HttpOnly Cookie độc lập
+                Response.Cookies.Append("X-Refresh-Token", refreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTime.UtcNow.AddDays(7) // Hết hạn sau 7 ngày
+                });
+
+                // Kiểm tra tính hợp lệ của đường dẫn chuyển hướng sau đăng nhập thành công
+                if (!string.IsNullOrEmpty(loginVM.ReturnUrl) && Url.IsLocalUrl(loginVM.ReturnUrl))
+                    return Redirect(loginVM.ReturnUrl);
+
                 return RedirectToAction("Index", "Home");
+            }
 
             if (result.IsLockedOut)
-                ModelState.AddModelError("", "Tài khoản bị khóa");
+                ModelState.AddModelError("", "Tài khoản của bạn đã bị khóa do nhập sai nhiều lần.");
             else if (result.IsNotAllowed)
-                ModelState.AddModelError("", "Không được phép đăng nhập");
+                ModelState.AddModelError("", "Tài khoản chưa được phép đăng nhập (ví dụ: Chưa xác nhận Email).");
             else
                 ModelState.AddModelError("", "Sai tài khoản hoặc mật khẩu");
 
             return View(loginVM);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            // Xóa hoàn toàn các Cookie lưu trữ Token tại client
+            Response.Cookies.Delete("X-Access-Token");
+            Response.Cookies.Delete("X-Refresh-Token");
+
+            return RedirectToAction("Login", "Auth,", new { area = "" });
+        }
+        //[AllowAnonymous]
+        //public async Task<IActionResult> Login(string returnUrl)
+        //{
+
+        //    return View(new LoginVM { ReturnUrl = returnUrl });
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> Login(LoginVM loginVM)
+        //{
+        //    if (!ModelState.IsValid)
+        //        return View(loginVM);
+
+        //    var result = await _signInManager.PasswordSignInAsync(
+        //        loginVM.UserName,
+        //        loginVM.Password,
+        //        false,
+        //        false
+        //    );
+
+        //    if (result.Succeeded)
+        //        return RedirectToAction("Index", "Home");
+
+        //    if (result.IsLockedOut)
+        //        ModelState.AddModelError("", "Tài khoản bị khóa");
+        //    else if (result.IsNotAllowed)
+        //        ModelState.AddModelError("", "Không được phép đăng nhập");
+        //    else
+        //        ModelState.AddModelError("", "Sai tài khoản hoặc mật khẩu");
+
+        //    return View(loginVM);
+        //}
         [AllowAnonymous]
         [HttpGet]
         public IActionResult ForgotPassword()

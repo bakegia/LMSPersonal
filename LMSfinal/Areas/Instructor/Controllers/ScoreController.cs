@@ -546,8 +546,7 @@ namespace LMSfinal.Areas.Instructor.Controllers
 
             if (notifications.Count > 0)
             {
-                _context.Notifications.AddRange(notifications);
-                await _context.SaveChangesAsync();
+                await _notificationService.CreateManyAsync(notifications);
             }
 
             TempData["success"] = $"Đã gửi thông báo điểm cho {notifications.Count} học sinh";
@@ -612,8 +611,7 @@ namespace LMSfinal.Areas.Instructor.Controllers
 
             if (notifications.Count > 0)
             {
-                _context.Notifications.AddRange(notifications);
-                await _context.SaveChangesAsync();
+                await _notificationService.CreateManyAsync(notifications);
             }
 
             TempData["success"] = $"Đã gửi thông báo điểm cho {notifications.Count} học sinh";

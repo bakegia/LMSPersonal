@@ -244,6 +244,8 @@ namespace LMSfinal.Areas.Admin.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
+            Response.Cookies.Delete("X-Access-Token");
+            Response.Cookies.Delete("X-Refresh-Token");
             return RedirectToRoute(new { controller = "Auth", action = "Login", area = "" });
         }
 
