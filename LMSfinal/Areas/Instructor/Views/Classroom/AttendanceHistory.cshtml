@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Lịch sử điểm danh";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
 
     var items = Model as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
     int totalSessions = items.Count();

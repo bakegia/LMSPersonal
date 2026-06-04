@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Thông báo";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container-fluid mt-4">
@@ -15,13 +15,7 @@
             <p class="text-muted mb-0">Chưa đọc: <strong>@Model.UnreadCount</strong></p>
         </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener("notification:received", function () {
-            window.location.reload();
-        });
-    </script>
-}
+
         <form asp-action="MarkAllAsRead" method="post">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-outline-primary">

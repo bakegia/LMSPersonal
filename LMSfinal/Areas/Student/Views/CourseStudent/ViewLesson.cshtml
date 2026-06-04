@@ -2,7 +2,7 @@
 @model Lesson
 @{
     ViewData["Title"] = $"{Model.Section?.Classroom?.Course?.Title} - {Model.Title}";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Student/Views/Shared/_Layout.cshtml";
 
     bool isCompleted = ViewBag.IsCompleted == true;
     bool canMarkComplete = ViewBag.CanMarkComplete == true;

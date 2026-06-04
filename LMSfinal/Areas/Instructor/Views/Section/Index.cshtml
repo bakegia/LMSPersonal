@@ -2,7 +2,7 @@
 @model IEnumerable<Section>
 @{
     ViewData["Title"] = "Quản lý nội dung lớp học";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
 
     // Lấy ClassroomId từ ViewBag do Controller truyền sang
     int classroomId = ViewBag.ClassroomId ?? 0;
