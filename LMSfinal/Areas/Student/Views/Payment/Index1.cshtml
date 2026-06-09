@@ -1,0 +1,172 @@
+﻿@using LMSfinal.Models.Enums
+@using LMSfinal.Models.ViewModels.Student
+
+@model List<StudentPaymentListItemVM>
+
+@{
+    ViewData["Title"] = "Thanh toán học phí";
+    Layout = "~/Areas/Student/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <h3 class="mb-4"><i class="fa-solid fa-credit-card"></i> Thanh toán học phí</h3>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Chưa có hóa đơn.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Lớp</th>
+                    <th>Môn</th>
+                    <th>Số tiền</th>
+                    <th>Hạn</th>
+                    <th>Trạng thái</th>
+                    <th>Thanh toán</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var statusClass = item.Status switch
+                    {
+                        PaymentStatus.Paid => "bg-success",
+                        PaymentStatus.Overdue => "bg-danger",
+                        _ => "bg-warning text-dark"
+                    };
+
+                    var statusLabel = item.Status switch
+                    {
+                        PaymentStatus.Paid => "Đã thanh toán",
+                        PaymentStatus.Overdue => "Quá hạn",
+                        _ => "Chờ thanh toán"
+                    };
+
+                    <tr>
+                        <td>@item.ClassroomName</td>
+                        <td>@item.CourseTitle</td>
+                        <td>@item.Amount.ToString("N0") VNĐ</td>
+                        <td>@item.DueDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="badge @statusClass">
+                                @statusLabel
+                            </span>
+                        </td>
+                        <td>
+                            @(item.PaidAt?.ToString("dd/MM/yyyy") ?? "-")
+                        </td>
+
+                        <td>
+                            @if (item.Status != PaymentStatus.Paid)
+                            {
+                                <div class="btn-group">
+                                    <button class="btn btn-primary btn-sm"
+                                            onclick="payVNPay('@item.BillId', @item.Amount)">
+                                        <i class="fa-solid fa-wallet"></i> VNPay
+                                    </button>
+
+                                    <button class="btn btn-success btn-sm"
+                                            onclick="payMomo('@item.BillId', @item.Amount)">
+                                        <i class="fa-solid fa-mobile-screen"></i> MoMo
+                                    </button>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            @* <tbody>
+                @foreach (var item in Model)
+                {
+                    var statusClass = item.Status switch
+                    {
+                        PaymentStatus.Paid => "bg-success",
+                        PaymentStatus.Overdue => "bg-danger",
+                        _ => "bg-warning text-dark"
+                    };
+
+                    var statusLabel = item.Status switch
+                    {
+                        PaymentStatus.Paid => "Đã thanh toán",
+                        PaymentStatus.Overdue => "Quá hạn",
+                        _ => "Chờ thanh toán"
+                    };
+
+                    <tr>
+                        <td>@item.ClassroomName</td>
+                        <td>@item.CourseTitle</td>
+                        <td>@item.Amount.ToString("N0") VNĐ</td>
+                        <td>@item.DueDate.ToString("dd/MM/yyyy")</td>
+                        <td><span class="badge @statusClass">@statusLabel</span></td>
+                        <td>@(item.PaidAt?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    </tr>
+                }
+            </tbody> *@
+        </table>
+    }
+</div>
+<form id="momoForm"
+      asp-area="Student"
+      asp-controller="Payment"
+      asp-action="CreatePaymentMomo"
+      method="post"
+      class="d-none">
+
+    <input type="hidden" name="BillId" />
+    <input type="hidden" name="Amount" />
+    <input type="hidden" name="OrderInfo" />
+</form>
+
+
+<form id="vnpayForm"
+      asp-area="Student"
+      asp-controller="Payment"
+      asp-action="CreatePaymentUrlVnpay"
+      method="post"
+      class="d-none">
+
+    <input type="hidden" name="BillId" />
+    <input type="hidden" name="Amount" />
+    <input type="hidden" name="OrderDescription" />
+</form>
+@* <!-- Dành cho VNPay -->
+<form asp-action="CreatePaymentUrlVnpay" method="post">
+    <!-- Phải map với PaymentId -->
+    <input type="hidden" name="OrderId" value="@Model.PaymentId" />
+    <input type="hidden" name="Amount" value="@Model.Amount" />
+    <button type="submit">Thanh toán VNPay</button>
+</form> *@
+<button type="button"
+        class="btn w-100 mt-3"
+        style="background:#6D4C41; color:#FFF8E1; font-weight:600;"
+        onclick="submitPayment()">
+    ☕ Thanh toán
+</button>
+<script>
+    function payVNPay(billId, amount) {
+
+        const form = document.getElementById("vnpayForm");
+
+        form.querySelector('[name="BillId"]').value = billId;
+        form.querySelector('[name="Amount"]').value = amount;
+        form.querySelector('[name="OrderDescription"]').value =
+            "Thanh toán học phí #" + billId;
+
+        form.submit();
+    }
+
+    function payMomo(billId, amount) {
+
+        const form = document.getElementById("momoForm");
+
+        form.querySelector('[name="BillId"]').value = billId;
+        form.querySelector('[name="Amount"]').value = amount;
+        form.querySelector('[name="OrderInfo"]').value =
+            "Thanh toán học phí #" + billId;
+
+        form.submit();
+    }
+</script>

@@ -4,6 +4,7 @@ namespace LMSfinal.Models.ViewModels.Student
 {
     public class StudentPaymentListItemVM
     {
+        public int? BillId { get; set; }
         public int PaymentId { get; set; }
         public int ClassroomId { get; set; }
         public string ClassroomName { get; set; } = string.Empty;

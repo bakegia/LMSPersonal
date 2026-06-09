@@ -62,6 +62,13 @@
                 <i class="fa-solid fa-house"></i>
                 Dashboard
             </a>
+            <a asp-area="Instructor"
+               asp-controller="Notification"
+               asp-action="Index"
+               class="sidebar-link @(controller == "Notification" ? "active" : "")">
+                <i class="fa-solid fa-bell"></i>
+                Thông báo
+            </a>
 
             <a asp-area="Instructor"
                asp-controller="Classroom"
@@ -94,6 +101,13 @@
                 <i class="fa-solid fa-file-lines"></i>
                 Bài tập
             </a>
+            <a asp-area="Instructor"
+               asp-controller="Score"
+               asp-action="Index"
+               class="sidebar-link @(controller == "Score" ? "active" : "")">
+                <i class="fa-solid fa-file-lines"></i>
+                Điểm số
+            </a>
 
             <hr />
 
@@ -105,7 +119,7 @@
                 Hồ sơ
             </a>
 
-            <a asp-area="Instructor"
+            <a asp-area="Admin"
                asp-controller="Account"
                asp-action="Logout"
                class="sidebar-link text-danger">
@@ -146,6 +160,47 @@
         </main>
 
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const sidebar = document.querySelector(".sidebar-instructor");
+
+            if (!sidebar) return;
+
+            // Khôi phục vị trí scroll
+            const savedPosition = sessionStorage.getItem("sidebarScroll");
+
+            if (savedPosition) {
+                sidebar.scrollTop = parseInt(savedPosition);
+            }
+
+            // Lưu vị trí scroll
+            sidebar.addEventListener("scroll", function () {
+                sessionStorage.setItem(
+                    "sidebarScroll",
+                    sidebar.scrollTop
+                );
+            });
+
+        });
+    </script>
+    <script>
+        document.querySelectorAll(".sidebar-link").forEach(link => {
+
+            link.addEventListener("click", function () {
+
+                const sidebar =
+                    document.querySelector(".sidebar-student");
+
+                sessionStorage.setItem(
+                    "sidebarScroll",
+                    sidebar.scrollTop
+                );
+
+            });
+
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
