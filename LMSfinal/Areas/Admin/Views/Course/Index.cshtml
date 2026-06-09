@@ -61,6 +61,7 @@
             <th>Code</th>
             <th>Title</th>
             <th>Slug</th>
+            <th>Credits</th>
             <th>Category</th>
             <th>Image</th>
             <th width="180">Action</th>
@@ -120,6 +121,13 @@
 
                 <div class="mb-3">
                     <img id="previewImage" src="" width="120" style="display:none; border-radius:8px; border:1px solid #ccc;" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Credits</label>
+                        <input id="credits" type="number" min="1" class="form-control" />
+                    </div>
                 </div>
             </div>
 
@@ -224,7 +232,7 @@
 
                 if (!data || data.length === 0) {
                     document.querySelector('#tblCourse tbody').innerHTML =
-                        '<tr><td colspan="7" class="text-center text-muted">No courses found</td></tr>';
+                        '<tr><td colspan="8" class="text-center text-muted">No courses found</td></tr>';
                     document.getElementById('paginationContainer').innerHTML = '';
                     return;
                 }
@@ -237,6 +245,7 @@
                             <td><span class="badge bg-info">${c.courseCode ?? ''}</span></td>
                             <td>${c.title ?? ''}</td>
                             <td><code>${c.slug ?? ''}</code></td>
+                            <td>${c.credits ?? 0}</td>
                             <td>${c.category ? c.category.name : ''}</td>
                             <td>
                                 ${c.imageUrl ? `<img src="${c.imageUrl}" width="70" style="border-radius:4px;"/>` : ''}
@@ -262,10 +271,10 @@
             .catch(error => {
                 console.error('Error loading data:', error);
                 document.querySelector('#tblCourse tbody').innerHTML =
-                    `<tr><td colspan="7" class="text-center text-danger"><strong>Error:</strong> ${error.message}</td></tr>`;
+                    `<tr><td colspan="8" class="text-center text-danger"><strong>Error:</strong> ${error.message}</td></tr>`;
             });
     }
-    
+
     function renderPagination(response) {
         const paginationContainer = document.getElementById('paginationContainer');
         paginationContainer.innerHTML = '';
@@ -343,7 +352,7 @@
     // =========================
     // LOAD CATEGORIES
     // =========================
-        function loadCategories() {
+    function loadCategories() {
         fetch(`${categoryApi}?pageNumber=1&pageSize=999`)
             .then(r => {
                 if (!r.ok)
@@ -379,27 +388,6 @@
                 document.getElementById("categoryId").innerHTML = modalHtml;
             });
     }
-    // function loadCategories() {
-    //     fetch(categoryApi)
-    //         .then(r => {
-    //             if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-    //             return r.json();
-    //         })
-    //         .then(response => {
-    //             const data = response.items || response;
-
-    //             let html = '<option value="">-- All Categories --</option>';
-    //             data.forEach(c => {
-    //                 html += `<option value="${c.categoryId}">${c.name}</option>`;
-    //             });
-
-    //             document.getElementById('filterByCategory').innerHTML = html;
-    //             document.getElementById('categoryId').innerHTML = html;
-    //         })
-    //         .catch(error => {
-    //             console.error('Error loading categories:', error);
-    //         });
-    // }
 
     // =========================
     // OPEN CREATE
@@ -437,6 +425,8 @@
                     preview.style.display = 'block';
                 }
 
+                document.getElementById('credits').value = c.credits ?? '';
+
                 new bootstrap.Modal('#courseModal').show();
             })
             .catch(error => {
@@ -457,6 +447,7 @@
         document.getElementById('categoryId').value = '';
         document.getElementById('imageUpload').value = '';
         document.getElementById('previewImage').style.display = 'none';
+        document.getElementById('credits').value = '';
     }
 
     // =========================
@@ -476,12 +467,19 @@
             return;
         }
 
+        const credits = parseInt(document.getElementById('credits').value, 10);
+        if (!credits || credits <= 0) {
+            alert('Credits is required');
+            return;
+        }
+
         let formData = new FormData();
         formData.append('CourseCode', courseCode);
         formData.append('Title', title);
         formData.append('Slug', document.getElementById('slug').value);
         formData.append('Description', document.getElementById('description').value);
         formData.append('CategoryId', document.getElementById('categoryId').value);
+        formData.append('Credits', credits);
 
         const file = document.getElementById('imageUpload').files[0];
         if (file) {

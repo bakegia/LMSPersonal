@@ -1,0 +1,107 @@
+﻿@using LMSfinal.Models.Enums
+@model IEnumerable<LMSfinal.Models.ViewModels.Student.StudentPaymentListItemVM>
+
+@{
+    ViewData["Title"] = "Học phí của tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Thay đổi nếu dùng Layout khác cho Area Student
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary"><i class="fas fa-file-invoice-dollar"></i> Lịch sử học phí</h2>
+
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-light text-center">
+                        <tr>
+                            <th>Lớp học</th>
+                            <th>Khóa học</th>
+                            <th>Hạn đóng phí</th>
+                            <th>Số tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-primary">@item.ClassroomName</td>
+                                    <td>@item.CourseTitle</td>
+                                    <td class="text-center">@item.DueDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end text-danger fw-bold">@item.Amount.ToString("N0") VNĐ</td>
+                                    <td class="text-center">
+                                        @if (item.Status == PaymentStatus.Paid)
+                                        {
+                                            <span class="badge bg-success">Đã thanh toán <br /> (@item.PaidAt?.ToString("dd/MM/yyyy"))</span>
+                                        }
+                                        else if (item.Status == PaymentStatus.Overdue)
+                                        {
+                                            <span class="badge bg-danger">Quá hạn</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Status != PaymentStatus.Paid)
+                                        {
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <!-- Thanh toán VNPay -->
+                                                <form asp-area="Student" asp-controller="Payment" asp-action="CreatePaymentUrlVnpay" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="paymentId" value="@item.PaymentId" />
+                                                    <button type="submit" class="btn btn-outline-info btn-sm">
+                                                        <i class="fas fa-credit-card"></i> VNPay
+                                                    </button>
+                                                </form>
+
+                                                <!-- Thanh toán Momo -->
+                                                <form asp-area="Student" asp-controller="Payment" asp-action="CreatePaymentMomo" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="paymentId" value="@item.PaymentId" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="fas fa-wallet"></i> Momo
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted"><i class="fas fa-check"></i> Đã hoàn tất</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu học phí.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

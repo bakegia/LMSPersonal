@@ -1,7 +1,7 @@
 ﻿@model LMSfinal.Models.EF.Lesson
 @{
     ViewData["Title"] = "Chi tiết bài học: " + Model.Title;
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container-fluid">
@@ -84,6 +84,22 @@
                         <li class="list-group-item d-flex justify-content-between">
                             <span class="text-muted">Thứ tự hiển thị:</span>
                             <span class="badge bg-secondary">@Model.Order</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Thời lượng video:</span>
+                            <span class="fw-bold">@((Model.VideoDurationSeconds ?? 0) > 0 ? $"{Model.VideoDurationSeconds} giây" : "Không yêu cầu")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Tỷ lệ xem bắt buộc:</span>
+                            <span class="fw-bold">@Model.RequiredWatchPercent%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Bắt buộc Quiz:</span>
+                            <span class="fw-bold">@((Model.RequireQuiz) ? "Có" : "Không")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted">Bắt buộc đạt Quiz:</span>
+                            <span class="fw-bold">@((Model.RequireQuizPass) ? "Có" : "Không")</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
                             <span class="text-muted">Trạng thái:</span>

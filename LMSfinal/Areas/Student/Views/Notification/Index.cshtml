@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Thông báo";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Student/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container-fluid mt-4">
@@ -12,8 +12,10 @@
             <h3 class="fw-bold">
                 <i class="fa-solid fa-bell me-2"></i>Thông báo
             </h3>
-            <p class="text-muted mb-0">Chưa đọc: <strong>@Model.UnreadCount</strong></p>
+            <p class="text-muted mb-0">Chưa đọc: <strong id="unreadCount">@Model.UnreadCount</strong></p>
         </div>
+
+
         <form asp-action="MarkAllAsRead" method="post">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-outline-primary">
@@ -24,7 +26,7 @@
 
     @if (Model.Notifications.Any())
     {
-        <div class="list-group">
+        <div id="notificationList" class="list-group">
             @foreach (var item in Model.Notifications)
             {
                 <div class="list-group-item list-group-item-action @(item.IsRead ? "" : "list-group-item-warning")">
@@ -56,3 +58,16 @@
         </div>
     }
 </div>
+@section Scripts {
+    <script>
+
+        document.addEventListener("notification:received", function (e) {
+
+            console.log("Notification Page Event:", e.detail);
+
+            location.reload();
+
+        });
+
+    </script>
+}

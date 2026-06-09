@@ -1,6 +1,8 @@
 ﻿using LMSfinal.Data;
+using LMSfinal.Models.Enums;
 using LMSfinal.Models;
 using LMSfinal.Models.EF;
+using LMSfinal.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,15 +16,18 @@ namespace LMSfinal.Areas.Admin.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IPricingService _pricingService;
 
         public ClassroomController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IPricingService pricingService)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _pricingService = pricingService;
         }
         public async Task<IActionResult> Index()
         {
@@ -33,7 +38,6 @@ namespace LMSfinal.Areas.Admin.Controllers
                 .OrderByDescending(x => x.StartDate)
                 .ToListAsync();
 
-            // ✅ FIX: Set default MaxCapacity = 30 nếu = 0
             foreach (var classroom in data)
             {
                 if (classroom.MaxCapacity <= 0)
@@ -54,9 +58,10 @@ namespace LMSfinal.Areas.Admin.Controllers
             // Thiết lập giá trị mặc định
             vm.StartDate = DateTime.Now;
             vm.EndDate = DateTime.Now.AddMonths(2);
-            vm.RegistrationDeadline = DateTime.Now.AddDays(7); // Mặc định: 7 ngày
+            vm.RegistrationDeadline = DateTime.Now.AddDays(2); // Mặc định: 7 ngày
             vm.MaxCapacity = 30; // Mặc định: 30 học sinh
             vm.IsOpenForRegistration = true; // Mặc định: mở đăng ký
+            vm.TotalPrice = 0m;
 
             return View(vm);
         }
@@ -66,7 +71,6 @@ namespace LMSfinal.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ClassroomVM vm)
         {
-            // ===== VALIDATION =====
             if (vm.StartDate >= vm.EndDate)
             {
                 ModelState.AddModelError(string.Empty, "❌ Ngày kết thúc phải lớn hơn ngày bắt đầu học.");
@@ -82,13 +86,20 @@ namespace LMSfinal.Areas.Admin.Controllers
                 ModelState.AddModelError(string.Empty, "❌ Sức chứa phải từ 1 đến 200 học sinh.");
             }
 
+            var currentPrice = await _pricingService.GetCurrentPriceAsync();
+            var tuition = await _pricingService.CalculateTuitionAsync(vm.CourseId);
+
+            if (currentPrice <= 0 || tuition <= 0)
+            {
+                ModelState.AddModelError(string.Empty, "❌ Chưa có giá tín chỉ hoặc tín chỉ môn học hợp lệ.");
+            }
+
             if (!ModelState.IsValid)
             {
                 vm = await LoadVM(vm);
                 return View(vm);
             }
 
-            // ===== TRANSACTION =====
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -101,20 +112,19 @@ namespace LMSfinal.Areas.Admin.Controllers
                     EndDate = vm.EndDate,
                     IsActive = vm.IsActive,
                     CourseId = vm.CourseId,
+                    Semester = vm.Semester,
 
-                    // ✅ THÊM CÁC TRƯỜNG ĐĂNG KÝ
+                    TotalPrice = tuition,
+
                     IsOpenForRegistration = vm.IsOpenForRegistration,
                     MaxCapacity = vm.MaxCapacity,
                     RegistrationDeadline = vm.RegistrationDeadline,
-
-                    // ⚠️ GIÁO VIÊN & HỌC SINH = NULL
                     InstructorId = vm.InstructorId
                 };
 
                 _context.Classrooms.Add(classroom);
-                await _context.SaveChangesAsync(); // Lưu để sinh ra classroom.Id
+                await _context.SaveChangesAsync();
 
-                // 👉 THÊM THỜI KHÓA BIỂU
                 if (vm.SelectedDays != null && vm.SelectedDays.Any())
                 {
                     var schedules = vm.SelectedDays.Select(day => new ClassSchedule
@@ -163,6 +173,8 @@ namespace LMSfinal.Areas.Admin.Controllers
                 IsActive = classroom.IsActive,
                 CourseId = classroom.CourseId,
                 InstructorId = classroom.InstructorId,
+                Semester = classroom.Semester,
+                TotalPrice = classroom.TotalPrice,
 
                 // ✅ LOAD ĐĂNG KÝ FIELDS
                 IsOpenForRegistration = classroom.IsOpenForRegistration,
@@ -193,7 +205,6 @@ namespace LMSfinal.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ClassroomVM vm)
         {
-            // ===== VALIDATION =====
             if (vm.StartDate >= vm.EndDate)
             {
                 ModelState.AddModelError(string.Empty, "❌ Ngày kết thúc phải lớn hơn ngày bắt đầu học.");
@@ -202,6 +213,14 @@ namespace LMSfinal.Areas.Admin.Controllers
             if (vm.MaxCapacity < 1 || vm.MaxCapacity > 200)
             {
                 ModelState.AddModelError(string.Empty, "❌ Sức chứa phải từ 1 đến 200 học sinh.");
+            }
+
+            var currentPrice = await _pricingService.GetCurrentPriceAsync();
+            var tuition = await _pricingService.CalculateTuitionAsync(vm.CourseId);
+
+            if (currentPrice <= 0 || tuition <= 0)
+            {
+                ModelState.AddModelError(string.Empty, "❌ Chưa có giá tín chỉ hoặc tín chỉ môn học hợp lệ.");
             }
 
             if (!ModelState.IsValid)
@@ -225,13 +244,13 @@ namespace LMSfinal.Areas.Admin.Controllers
             classroom.EndDate = vm.EndDate;
             classroom.IsActive = vm.IsActive;
             classroom.CourseId = vm.CourseId;
+            classroom.Semester = vm.Semester;
 
-            // ✅ UPDATE ĐĂNG KÝ FIELDS
+            classroom.TotalPrice = tuition;
+
             classroom.IsOpenForRegistration = vm.IsOpenForRegistration;
             classroom.MaxCapacity = vm.MaxCapacity;
             classroom.RegistrationDeadline = vm.RegistrationDeadline;
-
-            // ⚠️ KHÔNG CẬP NHẬT InstructorId (giáo viên đăng ký)
 
             // ===== UPDATE THỜI KHÓA BIỂU =====
             // Xóa lịch cũ
@@ -271,7 +290,7 @@ namespace LMSfinal.Areas.Admin.Controllers
             var mssv = await _context.UserProfiles
                 .Where(up => classroom.ClassroomStudents.Select(cs => cs.StudentId).Contains(up.UserId))
                 .ToDictionaryAsync(up => up.UserId, up => up.Mssv);
-            ViewBag.MssvLookup = mssv; // Truyền dictionary UserId -> MSSV cho View để hiển thị
+            ViewBag.MssvLookup = mssv;
             return View(classroom);
         }
 
@@ -292,11 +311,9 @@ namespace LMSfinal.Areas.Admin.Controllers
 
             try
             {
-                // Xóa liên kết
                 _context.ClassroomStudents.RemoveRange(classroom.ClassroomStudents);
                 _context.ClassSchedules.RemoveRange(classroom.ClassSchedules);
 
-                // Xóa lớp
                 _context.Classrooms.Remove(classroom);
                 await _context.SaveChangesAsync();
 
@@ -432,6 +449,7 @@ namespace LMSfinal.Areas.Admin.Controllers
             }
 
             var classroom = await _context.Classrooms
+                .Include(c => c.Course)
                 .Include(c => c.ClassroomStudents)
                 .FirstOrDefaultAsync(c => c.Id == classroomId);
 
@@ -440,7 +458,6 @@ namespace LMSfinal.Areas.Admin.Controllers
                 return Json(new { success = false, message = "Lớp học không tồn tại." });
             }
 
-            // Kiểm tra sức chứa
             int currentCount = classroom.ClassroomStudents.Count;
             if (currentCount + studentIds.Count > classroom.MaxCapacity)
             {
@@ -451,18 +468,59 @@ namespace LMSfinal.Areas.Admin.Controllers
                 });
             }
 
+            if (classroom.TotalPrice <= 0)
+            {
+                return Json(new { success = false, message = "Lớp học chưa có học phí hợp lệ." });
+            }
+
+            var currentPrice = await _pricingService.GetCurrentPriceAsync();
+            if (currentPrice <= 0)
+            {
+                return Json(new { success = false, message = "Chưa có giá tín chỉ hợp lệ." });
+            }
+
+            var now = DateTime.Now;
+
             try
             {
                 var newEnrolments = new List<ClassroomStudent>();
+                var newPayments = new List<ClassroomPayment>();
+
                 foreach (var studentId in studentIds)
                 {
-                    // Tránh thêm trùng lặp nếu sinh viên đã tồn tại (phòng hờ)
-                    if (!classroom.ClassroomStudents.Any(cs => cs.StudentId == studentId))
+                    if (classroom.ClassroomStudents.Any(cs => cs.StudentId == studentId))
                     {
-                        newEnrolments.Add(new ClassroomStudent
+                        continue;
+                    }
+
+                    var totalPrice = currentPrice * classroom.Course.Credits;
+
+                    var enrollment = new ClassroomStudent
+                    {
+                        ClassroomId = classroomId,
+                        StudentId = studentId,
+                        EnrolledAt = now,
+                        PricePerCreditAtEnroll = currentPrice,
+                        TotalPrice = totalPrice
+                    };
+
+                    newEnrolments.Add(enrollment);
+
+                    var paymentExists = await _context.ClassroomPayments
+                        .AnyAsync(p => p.ClassroomId == classroomId && p.StudentId == studentId);
+
+                    if (!paymentExists)
+                    {
+                        var dueDate = classroom.RegistrationDeadline ?? now.AddDays(2);
+
+                        newPayments.Add(new ClassroomPayment
                         {
                             ClassroomId = classroomId,
-                            StudentId = studentId
+                            StudentId = studentId,
+                            Amount = totalPrice,
+                            DueDate = dueDate,
+                            Status = PaymentStatus.Pending,
+                            CreatedAt = now
                         });
                     }
                 }
@@ -470,12 +528,14 @@ namespace LMSfinal.Areas.Admin.Controllers
                 if (newEnrolments.Any())
                 {
                     _context.ClassroomStudents.AddRange(newEnrolments);
-
-                    // Cập nhật lại trường CurrentEnrollment trong bảng Classroom
-                    var updatedEnrollment = currentCount + newEnrolments.Count;
-
-                    await _context.SaveChangesAsync();
                 }
+
+                if (newPayments.Any())
+                {
+                    _context.ClassroomPayments.AddRange(newPayments);
+                }
+
+                await _context.SaveChangesAsync();
 
                 return Json(new { success = true, message = $"Đã thêm thành công {newEnrolments.Count} sinh viên vào lớp." });
             }

@@ -18,6 +18,8 @@ namespace LMSfinal.Models.EF
         public int? CategoryId { get; set; }
         public Category? Category { get; set; }
 
+        [Range(1, 50, ErrorMessage = "Số tín chỉ phải từ 1 đến 50")]
+        public int Credits { get; set; } = 0;
 
         // Navigation
         public ICollection<Section> Sections { get; set; } = new List<Section>();

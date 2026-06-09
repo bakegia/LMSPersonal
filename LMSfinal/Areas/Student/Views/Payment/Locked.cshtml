@@ -1,0 +1,22 @@
+﻿@using LMSfinal.Models.Enums
+@using LMSfinal.Models.ViewModels.Student
+@model StudentPaymentLockedViewModel
+
+@{
+    ViewData["Title"] = "Lớp học bị khóa";
+    Layout = "~/Areas/Student/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="alert alert-danger">
+        <h4 class="mb-2"><i class="fa-solid fa-lock"></i> Lớp học đã bị khóa</h4>
+        <p class="mb-1"><strong>Lớp:</strong> @Model.ClassroomName</p>
+        <p class="mb-1"><strong>Lý do:</strong> @Model.LockReason</p>
+        <p class="mb-1"><strong>Hạn thanh toán:</strong> @Model.DueDate.ToString("dd/MM/yyyy")</p>
+        <p class="mb-0"><strong>Số tiền:</strong> @Model.Amount.ToString("N0") VNĐ</p>
+    </div>
+
+    <a asp-area="Student" asp-controller="Payment" asp-action="Index" class="btn btn-primary">
+        <i class="fa-solid fa-credit-card"></i> Xem hóa đơn
+    </a>
+</div>

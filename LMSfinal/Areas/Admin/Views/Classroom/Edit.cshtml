@@ -62,6 +62,23 @@
                             <textarea asp-for="Description" class="form-control" rows="3" required></textarea>
                             <span asp-validation-for="Description" class="text-danger small"></span>
                         </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Semester" class="form-label fw-bold">Niên Học Kỳ</label>
+                            <input asp-for="Semester" class="form-control" placeholder="VD: 2025-2026 - HK1" />
+                            <span asp-validation-for="Semester" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TotalPrice" class="form-label fw-bold">Học Phí (VND)</label>
+                            <input asp-for="TotalPrice" type="number" class="form-control" min="0" />
+                            <span asp-validation-for="TotalPrice" class="text-danger small"></span>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            Học phí được tự động tính theo tín chỉ và giá tín chỉ hiện hành.
+                        </div>
                     </div>
                 </div>
 

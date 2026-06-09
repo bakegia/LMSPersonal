@@ -1,5 +1,124 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@using LMSfinal.Data
+@using LMSfinal.Models.EF
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
 @{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LMS Instructor</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/instructor-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/lms-shared.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="page-loader">
+        <div class="spinner-border text-primary"></div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 col-lg-2 p-0 sidebar-instructor bg-white border-end">
+                <div class="sidebar-header text-center py-3">
+                    <strong>INSTRUCTOR</strong>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="mt-3 mb-3">
+                            @{
+                                var avatarUrl = "~/images/avatars/default-avatar.png";
+                                var currentUser = await UserManager.GetUserAsync(User);
+                                if (currentUser?.Avatar != null) { avatarUrl = currentUser.Avatar; }
+                            }
+                            <img src="@avatarUrl" alt="@User.Identity.Name" class="rounded-circle" style="width:72px;height:72px;object-fit:cover;" />
+                            <div class="small text-muted mt-2">@User.Identity.Name</div>
+                        </div>
+                    }
+                </div>
+
+                <div class="nav-links px-3">
+                    <a asp-area="Instructor" asp-controller="HomeInstructor" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-house me-2"></i> Dashboard</a>
+                    <a asp-area="Instructor" asp-controller="Classroom" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-chalkboard-user me-2"></i> Lớp dạy của tôi</a>
+                    <a asp-area="Instructor" asp-controller="Quiz" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-question-circle me-2"></i> Quản lý Quiz</a>
+                    <a asp-area="Instructor" asp-controller="ScheduleTeach" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-calendar me-2"></i> Thời khóa biểu</a>
+                    <a asp-area="Instructor" asp-controller="Assignment" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-file-lines me-2"></i> Bài Tập</a>
+                    <a asp-area="Instructor" asp-controller="Classroom" asp-action="OverallAttendanceHistory" class="d-block py-2"><i class="fa-solid fa-clipboard-list me-2"></i> Lịch sử điểm danh</a>
+                    <a asp-area="Instructor" asp-controller="Score" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-clipboard-list me-2"></i> Nhập điểm</a>
+                    <a asp-area="" asp-controller="Register" asp-action="AvailableClassroomsForInstructor" class="d-block py-2"><i class="fa-solid fa-clipboard-list me-2"></i> Đăng ký lớp dạy</a>
+                    <a asp-area="Instructor" asp-controller="FinalExamInstructor" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-calendar-check me-2"></i> Lịch giám sát thi</a>
+                    <a asp-area="Instructor" asp-controller="Notification" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-bell me-2"></i> Thông báo</a>
+                    <a asp-area="Instructor"
+                       asp-controller="Quiz"
+                       asp-action="Index"
+                       class="d-block py-2 @(controller == "Quiz" ? "active" : "")">
+                        <i class="fa-solid fa-question-circle me-2"></i>
+                        Quản lý Quiz
+                    </a>
+                </div>
+
+                <hr />
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="px-3 pb-3">
+                        <a asp-area="Instructor" asp-controller="Profile" asp-action="Index" class="d-block py-2"><i class="fa-solid fa-user me-2"></i> Hồ sơ</a>
+                        <a asp-area="Instructor" asp-controller="Account" asp-action="Logout" class="d-block py-2 text-danger"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="px-3 pb-3">
+                        <a asp-controller="Auth" asp-action="Login" class="d-block py-2">Đăng nhập</a>
+                    </div>
+                }
+            </nav>
+
+            <main id="main-content-area" class="col-md-9 col-lg-10 p-0">
+                <div class="d-flex justify-content-between align-items-center p-3 px-4 border-bottom bg-white">
+                    <h5 class="m-0 text-secondary">@ViewData["Title"]</h5>
+                    <div class="user-info d-flex align-items-center gap-3">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="avatar-container">
+                                @{
+                                    var topAvatarUrl = "~/images/avatars/default-avatar.png";
+                                    var topUser = await UserManager.GetUserAsync(User);
+                                    if (topUser?.Avatar != null) { topAvatarUrl = topUser.Avatar; }
+                                }
+                                <img src="@topAvatarUrl" alt="@User.Identity.Name" class="rounded-circle border border-secondary" style="width:40px;height:40px;object-fit:cover;" />
+                            </div>
+                        }
+                        <span class="badge bg-info text-dark">Xin chào, @User.Identity?.Name</span>
+                    </div>
+                </div>
+
+                <div class="main-content p-4">
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function () {
+
+                const href = this.getAttribute('href');
+
+                if (href &&
+                    !href.startsWith('#') &&
+                    !href.startsWith('javascript'))
+                {
+                    document.getElementById('page-loader').style.display = 'flex';
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

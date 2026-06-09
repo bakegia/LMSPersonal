@@ -3,14 +3,15 @@
 @{
     var classroom = ViewBag.Classroom as Classroom;
     DateTime selectedDate = ViewBag.SelectedDate;
-    var existingAttendance = ViewBag.ExistingAttendance as Dictionary<string, bool>;
+    var existingIsPresent = ViewBag.ExistingIsPresent as Dictionary<string, bool> ?? new Dictionary<string, bool>();
+    var existingIsLate = ViewBag.ExistingIsLate as Dictionary<string, bool> ?? new Dictionary<string, bool>();
+    var existingNote = ViewBag.ExistingNote as Dictionary<string, string> ?? new Dictionary<string, string>();
 }
 
 @{
     ViewData["Title"] = "Attendance";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
 }
-
 
 <div class="container mt-4">
     <h3>Điểm danh lớp: @classroom.NameClass</h3>
@@ -34,6 +35,7 @@
     </div>
 
     <form asp-action="SaveAttendance" method="post">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="classroomId" value="@classroom.Id" />
         <input type="hidden" name="attendanceDate" value="@selectedDate.ToString("yyyy-MM-dd")" />
 
@@ -43,15 +45,20 @@
                     <th>STT</th>
                     <th>Họ và Tên</th>
                     <th class="text-center">Hiện diện</th>
+                    <th class="text-center">Trễ</th>
+                    <th>Ghi chú</th>
                 </tr>
             </thead>
             <tbody>
                 @{
                     var students = Model.ToList();
+                    TempData["Debug"] = $"Students: {students.Count}";
                     for (int i = 0; i < students.Count; i++)
                     {
                         var student = students[i];
-                        bool isPresent = existingAttendance.ContainsKey(student.Id) && existingAttendance[student.Id];
+                        bool isPresent = existingIsPresent.TryGetValue(student.Id, out var present) && present;
+                        bool isLate = existingIsLate.TryGetValue(student.Id, out var late) && late;
+                        string note = existingNote.TryGetValue(student.Id, out var noteValue) ? noteValue : string.Empty;
 
                         <tr>
                             <td>@(i + 1)</td>
@@ -65,6 +72,17 @@
                                            class="form-check-input" @(isPresent ? "checked" : "") />
                                     <input type="hidden" name="models[@i].IsPresent" value="false" />
                                 </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input type="checkbox" name="models[@i].IsLate" value="true"
+                                           class="form-check-input" @(isLate ? "checked" : "") />
+                                    <input type="hidden" name="models[@i].IsLate" value="false" />
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" name="models[@i].Note" class="form-control"
+                                       value="@note" maxlength="500" placeholder="Ghi chú..." />
                             </td>
                         </tr>
                     }

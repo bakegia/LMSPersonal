@@ -1,0 +1,170 @@
+﻿@model LMSfinal.Models.EF.Lesson
+
+@{
+    ViewData["Title"] = "Chỉnh sửa bài học";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Chỉnh sửa bài học</h5>
+            </div>
+
+            <div class="card-body">
+
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div asp-validation-summary="All" class="alert alert-danger"></div>
+                <form asp-area="Instructor"
+                      asp-controller="Lesson"
+                      asp-action="Edit"
+                      method="post"
+                      enctype="multipart/form-data">
+
+                    <input asp-for="Id" type="hidden" />
+                    <input asp-for="SectionId" type="hidden" />
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-bold"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <!-- Slug -->
+                    <div class="mb-3">
+                        <label asp-for="Slug" class="form-label fw-bold"></label>
+                        <input asp-for="Slug"
+                               class="form-control"
+                               placeholder="vi-du-bai-hoc" />
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="mb-3">
+                        <label asp-for="Summary" class="form-label fw-bold"></label>
+                        <textarea asp-for="Summary"
+                                  class="form-control"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="Summary" class="text-danger"></span>
+                    </div>
+
+                    <!-- Order -->
+                    <div class="mb-3">
+                        <label asp-for="Order" class="form-label fw-bold"></label>
+                        <input asp-for="Order"
+                               type="number"
+                               class="form-control" />
+                    </div>
+
+                    <!-- Video URL -->
+                    <div class="mb-3">
+                        <label asp-for="VideoUrl" class="form-label fw-bold"></label>
+                        <input asp-for="VideoUrl"
+                               class="form-control"
+                               placeholder="https://youtube.com/..." />
+                    </div>
+
+                    <!-- Upload Video -->
+                    <div class="mb-3">
+                        <label asp-for="VideoUpload" class="form-label fw-bold"></label>
+                        <input asp-for="VideoUpload"
+                               type="file"
+                               class="form-control"
+                               accept="video/*" />
+                        @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                        {
+                            <small class="text-muted d-block mt-2">
+                                Video hiện tại: <a href="@Model.VideoUrl" target="_blank">@Model.VideoUrl</a>
+                            </small>
+                        }
+                    </div>
+
+                    <!-- Completion Rules -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-light">
+                            <strong>Điều kiện hoàn thành</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="VideoDurationSeconds" class="form-label fw-bold"></label>
+                                    <input asp-for="VideoDurationSeconds"
+                                           type="number"
+                                           class="form-control"
+                                           min="0" />
+                                    <span asp-validation-for="VideoDurationSeconds" class="text-danger"></span>
+                                    <small class="text-muted">Giây (0 = không yêu cầu video)</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="RequiredWatchPercent" class="form-label fw-bold"></label>
+                                    <input asp-for="RequiredWatchPercent"
+                                           type="number"
+                                           class="form-control"
+                                           min="1"
+                                           max="100" />
+                                    <span asp-validation-for="RequiredWatchPercent" class="text-danger"></span>
+                                    <small class="text-muted">% cần xem</small>
+                                </div>
+                            </div>
+
+                            <div class="form-check mt-3">
+                                <input asp-for="RequireQuiz" class="form-check-input" />
+                                <label asp-for="RequireQuiz" class="form-check-label">
+                                    Bắt buộc có Quiz
+                                </label>
+                            </div>
+
+                            <div class="form-check mt-2">
+                                <input asp-for="RequireQuizPass" class="form-check-input" />
+                                <label asp-for="RequireQuizPass" class="form-check-label">
+                                    Bắt buộc đạt Quiz
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Free -->
+                    <div class="form-check mb-3">
+                        <input asp-for="IsPreviewFree"
+                               class="form-check-input" />
+                        <label asp-for="IsPreviewFree"
+                               class="form-check-label">
+                            Cho phép học thử miễn phí
+                        </label>
+                        <small class="text-muted d-block">Bật để học viên được xem bài học khi chưa đăng ký.</small>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label fw-bold"></label>
+                        <textarea asp-for="Content"
+                                  class="form-control"
+                                  rows="6"
+                                  id="editor"></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a href="javascript:history.back()"
+                           class="btn btn-outline-secondary">
+                            Quay lại
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-warning px-4">
+                            Cập nhật
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -30,7 +30,10 @@ namespace LMSfinal.Data
         public DbSet<ClassroomGrade> ClassroomGrades { get; set; } = null!;
         public DbSet<FinalExamSchedule> FinalExamSchedules { get; set; }
         public DbSet<Notification> Notifications { get; set; }
-
+        public DbSet<StudentPreference> StudentPreferences { get; set; }
+        public DbSet<PricePerCreditHistory> PricePerCreditHistories { get; set; }
+        public DbSet<ClassroomPayment> ClassroomPayments { get; set; }
+        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -57,6 +60,28 @@ namespace LMSfinal.Data
                 .WithMany()
                 .HasForeignKey(cs => cs.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ClassroomStudent>()
+                .Property(cs => cs.PricePerCreditAtEnroll)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ClassroomStudent>()
+                .Property(cs => cs.TotalPrice)
+                .HasPrecision(18, 2);
+
+            // ========================= PRICE PER CREDIT =========================
+            builder.Entity<PricePerCreditHistory>(entity =>
+            {
+                entity.Property(x => x.Price).HasPrecision(18, 2);
+                entity.HasIndex(x => new { x.EffectiveFrom, x.EffectiveTo });
+                entity.HasData(new PricePerCreditHistory
+                {
+                    Id = 1,
+                    Price = 2500000m,
+                    EffectiveFrom = new DateTime(2026, 5, 28),
+                    EffectiveTo = null
+                });
+            });
 
             // ========================= SECTION =========================
             builder.Entity<Section>()
@@ -163,6 +188,40 @@ namespace LMSfinal.Data
                 entity.HasIndex(n => new { n.RecipientUserId, n.IsRead, n.CreatedAt });
             });
 
+            // ========================= STUDENT PREFERENCE =========================
+            builder.Entity<StudentPreference>(entity =>
+            {
+                entity.Property(x => x.Reason)
+                    .HasMaxLength(1000)
+                    .IsRequired();
+
+                entity.Property(x => x.Status)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.HasOne(x => x.Student)
+                    .WithMany()
+                    .HasForeignKey(x => x.StudentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Instructor)
+                    .WithMany()
+                    .HasForeignKey(x => x.InstructorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Course)
+                    .WithMany()
+                    .HasForeignKey(x => x.CourseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.TimeSlot)
+                    .WithMany()
+                    .HasForeignKey(x => x.TimeSlotId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new { x.StudentId, x.CreatedAt });
+            });
+
             // ========================= CATEGORY =========================
             builder.Entity<Category>(entity =>
             {
@@ -191,6 +250,9 @@ namespace LMSfinal.Data
                 entity.Property(x => x.Title)
                     .HasMaxLength(250)
                     .IsRequired();
+
+                entity.Property(x => x.Credits)
+                    .HasDefaultValue(0);
             });
 
             // ========================= CLASSROOM =========================
@@ -214,6 +276,28 @@ namespace LMSfinal.Data
                       .HasForeignKey(e => e.ClassroomId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+            // ========================= CLASSROOM PAYMENT =========================
+            builder.Entity<ClassroomPayment>(entity =>
+            {
+                entity.Property(x => x.Amount).HasPrecision(18, 2);
+
+                entity.HasIndex(x => new { x.StudentId, x.ClassroomId })
+                    .IsUnique();
+
+                entity.HasOne(x => x.Classroom)
+                    .WithMany()
+                    .HasForeignKey(x => x.ClassroomId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Student)
+                    .WithMany()
+                    .HasForeignKey(x => x.StudentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            builder.Entity<UserRefreshToken>()
+    .HasOne(x => x.User)
+    .WithMany()
+    .HasForeignKey(x => x.UserId);
         }
     }
 }

@@ -18,6 +18,9 @@ namespace LMSfinal.Models.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Category is required")]
         public int? CategoryId { get; set; }
 
+        [Range(1, 50, ErrorMessage = "Credits must be between 1 and 50")]
+        public int Credits { get; set; }
+
         public IFormFile? ImageUpload { get; set; }
     }
 }

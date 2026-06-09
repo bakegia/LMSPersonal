@@ -1,69 +1,78 @@
-﻿/* Layout General */
+﻿@import url('/css/color-scheme.css');
+
+/* Layout General */
 body {
-    background-color: #f8f9fa;
+    background-color: var(--color-light);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Sidebar Styling */
+/* Sidebar Styling (Admin) */
 .sidebar {
     min-height: 100vh;
-    background: #1e293b; /* Màu xanh đen hiện đại */
-    color: #cbd5e1;
+    background: var(--color-primary);
+    color: var(--color-white);
     transition: all 0.3s;
-    box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 10px rgba(0,0,0,0.06);
 }
 
 .sidebar-header {
-    background: rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.05);
     padding: 20px;
-    font-weight: bold;
-    color: #fff;
+    font-weight: 700;
+    color: var(--color-white);
     letter-spacing: 1px;
 }
 
 .sidebar a {
-    color: #cbd5e1;
+    color: var(--color-white);
     text-decoration: none;
     display: flex;
     align-items: center;
     padding: 12px 20px;
-    margin: 4px 10px;
+    margin: 6px 10px;
     border-radius: 8px;
-    transition: 0.2s;
+    transition: transform 0.18s ease, background 0.18s ease;
 }
 
     .sidebar a i {
         margin-right: 10px;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
     }
 
     .sidebar a:hover {
-        background: #334155;
-        color: #38bdf8;
-        transform: translateX(5px);
+        background: var(--color-primary-light);
+        color: var(--color-white);
+        transform: translateX(4px);
     }
 
     .sidebar a.active {
-        background: #38bdf8;
-        color: #fff;
+        background: var(--color-secondary);
+        color: var(--color-white);
     }
 
 /* Main Content */
 .main-content {
-    background: #ffffff;
+    background: var(--color-white);
     min-height: 95vh;
     margin: 15px;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(122,31,43,0.06);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+html.turbo-preview .main-content,
+html.turbo-visit-control-preview .main-content {
+    opacity: 0.75;
+    transform: translateY(4px);
 }
 
 .logout-btn {
     margin-top: 50px !important;
-    border: 1px solid #ef4444;
-    color: #ef4444 !important;
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger) !important;
 }
 
     .logout-btn:hover {
-        background: #ef4444 !important;
-        color: #fff !important;
+        background: var(--color-danger) !important;
+        color: var(--color-white) !important;
     }

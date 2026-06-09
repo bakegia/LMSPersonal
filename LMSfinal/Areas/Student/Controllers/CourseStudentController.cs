@@ -1,4 +1,5 @@
 ﻿using LMSfinal.Data;
+using LMSfinal.Services;
 using LMSfinal.Models;
 using LMSfinal.Models.EF;
 using LMSfinal.Models.ViewModels.Student;
@@ -14,23 +15,23 @@ namespace LMSfinal.Areas.Student.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IClassroomAccessService _classroomAccessService;
 
-        public CourseStudentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public CourseStudentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IClassroomAccessService classroomAccessService)
         {
             _userManager = userManager;
             _context = context;
+            _classroomAccessService = classroomAccessService;
         }
         public async Task<IActionResult> Index()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // 1. Lấy danh sách bài học sinh viên đã hoàn thành
             var completedLessonIds = await _context.UserProgresses
-                .Where(up => up.UserId == userId)
+                .Where(up => up.UserId == userId && up.IsCompleted)
                 .Select(up => up.LessonId)
                 .ToListAsync();
 
-            // 2. Lấy danh sách lớp học (Cần Include sâu đến tận Lesson để đếm tổng số bài)
             var allCourses = await _context.Classrooms
                 .Include(c => c.Course)
                 .Include(c => c.Sections)
@@ -38,7 +39,6 @@ namespace LMSfinal.Areas.Student.Controllers
                 .OrderByDescending(c => c.Id)
                 .ToListAsync();
 
-            // Truyền danh sách ID bài đã xong qua ViewBag
             ViewBag.CompletedLessonIds = completedLessonIds;
 
             return View(allCourses);
@@ -46,7 +46,11 @@ namespace LMSfinal.Areas.Student.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            // Lấy trực tiếp đối tượng Classroom từ database
+            if (!await _classroomAccessService.EnsureStudentAccessAsync(userId, id))
+            {
+                return RedirectToAction("Locked", "Payment", new { area = "Student", classroomId = id });
+            }
+
             var classroom = await _context.Classrooms
                 .Include(c => c.Course)
                 .Include(c => c.Sections)
@@ -57,23 +61,22 @@ namespace LMSfinal.Areas.Student.Controllers
             {
                 return NotFound();
             }
+
             var lessonIds = classroom.Sections.SelectMany(s => s.Lessons).Select(l => l.Id).ToList();
             int totalLessons = lessonIds.Count;
 
-            // 2. Đếm số bài học người dùng này đã hoàn thành trong khóa này
             int completedCount = await _context.UserProgresses
-                .CountAsync(p => p.UserId == userId && lessonIds.Contains(p.LessonId));
+                .CountAsync(p => p.UserId == userId && p.IsCompleted && lessonIds.Contains(p.LessonId));
 
-            // 3. Tính phần trăm và truyền qua ViewBag
             ViewBag.ProgressPercent = totalLessons > 0 ? (int)((double)completedCount / totalLessons * 100) : 0;
             ViewBag.CompletedCount = completedCount;
             ViewBag.TotalLessons = totalLessons;
-            return View(classroom); // Truyền trực tiếp Model Classroom sang View
+            return View(classroom);
         }
         public async Task<IActionResult> ViewLesson(int id)
         {
             var userId = _userManager.GetUserId(User);
-            // Lấy bài học cùng với thông tin chương (Section)
+
             var lesson = await _context.Lessons
                 .Include(l => l.Section)
                     .ThenInclude(s => s.Classroom)
@@ -84,11 +87,24 @@ namespace LMSfinal.Areas.Student.Controllers
                 return NotFound();
             }
 
-            // 1. Kiểm tra bài học đã hoàn thành chưa
-            ViewBag.IsCompleted = await _context.UserProgresses
-                .AnyAsync(p => p.UserId == userId && p.LessonId == id);
+            var classroomId = lesson.Section?.ClassroomId ?? 0;
+            if (classroomId == 0 || !await _classroomAccessService.EnsureStudentAccessAsync(userId, classroomId))
+            {
+                return RedirectToAction("Locked", "Payment", new { area = "Student", classroomId });
+            }
 
-            // 2. Kiểm tra bài này có Quiz hay không
+            var progress = await _context.UserProgresses
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == id);
+
+            ViewBag.IsCompleted = progress?.IsCompleted == true;
+            ViewBag.VideoCompleted = progress?.IsVideoCompleted == true;
+            ViewBag.WatchedPercent = progress?.WatchedPercent ?? 0;
+            ViewBag.QuizPassed = progress?.IsQuizPassed == true;
+
+            ViewBag.RequireVideo = lesson.VideoDurationSeconds.HasValue && lesson.VideoDurationSeconds > 0;
+            ViewBag.RequireQuiz = lesson.RequireQuiz;
+            ViewBag.RequireQuizPass = lesson.RequireQuizPass;
+
             var quiz = await _context.Set<Quiz>()
                 .FirstOrDefaultAsync(q => q.LessonId == id && q.IsActive);
 
@@ -101,8 +117,61 @@ namespace LMSfinal.Areas.Student.Controllers
                     .AnyAsync(a => a.StudentId == userId && a.QuizId == quiz.Id);
             }
 
+            ViewBag.CanMarkComplete = await CanMarkCompleteAsync(lesson, progress);
+
             return View(lesson);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateLessonProgress([FromBody] UpdateLessonProgressRequest request)
+        {
+            if (request == null || request.LessonId == 0)
+            {
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
+            }
+
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Chưa đăng nhập!" });
+            }
+
+            var lesson = await _context.Lessons.FindAsync(request.LessonId);
+            if (lesson == null)
+            {
+                return Json(new { success = false, message = "Bài học không tồn tại!" });
+            }
+
+            var progress = await GetOrCreateProgressAsync(userId, request.LessonId);
+
+            if (request.VideoDurationSeconds > 0 && (!lesson.VideoDurationSeconds.HasValue || lesson.VideoDurationSeconds == 0))
+            {
+                lesson.VideoDurationSeconds = request.VideoDurationSeconds;
+            }
+
+            progress.WatchedSeconds = Math.Max(progress.WatchedSeconds, request.WatchedSeconds);
+            progress.LastWatchedAt = DateTime.Now;
+
+            var duration = lesson.VideoDurationSeconds ?? 0;
+            progress.WatchedPercent = duration > 0
+                ? Math.Min(100, (int)Math.Round((double)progress.WatchedSeconds / duration * 100))
+                : 0;
+
+            progress.IsVideoCompleted = duration > 0 && progress.WatchedPercent >= lesson.RequiredWatchPercent;
+
+            await _context.SaveChangesAsync();
+
+            var canMarkComplete = await CanMarkCompleteAsync(lesson, progress);
+
+            return Json(new
+            {
+                success = true,
+                watchedPercent = progress.WatchedPercent,
+                isVideoCompleted = progress.IsVideoCompleted,
+                canMarkComplete
+            });
+        }
+
         [HttpPost]
         public async Task<IActionResult> MarkAsCompleted([FromBody] MarkCompletedRequest request)
         {
@@ -115,36 +184,36 @@ namespace LMSfinal.Areas.Student.Controllers
 
                 int lessonId = request.LessonId;
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                
+
                 if (string.IsNullOrEmpty(userId))
                 {
                     return Json(new { success = false, message = "Lỗi: Chưa đăng nhập!" });
                 }
 
-                // Kiểm tra bài học tồn tại
-                var lessonExists = await _context.Lessons.AnyAsync(l => l.Id == lessonId);
-                if (!lessonExists)
+                var lesson = await _context.Lessons.FindAsync(lessonId);
+                if (lesson == null)
                 {
                     return Json(new { success = false, message = "Lỗi: Bài học không tồn tại!" });
                 }
 
-                var exists = await _context.UserProgresses
-                    .AnyAsync(p => p.UserId == userId && p.LessonId == lessonId);
+                var progress = await GetOrCreateProgressAsync(userId, lessonId);
 
-                if (!exists)
+                if (progress.IsCompleted)
                 {
-                    var progress = new UserProgress
-                    {
-                        UserId = userId,
-                        LessonId = lessonId,
-                        CompletedDate = DateTime.Now
-                    };
-                    _context.UserProgresses.Add(progress);
-                    await _context.SaveChangesAsync();
-                    return Json(new { success = true });
+                    return Json(new { success = false, message = "Bài học này đã được ghi nhận rồi." });
                 }
 
-                return Json(new { success = false, message = "Bài học này đã được ghi nhận rồi." });
+                var canMarkComplete = await CanMarkCompleteAsync(lesson, progress);
+                if (!canMarkComplete)
+                {
+                    return Json(new { success = false, message = "Bạn cần xem đủ video và hoàn thành Quiz trước khi đánh dấu." });
+                }
+
+                progress.IsCompleted = true;
+                progress.CompletedDate ??= DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
             }
             catch (Exception ex)
             {
@@ -153,7 +222,13 @@ namespace LMSfinal.Areas.Student.Controllers
             }
         }
 
-        // Thêm Model này vào cuối controller cùng với các model input khác
+        public class UpdateLessonProgressRequest
+        {
+            public int LessonId { get; set; }
+            public int WatchedSeconds { get; set; }
+            public int VideoDurationSeconds { get; set; }
+        }
+
         public class MarkCompletedRequest
         {
             public int LessonId { get; set; }
@@ -186,7 +261,6 @@ namespace LMSfinal.Areas.Student.Controllers
                         a.Id,
                         a.AnswerText,
                         a.AnswerLabel
-                        // Không truyền IsCorrect (để ko cheating)
                     }).ToList()
                 }).ToList()
             };
@@ -207,7 +281,6 @@ namespace LMSfinal.Areas.Student.Controllers
                 if (model == null || model.QuizId == 0)
                     return Json(new { success = false, message = "Dữ liệu không hợp lệ" });
 
-                // 1. Lấy Quiz và tất cả questions + answers
                 var quiz = await _context.Set<Quiz>()
                     .Include(q => q.Questions)
                         .ThenInclude(qn => qn.Answers)
@@ -216,10 +289,8 @@ namespace LMSfinal.Areas.Student.Controllers
                 if (quiz == null)
                     return Json(new { success = false, message = "Quiz không tồn tại" });
 
-                // 2. Tính tổng điểm
                 decimal totalPoints = quiz.Questions.Sum(q => q.Points);
 
-                // 3. Chấm điểm tự động
                 decimal earnedPoints = 0;
                 var quizAttempt = new StudentQuizAttempt
                 {
@@ -241,13 +312,9 @@ namespace LMSfinal.Areas.Student.Controllers
                     var qAnswerRecord = new StudentQuizAnswer
                     {
                         Attempt = quizAttempt,
-
                         QuestionId = studentAnswer.QuestionId,
-
                         SelectedAnswerId = studentAnswer.SelectedAnswerId,
-
                         IsCorrect = isCorrect,
-
                         EarnedPoints = isCorrect ? question.Points : 0
                     };
 
@@ -257,13 +324,22 @@ namespace LMSfinal.Areas.Student.Controllers
                         earnedPoints += question.Points;
                 }
 
-                // 4. Tính score (%)
                 quizAttempt.Score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
                 quizAttempt.Passed = quizAttempt.Score >= quiz.PassingScore;
 
-                // 5. Lưu vào database
                 _context.Set<StudentQuizAttempt>().Add(quizAttempt);
+
+                var progress = await GetOrCreateProgressAsync(userId, quiz.LessonId);
+                if (quizAttempt.Passed)
+                {
+                    progress.IsQuizPassed = true;
+                    progress.QuizPassedAt ??= DateTime.Now;
+                }
+
                 await _context.SaveChangesAsync();
+
+                var lesson = await _context.Lessons.FindAsync(quiz.LessonId);
+                var canMarkComplete = lesson != null && await CanMarkCompleteAsync(lesson, progress);
 
                 return Json(new
                 {
@@ -272,6 +348,7 @@ namespace LMSfinal.Areas.Student.Controllers
                     score = Math.Round(quizAttempt.Score, 2),
                     earnedPoints = earnedPoints,
                     totalPoints = totalPoints,
+                    canMarkComplete,
                     message = quizAttempt.Passed
                         ? $"Chúc mừng! Bạn đạt {quizAttempt.Score:F1}%"
                         : $"Chưa đạt. Bạn được {quizAttempt.Score:F1}% (cần {quiz.PassingScore}%)"
@@ -287,6 +364,48 @@ namespace LMSfinal.Areas.Student.Controllers
                     message = inner
                 });
             }
+        }
+
+        private async Task<UserProgress> GetOrCreateProgressAsync(string userId, int lessonId)
+        {
+            var progress = await _context.UserProgresses
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == lessonId);
+
+            if (progress != null)
+            {
+                return progress;
+            }
+
+            progress = new UserProgress
+            {
+                UserId = userId,
+                LessonId = lessonId
+            };
+
+            _context.UserProgresses.Add(progress);
+            return progress;
+        }
+
+        private async Task<bool> CanMarkCompleteAsync(Lesson lesson, UserProgress? progress)
+        {
+            bool videoRequired = lesson.VideoDurationSeconds.HasValue && lesson.VideoDurationSeconds > 0;
+            bool videoOk = !videoRequired || (progress?.IsVideoCompleted ?? false);
+
+            if (!lesson.RequireQuiz)
+            {
+                return videoOk;
+            }
+
+            bool quizExists = await _context.Set<Quiz>()
+                .AnyAsync(q => q.LessonId == lesson.Id && q.IsActive);
+
+            if (!quizExists)
+            {
+                return false;
+            }
+
+            bool quizOk = !lesson.RequireQuizPass || (progress?.IsQuizPassed ?? false);
+            return videoOk && quizOk;
         }
 
         // INPUT MODEL

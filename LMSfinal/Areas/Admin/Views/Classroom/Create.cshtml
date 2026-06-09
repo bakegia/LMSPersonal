@@ -219,6 +219,33 @@
                     </div>
                 </div>
 
+                <!-- SECTION 6: THÔNG TIN THÊM -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fa-solid fa-plus me-2 text-success"></i>Thông Tin Thêm
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Semester" class="form-label fw-bold">Niên Học Kỳ</label>
+                            <input asp-for="Semester" class="form-control" placeholder="VD: 2025-2026 - HK1" />
+                            <span asp-validation-for="Semester" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TotalPrice" class="form-label fw-bold">Học Phí (VND)</label>
+                            <input asp-for="TotalPrice" type="number" class="form-control" min="0" />
+                            <span asp-validation-for="TotalPrice" class="text-danger small"></span>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            Học phí được tự động tính theo tín chỉ và giá tín chỉ hiện hành.
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Submit Buttons -->
                 <div class="d-flex gap-2 mb-4">
                     <button type="submit" class="btn btn-success btn-lg">

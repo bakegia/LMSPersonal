@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Thêm bài học mới";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Instructor/Views/Shared/_Layout.cshtml";
 }
 
 <div class="row justify-content-center">
@@ -71,6 +71,50 @@
                                type="file"
                                class="form-control"
                                accept="video/*" />
+                    </div>
+
+                    <!-- Completion Rules -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-light">
+                            <strong>Điều kiện hoàn thành</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="VideoDurationSeconds" class="form-label fw-bold"></label>
+                                    <input asp-for="VideoDurationSeconds"
+                                           type="number"
+                                           class="form-control"
+                                           min="0" />
+                                    <span asp-validation-for="VideoDurationSeconds" class="text-danger"></span>
+                                    <small class="text-muted">Giây (0 = không yêu cầu video)</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="RequiredWatchPercent" class="form-label fw-bold"></label>
+                                    <input asp-for="RequiredWatchPercent"
+                                           type="number"
+                                           class="form-control"
+                                           min="1"
+                                           max="100" />
+                                    <span asp-validation-for="RequiredWatchPercent" class="text-danger"></span>
+                                    <small class="text-muted">% cần xem</small>
+                                </div>
+                            </div>
+
+                            <div class="form-check mt-3">
+                                <input asp-for="RequireQuiz" class="form-check-input" />
+                                <label asp-for="RequireQuiz" class="form-check-label">
+                                    Bắt buộc có Quiz
+                                </label>
+                            </div>
+
+                            <div class="form-check mt-2">
+                                <input asp-for="RequireQuizPass" class="form-check-input" />
+                                <label asp-for="RequireQuizPass" class="form-check-label">
+                                    Bắt buộc đạt Quiz
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Preview Free -->

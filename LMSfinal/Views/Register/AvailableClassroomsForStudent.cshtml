@@ -1,8 +1,9 @@
 ﻿@using LMSfinal.Models.EF
-@model List<Classroom>
+@using LMSfinal.Models.ViewModels.Student
+@model StudentPreferencePageViewModel
 @{
     ViewData["Title"] = "Đăng Ký Lớp Học";
-    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/Student/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container-fluid mt-4">
@@ -13,6 +14,98 @@
                 <i class="fa-solid fa-book-open text-primary me-2"></i>Đăng Ký Lớp Học
             </h2>
             <p class="text-muted">Danh sách các lớp học đang mở đăng ký</p>
+        </div>
+    </div>
+
+    <!-- Preference Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-bottom">
+            <h5 class="mb-0 fw-bold">
+                <i class="fa-solid fa-clipboard-list me-2"></i>Đăng ký nguyện vọng
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="StudentPreferenceRegister" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label asp-for="Input.CourseId" class="form-label fw-bold">Khóa học</label>
+                        <select asp-for="Input.CourseId" asp-items="Model.Courses" class="form-select">
+                            <option value="">-- Chọn khóa học --</option>
+                        </select>
+                        <span asp-validation-for="Input.CourseId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Input.TimeSlotId" class="form-label fw-bold">Ca học mong muốn</label>
+                        <select asp-for="Input.TimeSlotId" asp-items="Model.TimeSlots" class="form-select">
+                            <option value="">-- Chọn ca học --</option>
+                        </select>
+                        <span asp-validation-for="Input.TimeSlotId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Input.InstructorId" class="form-label fw-bold">Giảng viên mong muốn</label>
+                        <select asp-for="Input.InstructorId" asp-items="Model.Instructors" class="form-select">
+                            <option value="">-- Không yêu cầu --</option>
+                        </select>
+                        <span asp-validation-for="Input.InstructorId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Input.Reason" class="form-label fw-bold">Lý do</label>
+                        <textarea asp-for="Input.Reason" class="form-control" rows="2" placeholder="Nhập lý do..."></textarea>
+                        <span asp-validation-for="Input.Reason" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane me-1"></i>Gửi nguyện vọng
+                    </button>
+                </div>
+            </form>
+
+            @if (Model.Preferences.Any())
+            {
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fa-solid fa-clock-rotate-left me-2"></i>Nguyện vọng đã gửi
+                    </h6>
+                    <div class="list-group">
+                        @foreach (var pref in Model.Preferences)
+                        {
+                            var instructorName = pref.Instructor?.FullName ?? "Không yêu cầu";
+                            var statusBadge = pref.Status == "Approved" ? "success"
+                                : pref.Status == "Rejected" ? "danger"
+                                : "warning";
+
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between flex-wrap gap-2">
+                                    <div>
+                                        <div class="fw-bold">
+                                            @pref.Course?.Title
+                                            <span class="badge bg-secondary ms-2">@pref.TimeSlot?.Name</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            GV: @instructorName ·
+                                            @pref.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                        <div class="small mt-1">
+                                            Lý do: @pref.Reason
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-@statusBadge align-self-start">
+                                        @pref.Status
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light border mt-4 mb-0">
+                    Chưa có nguyện vọng nào được gửi.
+                </div>
+            }
         </div>
     </div>
 
@@ -35,7 +128,7 @@
         </div>
     }
 
-    @if (Model != null && Model.Count > 0)
+    @if (Model != null && Model.Classrooms.Count > 0)
     {
         <!-- Statistics -->
         <div class="row mb-4 g-3">
@@ -43,7 +136,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-2">Tổng Lớp Mở Đăng Ký</h6>
-                        <h3 class="fw-bold text-primary">@Model.Count</h3>
+                        <h3 class="fw-bold text-primary">@Model.Classrooms.Count</h3>
                     </div>
                 </div>
             </div>
@@ -51,7 +144,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-2">Lớp Còn Chỗ</h6>
-                        <h3 class="fw-bold text-success">@Model.Count(c => c.CurrentEnrollment < c.MaxCapacity)</h3>
+                        <h3 class="fw-bold text-success">@Model.Classrooms.Count(c => c.CurrentEnrollment < c.MaxCapacity)</h3>
                     </div>
                 </div>
             </div>
@@ -59,7 +152,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
                         <h6 class="text-muted mb-2">Lớp Đã Đủ</h6>
-                        <h3 class="fw-bold text-danger">@Model.Count(c => c.CurrentEnrollment >= c.MaxCapacity)</h3>
+                        <h3 class="fw-bold text-danger">@Model.Classrooms.Count(c => c.CurrentEnrollment >= c.MaxCapacity)</h3>
                     </div>
                 </div>
             </div>
@@ -90,7 +183,7 @@
                         @{
                             int index = 1;
                         }
-                        @foreach (var classroom in Model)
+                        @foreach (var classroom in Model.Classrooms)
                         {
                             var isFull = classroom.CurrentEnrollment >= classroom.MaxCapacity;
                             var isDeadlinePassed = classroom.RegistrationDeadline.HasValue && DateTime.Now > classroom.RegistrationDeadline;
@@ -275,6 +368,12 @@
             DayOfWeek.Sunday => "CN",
             _ => day.ToString()
         };
+    }
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
 

@@ -1,0 +1,92 @@
+﻿@using LMSfinal.Models.ViewModels.Admin
+@model PricingHistoryViewModel
+@{
+    ViewData["Title"] = "Giá tín chỉ";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success">@TempData["success"]</div>
+    }
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fa-solid fa-money-bill-wave me-2"></i>Cập nhật giá tín chỉ
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <strong>Giá hiện tại:</strong>
+                <span class="text-primary fw-bold">@Model.CurrentPrice.ToString("N0") VND</span>
+            </div>
+
+            <form asp-action="SetPrice" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="NewPrice" class="form-label fw-bold">Giá mới (VND)</label>
+                        <input asp-for="NewPrice" type="number" min="1" step="1000" class="form-control" />
+                        <span asp-validation-for="NewPrice" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NewEffectiveFrom" class="form-label fw-bold">Hiệu lực từ</label>
+                        <input asp-for="NewEffectiveFrom"
+                               type="datetime-local"
+                               value="@Model.NewEffectiveFrom.ToString("yyyy-MM-ddTHH:mm")"
+                               class="form-control" />
+                        <span asp-validation-for="NewEffectiveFrom" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save me-1"></i>Lưu giá mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light border-bottom">
+            <h6 class="mb-0 fw-bold">
+                <i class="fa-solid fa-clock-rotate-left me-2"></i>Lịch sử giá
+            </h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Giá</th>
+                        <th>Hiệu lực từ</th>
+                        <th>Hiệu lực đến</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.History.Any())
+                    {
+                        foreach (var item in Model.History)
+                        {
+                            <tr>
+                                <td class="fw-bold">@item.Price.ToString("N0") VND</td>
+                                <td>@item.EffectiveFrom.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(item.EffectiveTo?.ToString("dd/MM/yyyy HH:mm") ?? "Đang áp dụng")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">Chưa có dữ liệu lịch sử.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
