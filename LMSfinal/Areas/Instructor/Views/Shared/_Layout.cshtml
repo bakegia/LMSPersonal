@@ -1,4 +1,5 @@
-﻿@using LMSfinal.Data
+﻿@using DocumentFormat.OpenXml.Wordprocessing
+@using LMSfinal.Data
 @using LMSfinal.Models.EF
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -6,7 +7,12 @@
 @inject ApplicationDbContext DbContext
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
     var topAvatarUrl = "~/images/avatars/default-avatar.png";
+    var instructorUser = await UserManager.GetUserAsync(User);
+    var instructorNotificationCount = instructorUser == null
+        ? 0
+        : await DbContext.Notifications.CountAsync(n => n.RecipientUserId == instructorUser.Id && !n.IsRead);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -68,6 +74,10 @@
                class="sidebar-link @(controller == "Notification" ? "active" : "")">
                 <i class="fa-solid fa-bell"></i>
                 Thông báo
+                @if (instructorNotificationCount > 0)
+                {
+                    <span class="badge bg-danger ms-2">@instructorNotificationCount</span>
+                }
             </a>
 
             <a asp-area="Instructor"
@@ -108,7 +118,12 @@
                 <i class="fa-solid fa-file-lines"></i>
                 Điểm số
             </a>
-
+            <a asp-area="Instructor" asp-controller="Classroom" asp-action="OverallAttendanceHistory" class="sidebar-link @(controller == "Classroom" && action == "OverallAttendanceHistory" ? "active" : "")">
+                <i class="fa-solid fa-clipboard-list"></i> Lịch sử điểm danh
+            </a>
+            <a asp-area="Instructor" asp-controller="FinalExamInstructor" asp-action="Index" class="sidebar-link @(controller == "FinalExamInstructor" ? "active" : "")">
+                <i class="fa-solid fa-clipboard-list"></i> Xem lịch giám sát thi
+            </a>
             <hr />
 
             <a asp-area="Instructor"
@@ -160,6 +175,7 @@
         </main>
 
     </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 
@@ -201,6 +217,8 @@
 
         });
     </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
