@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "Học phí của tôi";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // Thay đổi nếu dùng Layout khác cho Area Student
+    Layout = "~/Areas/Student/Views/Shared/_Layout.cshtml"; // Thay đổi nếu dùng Layout khác cho Area Student
 }
 
 <div class="container mt-4">
@@ -32,6 +32,7 @@
                         <tr>
                             <th>Lớp học</th>
                             <th>Khóa học</th>
+                            <th>Số Tín Chỉ</th>
                             <th>Hạn đóng phí</th>
                             <th>Số tiền</th>
                             <th>Trạng thái</th>
@@ -46,6 +47,7 @@
                                 <tr>
                                     <td class="fw-bold text-primary">@item.ClassroomName</td>
                                     <td>@item.CourseTitle</td>
+                                    <td class="text-center">@item.Credits</td>
                                     <td class="text-center">@item.DueDate.ToString("dd/MM/yyyy")</td>
                                     <td class="text-end text-danger fw-bold">@item.Amount.ToString("N0") VNĐ</td>
                                     <td class="text-center">

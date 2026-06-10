@@ -1,0 +1,141 @@
+﻿
+:root {
+    --primary-red: #7B1E2B; /* đỏ đô */
+    --primary-red-light: #F8EDEE;
+    --primary-red-hover: #641722;
+    --border-color: #E5D4D7;
+    --text-dark: #3A3A3A;
+}
+
+/* Card tổng */
+.schedule-wrapper {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* Header */
+.schedule-header {
+    background: linear-gradient(135deg, #7B1E2B, #A52A3A);
+    color: white;
+    padding: 20px;
+}
+
+    .schedule-header h5 {
+        margin: 0;
+        font-weight: 700;
+    }
+
+/* Table */
+.table-schedule {
+    margin-bottom: 0;
+}
+
+    .table-schedule thead th {
+        background: #faf6f6;
+        text-align: center;
+        vertical-align: middle;
+        border-color: var(--border-color);
+        font-weight: 600;
+        color: var(--primary-red);
+    }
+
+    .table-schedule td {
+        height: 95px;
+        width: 12%;
+        vertical-align: top;
+        padding: 6px;
+        border-color: #eee;
+    }
+
+/* Cột tiết học */
+.time-col {
+    background: #faf6f6;
+    text-align: center;
+    width: 90px !important;
+    font-weight: 600;
+}
+
+    .time-col .slot-name {
+        color: var(--primary-red);
+        font-weight: 700;
+    }
+
+/* Highlight ngày hiện tại */
+.today-column {
+    background-color: #fff4f5 !important;
+}
+
+/* Card môn học */
+.schedule-card {
+    background: linear-gradient( 135deg, #fff6f6 0%, #fdeaea 100% );
+    border-left: 5px solid var(--primary-red);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .25s ease;
+    color: var(--text-dark);
+    height: 100%;
+    min-height: 75px;
+}
+
+    .schedule-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(123, 30, 43, .15);
+        background: white;
+    }
+
+.schedule-title {
+    color: var(--primary-red);
+    font-weight: 700;
+    font-size: .95rem;
+}
+
+.schedule-code {
+    color: #666;
+    font-size: .8rem;
+}
+
+.schedule-room {
+    color: #555;
+    font-size: .8rem;
+}
+
+/* Select tuần */
+.week-select {
+    border: 2px solid var(--primary-red);
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+    .week-select:focus {
+        box-shadow: 0 0 0 0.2rem rgba(123,30,43,.15);
+        border-color: var(--primary-red);
+    }
+
+/* Button */
+.btn-red {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+    .btn-red:hover {
+        background: var(--primary-red);
+        color: white;
+    }
+
+/* Tooltip */
+.custom-tooltip .tooltip-inner {
+    background: #222 !important;
+    color: white;
+    padding: 14px;
+    max-width: 320px;
+    border-radius: 10px;
+    text-align: left;
+    box-shadow: 0 10px 25px rgba(0,0,0,.25);
+}
+
+.custom-tooltip .tooltip-arrow::before {
+    border-top-color: #222 !important;
+}
+
+

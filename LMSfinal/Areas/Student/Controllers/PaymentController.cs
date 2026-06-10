@@ -1,5 +1,7 @@
-﻿using LMSfinal.Data;
+﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using LMSfinal.Data;
 using LMSfinal.Models;
+using LMSfinal.Models.EF;
 using LMSfinal.Models.Enums;
 using LMSfinal.Models.Momo;
 using LMSfinal.Models.ViewModels.Student;
@@ -34,6 +36,7 @@ namespace LMSfinal.Areas.Student.Controllers
 
         public async Task<IActionResult> Index()
         {
+
             var userId = _userManager.GetUserId(User);
 
             var payments = await _context.ClassroomPayments
@@ -47,6 +50,7 @@ namespace LMSfinal.Areas.Student.Controllers
                     ClassroomId = p.ClassroomId,
                     ClassroomName = p.Classroom!.NameClass,
                     CourseTitle = p.Classroom!.Course.Title,
+                    Credits = p.Classroom.Course.Credits,
                     Amount = p.Amount,
                     DueDate = p.DueDate,
                     Status = p.Status,

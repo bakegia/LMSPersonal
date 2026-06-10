@@ -40,11 +40,11 @@
         height: 100%;
     }
 
-    .schedule-card:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-        filter: brightness(0.95);
-    }
+        .schedule-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+            filter: brightness(0.95);
+        }
 
     /* Tùy chỉnh Tooltip giống ảnh mẫu */
     .custom-tooltip .tooltip-inner {
@@ -118,13 +118,13 @@
                             <td class="time-col">
                                 <div class="text-primary">@slot.Name</div>
                                 <div style="font-size: 0.7rem;" class="text-muted">
-                                    @slot.StartTime.ToString(@"hh\:mm")<br/>@slot.EndTime.ToString(@"hh\:mm")
+                                    @slot.StartTime.ToString(@"hh\:mm")<br />@slot.EndTime.ToString(@"hh\:mm")
                                 </div>
                             </td>
                             @foreach (var day in Model.DaysInWeek)
                             {
-                                var session = Model.Schedules.FirstOrDefault(s => 
-                                    s.DayOfWeek == day.DayOfWeek && s.TimeSlotId == slot.Id);
+                                var session = Model.Schedules.FirstOrDefault(s =>
+                                s.DayOfWeek == day.DayOfWeek && s.TimeSlotId == slot.Id);
 
                                 <td>
                                     @if (session != null)

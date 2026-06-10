@@ -13,6 +13,7 @@ namespace LMSfinal.Models.ViewModels.Student
         public DateTime DueDate { get; set; }
         public PaymentStatus Status { get; set; }
         public DateTime? PaidAt { get; set; }
+        public int? Credits { get; set; }
     }
 
     public class StudentPaymentLockedViewModel
@@ -24,5 +25,6 @@ namespace LMSfinal.Models.ViewModels.Student
         public PaymentStatus Status { get; set; }
         public bool IsLocked { get; set; }
         public string? LockReason { get; set; }
+        public int? Credits { get; set; }
     }
 }
